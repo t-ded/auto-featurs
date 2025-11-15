@@ -12,7 +12,7 @@ class PolynomialTransformer(Transformer):
     def input_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
-    def return_type(self) -> ColumnType:
+    def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:

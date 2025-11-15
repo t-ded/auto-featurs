@@ -1,6 +1,7 @@
 import polars as pl
 from polars.testing import assert_frame_equal
 
+from core.base.column_types import ColumnType
 from core.transformers.numeric_transformers import PolynomialTransformer
 
 
@@ -13,6 +14,10 @@ class TestPolynomialTransformer:
                 'CATEGORICAL_FEATURE': ['A', 'B', 'C', 'D', 'E'],
             },
         )
+
+    def test_new_column_type(self) -> None:
+        pol_transformer = PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)
+        assert pol_transformer.new_column_type() == ('NUMERIC_FEATURE_pow_2', ColumnType.NUMERIC)
 
     def test_basic_polynomial_transformation(self) -> None:
         feature_2_polynomial_transformer_degree_2 = PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)

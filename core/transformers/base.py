@@ -10,7 +10,7 @@ class Transformer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def return_type(self) -> ColumnType:
+    def _return_type(self) -> ColumnType:
         raise NotImplementedError
 
     @abstractmethod
@@ -23,3 +23,6 @@ class Transformer(ABC):
 
     def transform(self) -> pl.Expr:
         return self._name(self._transform())
+
+    def new_column_type(self) -> tuple[str, ColumnType]:
+        return self.transform().meta.output_name(), self._return_type()

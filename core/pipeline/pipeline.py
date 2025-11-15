@@ -16,8 +16,8 @@ class Pipeline:
         column_types: Optional[dict[str, ColumnType]] = None,
         transformers: Optional[list[list[Transformer]]] = None,
     ) -> None:
-        self._column_types: dict[str, ColumnType] = column_types or {}
         self._transformers: list[list[Transformer]] = transformers or [[]]
+        self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
         transformers = []
@@ -28,7 +28,8 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:
-        return Pipeline(column_types=self._column_types, transformers=self._transformers + [[]])
+        current_layer_column_types = self._get_column_types_from_transformers(self._current_layer())
+        return Pipeline(column_types=self._column_types | current_layer_column_types, transformers=self._transformers + [[]])
 
     def collect(self, df: pl.LazyFrame) -> pl.DataFrame:
         for layer in self._transformers:
@@ -56,3 +57,11 @@ class Pipeline:
 
     def _get_columns_of_type(self, column_type: ColumnType) -> list[str]:
         return [col for col, col_type in self._column_types.items() if col_type == column_type]
+
+    @staticmethod
+    def _get_column_types_from_transformers(transformers: Iterable[Transformer]) -> dict[str, ColumnType]:
+        missing_column_types: dict[str, ColumnType] = {}
+        for transformer in transformers:
+            col_name, col_type = transformer.new_column_type()
+            missing_column_types[col_name] = col_type
+        return missing_column_types
