@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 
 import polars as pl
 from polars.selectors import Selector
@@ -12,8 +11,14 @@ class PolynomialTransformer(Transformer):
         self._columns = columns
         self._degree = degree
 
+    def input_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
     def return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
-    def transform(self) -> pl.Expr:
-        return self._columns.pow(self._degree).name.suffix(f'_pow_{self._degree}')
+    def _transform(self) -> pl.Expr:
+        return self._columns.pow(self._degree)
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.name.suffix(f'_pow_{self._degree}')
