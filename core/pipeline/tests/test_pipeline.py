@@ -11,7 +11,7 @@ class TestPipeline:
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
             column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC},
-            transformers=[PolynomialTransformer(columns=cs.by_name('NUMERIC_FEATURE'), degree=2)],
+            transformers=[[PolynomialTransformer(columns=cs.by_name('NUMERIC_FEATURE'), degree=2)]],
         )
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
