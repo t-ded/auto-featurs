@@ -4,7 +4,6 @@ from collections.abc import Iterable, Sequence
 from typing import Optional
 
 import polars as pl
-import polars.selectors as cs
 
 from core.base.column_types import ColumnType
 from core.transformers.base import Transformer
@@ -20,8 +19,8 @@ class Pipeline:
         self._column_types: dict[str, ColumnType] = column_types or {}
         self._transformers: list[list[Transformer]] = transformers or [[]]
 
-    def with_polynomial(self, subset: str | Sequence[str] | cs.Selector, degrees: Iterable[int]) -> Pipeline:
-        selection = subset if isinstance(subset, cs.Selector) else cs.by_name(subset)
+    def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
+        selection = self._get_columns_from_subset(subset)
         transformers = [PolynomialTransformer(columns=selection, degree=degree) for degree in degrees]
         return self._with_added_to_current_layer(transformers)
 
@@ -40,3 +39,17 @@ class Pipeline:
 
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
+
+    def _get_columns_from_subset(self, subset: str | Sequence[str] | ColumnType) -> list[str]:
+        match subset:
+            case ColumnType():
+                return self._get_columns_of_type(subset)
+            case str():
+                return [subset]
+            case Sequence():
+                return list(subset)
+            case _:
+                raise ValueError(f'Unexpected subset type: {type(subset)}')
+
+    def _get_columns_of_type(self, column_type: ColumnType) -> list[str]:
+        return [col for col, col_type in self._column_types.items() if col_type == column_type]

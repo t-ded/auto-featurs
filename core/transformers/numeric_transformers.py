@@ -1,13 +1,13 @@
 
 import polars as pl
-from polars.selectors import Selector
+import polars.selectors as cs
 
 from core.base.column_types import ColumnType
 from core.transformers.base import Transformer
 
 
 class PolynomialTransformer(Transformer):
-    def __init__(self, columns: Selector, degree: int) -> None:
+    def __init__(self, columns: list[str], degree: int) -> None:
         self._columns = columns
         self._degree = degree
 
@@ -18,7 +18,7 @@ class PolynomialTransformer(Transformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        return self._columns.pow(self._degree)
+        return cs.by_name(self._columns).pow(self._degree)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.name.suffix(f'_pow_{self._degree}')

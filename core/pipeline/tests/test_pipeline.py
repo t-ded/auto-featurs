@@ -1,5 +1,4 @@
 import polars as pl
-import polars.selectors as cs
 from polars.testing import assert_frame_equal
 
 from core.base.column_types import ColumnType
@@ -11,7 +10,7 @@ class TestPipeline:
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
             column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC},
-            transformers=[[PolynomialTransformer(columns=cs.by_name('NUMERIC_FEATURE'), degree=2)]],
+            transformers=[[PolynomialTransformer(columns=['NUMERIC_FEATURE'], degree=2)]],
         )
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
@@ -24,9 +23,9 @@ class TestPipeline:
 
     def test_basic_layering(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
-        pipeline = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
+        pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         pipeline = pipeline.with_new_layer()
-        pipeline = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
+        pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
         res = pipeline.collect(df)
@@ -42,7 +41,7 @@ class TestPipeline:
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
-        pipeline_with_polynomial = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
+        pipeline_with_polynomial = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
         res = pipeline.collect(df)
@@ -53,7 +52,7 @@ class TestPipeline:
 
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC})
-        pipeline = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2, 3])
+        pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
         df = pl.LazyFrame({
             'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
             'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],

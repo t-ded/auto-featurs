@@ -1,6 +1,5 @@
 import polars as pl
 from polars.testing import assert_frame_equal
-import polars.selectors as cs
 
 from core.transformers.numeric_transformers import PolynomialTransformer
 
@@ -16,7 +15,7 @@ class TestPolynomialTransformer:
         )
 
     def test_basic_polynomial_transformation(self) -> None:
-        numeric_features_polynomial_transformer_degree_2 = PolynomialTransformer(columns=cs.numeric(), degree=2)
+        numeric_features_polynomial_transformer_degree_2 = PolynomialTransformer(columns=['NUMERIC_FEATURE', 'NUMERIC_FEATURE_2'], degree=2)
         df = self._df.with_columns(numeric_features_polynomial_transformer_degree_2.transform())
         assert_frame_equal(
             df,
@@ -32,8 +31,8 @@ class TestPolynomialTransformer:
         )
 
     def test_combination_of_polynomial_transformations(self) -> None:
-        numeric_features_polynomial_transformer_degree_2 = PolynomialTransformer(columns=cs.numeric(), degree=2)
-        numeric_features_polynomial_transformer_degree_3 = PolynomialTransformer(columns=cs.numeric(), degree=3)
+        numeric_features_polynomial_transformer_degree_2 = PolynomialTransformer(columns=['NUMERIC_FEATURE', 'NUMERIC_FEATURE_2'], degree=2)
+        numeric_features_polynomial_transformer_degree_3 = PolynomialTransformer(columns=['NUMERIC_FEATURE', 'NUMERIC_FEATURE_2'], degree=3)
         df = self._df.with_columns(numeric_features_polynomial_transformer_degree_2.transform(), numeric_features_polynomial_transformer_degree_3.transform())
         assert_frame_equal(
             df,
@@ -51,7 +50,7 @@ class TestPolynomialTransformer:
         )
 
     def test_polynomial_transformation_for_subset(self) -> None:
-        feature_2_polynomial_transformer_degree_2 = PolynomialTransformer(columns=cs.by_name("NUMERIC_FEATURE_2"), degree=2)
+        feature_2_polynomial_transformer_degree_2 = PolynomialTransformer(columns=['NUMERIC_FEATURE_2'], degree=2)
         df = self._df.with_columns(feature_2_polynomial_transformer_degree_2.transform())
         assert_frame_equal(
             df,
