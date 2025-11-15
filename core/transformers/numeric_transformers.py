@@ -8,13 +8,12 @@ from core.transformers.base import Transformer
 
 
 class PolynomialTransformer(Transformer):
-    def __init__(self, columns: Selector, degrees: Iterable[int]) -> None:
+    def __init__(self, columns: Selector, degree: int) -> None:
         self._columns = columns
-        self._degrees = degrees
+        self._degree = degree
 
     def return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
-    def transform(self, df: pl.LazyFrame) -> pl.LazyFrame:
-        df = df.with_columns([self._columns.pow(degree).name.suffix(f'_pow_{degree}') for degree in self._degrees])
-        return df
+    def transform(self) -> pl.Expr:
+        return self._columns.pow(self._degree).name.suffix(f'_pow_{self._degree}')

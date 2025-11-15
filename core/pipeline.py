@@ -22,10 +22,10 @@ class Pipeline:
 
     def with_polynomial(self, subset: str | Sequence[str] | cs.Selector, degrees: Iterable[int]) -> Pipeline:
         selection = subset if isinstance(subset, cs.Selector) else cs.by_name(subset)
-        self._transformers.append(PolynomialTransformer(columns=selection, degrees=degrees))
+        for degree in degrees:
+            self._transformers.append(PolynomialTransformer(columns=selection, degree=degree))
         return self
 
     def collect(self, df: pl.LazyFrame) -> pl.DataFrame:
-        for transformer in self._transformers:
-            df = df.pipe(transformer.transform)
-        return df.collect()
+        exprs = [transformer.transform() for transformer in self._transformers]
+        return df.with_columns(*exprs).collect()

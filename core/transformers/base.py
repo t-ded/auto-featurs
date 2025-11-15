@@ -10,5 +10,5 @@ class Transformer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def transform(self, df: pl.LazyFrame) -> pl.LazyFrame:
+    def transform(self) -> pl.Expr:
         raise NotImplementedError
