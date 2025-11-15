@@ -25,7 +25,7 @@ class TestPipeline:
     def test_basic_layering(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
         pipeline = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
-        pipeline = pipeline.with_layer()
+        pipeline = pipeline.with_new_layer()
         pipeline = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
@@ -39,6 +39,17 @@ class TestPipeline:
                 'NUMERIC_FEATURE_pow_2_pow_2': [0, 1, 16, 81, 256, 625],
             })
         )
+
+    def test_pipeline_is_not_changed_inplace(self) -> None:
+        pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
+        pipeline_with_polynomial = pipeline.with_polynomial(subset=cs.numeric(), degrees=[2])
+        df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
+
+        res = pipeline.collect(df)
+        res_with_polynomial = pipeline_with_polynomial.collect(df)
+
+        assert_frame_equal(res, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]}))
+        assert_frame_equal(res_with_polynomial, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}))
 
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC})
