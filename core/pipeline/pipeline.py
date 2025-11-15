@@ -20,8 +20,11 @@ class Pipeline:
         self._transformers: list[list[Transformer]] = transformers or [[]]
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
+        transformers = []
         selection = self._get_columns_from_subset(subset)
-        transformers = [PolynomialTransformer(columns=selection, degree=degree) for degree in degrees]
+        for column in selection:
+            for degree in degrees:
+                transformers.append(PolynomialTransformer(column=column, degree=degree))
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:

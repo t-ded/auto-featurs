@@ -10,7 +10,7 @@ class TestPipeline:
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
             column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC},
-            transformers=[[PolynomialTransformer(columns=['NUMERIC_FEATURE'], degree=2)]],
+            transformers=[[PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)]],
         )
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
@@ -62,12 +62,14 @@ class TestPipeline:
 
         assert_frame_equal(
             res,
-            pl.DataFrame({
-                'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
-                'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],
-                'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
-                'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
-                'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
-                'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
-            })
+            pl.DataFrame(
+                {
+                    'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
+                    'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],
+                    'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
+                    'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
+                    'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
+                    'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
+                },
+            ),
         )
