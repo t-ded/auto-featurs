@@ -7,7 +7,9 @@ import polars as pl
 
 from core.base.column_types import ColumnType
 from core.transformers.base import Transformer
+from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
+from utils.utils import order_preserving_unique
 
 
 class Pipeline:
@@ -20,11 +22,22 @@ class Pipeline:
         self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
-        transformers = []
+        transformers: list[Transformer] = []
         selection = self._get_columns_from_subset(subset)
         for column in selection:
             for degree in degrees:
                 transformers.append(PolynomialTransformer(column=column, degree=degree))
+        return self._with_added_to_current_layer(transformers)
+
+    def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation], skip_self: bool = True) -> Pipeline:
+        transformers: list[Transformer] = []
+        operations = order_preserving_unique(operations)
+        for op in operations:
+            for left_col in self._get_columns_from_subset(left_subset):
+                for right_col in self._get_columns_from_subset(right_subset):
+                    if skip_self and left_col == right_col:
+                        continue
+                    transformers.append(op.value(left_column=left_col, right_column=right_col))
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:

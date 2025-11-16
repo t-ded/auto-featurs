@@ -1,17 +1,10 @@
 from abc import ABC
-from enum import StrEnum
+from enum import Enum
 
 import polars as pl
 
 from core.base.column_types import ColumnType
 from core.transformers.base import Transformer
-
-
-class ArithmeticOperation(StrEnum):
-    ADD = '+'
-    SUBTRACT = '-'
-    MULTIPLY = '*'
-    DIVIDE = '/'
 
 
 class PolynomialTransformer(Transformer):
@@ -37,7 +30,7 @@ class ArithmeticTransformer(Transformer, ABC):
         self._left_column = left_column
         self._right_column = right_column
 
-    def input_type(self) -> ColumnType | tuple[ColumnType, ...]:
+    def input_type(self) -> tuple[ColumnType, ...]:
         return ColumnType.NUMERIC, ColumnType.NUMERIC
 
     def _return_type(self) -> ColumnType:
@@ -74,3 +67,10 @@ class DivideTransformer(ArithmeticTransformer):
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.alias(f'{self._left_column}_divide_{self._right_column}')
+
+
+class ArithmeticOperation(Enum):
+    ADD = AddTransformer
+    SUBTRACT = SubtractTransformer
+    MULTIPLY = MultiplyTransformer
+    DIVIDE = DivideTransformer
