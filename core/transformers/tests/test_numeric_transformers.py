@@ -1,15 +1,17 @@
+import numpy as np
+import pytest
 
-from core.base.column_types import ColumnType
-from core.transformers.numeric_transformers import PolynomialTransformer
+from core.transformers.numeric_transformers import AddTransformer, PolynomialTransformer
+from core.transformers.numeric_transformers import ArithmeticTransformer
+from core.transformers.numeric_transformers import DivideTransformer
+from core.transformers.numeric_transformers import MultiplyTransformer
+from core.transformers.numeric_transformers import SubtractTransformer
 from utils.utils_for_tests import BASIC_FRAME, assert_new_columns_in_frame
 
 
 class TestPolynomialTransformer:
     def setup_method(self) -> None:
         self._feature_2_polynomial_transformer_degree_2 = PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)
-
-    def test_new_column_type(self) -> None:
-        assert self._feature_2_polynomial_transformer_degree_2.new_column_type() == ('NUMERIC_FEATURE_pow_2', ColumnType.NUMERIC)
 
     def test_basic_polynomial_transformation(self) -> None:
         df = BASIC_FRAME.with_columns(self._feature_2_polynomial_transformer_degree_2.transform())
@@ -33,3 +35,33 @@ class TestPolynomialTransformer:
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
             },
         )
+
+
+class TestArithmeticTransformers:
+    @pytest.mark.parametrize(
+        'transformer_type, expected_new_columns',
+        [
+            (AddTransformer, {'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0]}),
+            (SubtractTransformer, {'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE_2': [0, 2, 4, 6, 8, 10]}),
+            (MultiplyTransformer, {'NUMERIC_FEATURE_multiply_NUMERIC_FEATURE_2': [0, -1, -4, -9, -16, -25]}),
+            (DivideTransformer, {'NUMERIC_FEATURE_divide_NUMERIC_FEATURE_2': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0]}),
+        ],
+    )
+    def test_basic_arithmetic_transformation(self, transformer_type: type[ArithmeticTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(left_column='NUMERIC_FEATURE', right_column='NUMERIC_FEATURE_2')
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+    @pytest.mark.parametrize(
+        'transformer_type, expected_new_columns',
+        [
+            (AddTransformer, {'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0]}),
+            (SubtractTransformer, {'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE': [0, -2, -4, -6, -8, -10]}),
+            (MultiplyTransformer, {'NUMERIC_FEATURE_2_multiply_NUMERIC_FEATURE': [0, -1, -4, -9, -16, -25]}),
+            (DivideTransformer, {'NUMERIC_FEATURE_2_divide_NUMERIC_FEATURE': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0]}),
+        ],
+    )
+    def test_basic_arithmetic_transformation_opposite_order(self, transformer_type: type[ArithmeticTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(left_column='NUMERIC_FEATURE_2', right_column='NUMERIC_FEATURE')
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
