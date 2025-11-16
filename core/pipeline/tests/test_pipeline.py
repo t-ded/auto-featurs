@@ -4,6 +4,8 @@ from polars.testing import assert_frame_equal
 from core.base.column_types import ColumnType
 from core.pipeline.pipeline import Pipeline
 from core.transformers.numeric_transformers import PolynomialTransformer
+from utils.utils_for_tests import BASIC_FRAME
+from utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestPipeline:
@@ -53,23 +55,16 @@ class TestPipeline:
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC})
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
-        df = pl.LazyFrame({
-            'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
-            'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],
-        })
 
-        res = pipeline.collect(df)
+        res = pipeline.collect(BASIC_FRAME)
 
-        assert_frame_equal(
-            res,
-            pl.DataFrame(
-                {
-                    'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
-                    'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],
-                    'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
-                    'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
-                    'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
-                    'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
-                },
-            ),
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=res,
+            expected_new_columns={
+                'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
+                'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
+                'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
+                'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
+            },
         )
