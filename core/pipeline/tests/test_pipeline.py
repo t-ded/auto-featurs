@@ -4,6 +4,7 @@ from polars.testing import assert_frame_equal
 
 from core.base.column_types import ColumnType
 from core.pipeline.pipeline import Pipeline
+from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils_for_tests import BASIC_FRAME
@@ -61,6 +62,11 @@ class TestPipeline:
             left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
             operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT, ArithmeticOperation.MULTIPLY, ArithmeticOperation.DIVIDE],
         )
+        # TODO: Add tests for other types of input columns
+        pipeline = pipeline.with_comparison(
+            left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
+            comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
+        )
 
         res = pipeline.collect(BASIC_FRAME)
 
@@ -80,5 +86,11 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_multiply_NUMERIC_FEATURE': [0, -1, -4, -9, -16, -25],
                 'NUMERIC_FEATURE_divide_NUMERIC_FEATURE_2': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0],
                 'NUMERIC_FEATURE_2_divide_NUMERIC_FEATURE': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0],
+                'NUMERIC_FEATURE_equal_NUMERIC_FEATURE_2': [True, False, False, False, False, False],
+                'NUMERIC_FEATURE_2_equal_NUMERIC_FEATURE': [True, False, False, False, False, False],
+                'NUMERIC_FEATURE_greater_than_NUMERIC_FEATURE_2': [False, True, True, True, True, True],
+                'NUMERIC_FEATURE_2_greater_than_NUMERIC_FEATURE': [False, False, False, False, False, False],
+                'NUMERIC_FEATURE_greater_or_equal_NUMERIC_FEATURE_2': [True, True, True, True, True, True],
+                'NUMERIC_FEATURE_2_greater_or_equal_NUMERIC_FEATURE': [True, False, False, False, False, False],
             },
         )
