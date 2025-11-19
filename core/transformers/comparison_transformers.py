@@ -1,4 +1,5 @@
 from abc import ABC
+from enum import Enum
 
 import polars as pl
 
@@ -40,3 +41,9 @@ class GreaterOrEqualTransformer(ComparisonTransformer):
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.alias(f'{self._left_column}_greater_or_equal_{self._right_column}')
+
+
+class Comparisons(Enum):
+    EQUAL = EqualTransformer
+    GREATER_THAN = GreaterThanTransformer
+    GREATER_OR_EQUAL = GreaterOrEqualTransformer

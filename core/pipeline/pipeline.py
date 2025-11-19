@@ -7,11 +7,13 @@ import polars as pl
 
 from core.base.column_types import ColumnType
 from core.transformers.base import Transformer
+from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
 
 
+# TODO: Add commutativity property for the Transformer class -> smarter filtering in pipeline to avoid duplicate columns (e.g. F1_eq_F2 and F2_eq_F1)
 class Pipeline:
     def __init__(
         self,
@@ -38,6 +40,17 @@ class Pipeline:
                     if skip_self and left_col == right_col:
                         continue
                     transformers.append(op.value(left_column=left_col, right_column=right_col))
+        return self._with_added_to_current_layer(transformers)
+
+    def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
+        transformers: list[Transformer] = []
+        comparisons = order_preserving_unique(comparisons)
+        for comp in comparisons:
+            for left_col in self._get_columns_from_subset(left_subset):
+                for right_col in self._get_columns_from_subset(right_subset):
+                    if left_col == right_col:
+                        continue
+                    transformers.append(comp.value(left_column=left_col, right_column=right_col))
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:
