@@ -36,34 +36,26 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation]) -> Pipeline:
-        transformers: list[Transformer] = []
         operations = order_preserving_unique(operations)
         left_selection = self._get_columns_from_subset(left_subset)
         right_selection = self._get_columns_from_subset(right_subset)
 
-        for op in operations:
-            transformers.extend(
-                self._build_transformers(
-                    transformer_factory=op.value,
-                    input_columns=[left_selection, right_selection],
-                ),
-            )
+        transformers = self._build_transformers(
+            transformer_factory=[op.value for op in operations],
+            input_columns=[left_selection, right_selection],
+        )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
-        transformers: list[Transformer] = []
         comparisons = order_preserving_unique(comparisons)
         left_selection = self._get_columns_from_subset(left_subset)
         right_selection = self._get_columns_from_subset(right_subset)
 
-        for comp in comparisons:
-            transformers.extend(
-                self._build_transformers(
-                    transformer_factory=comp.value,
-                    input_columns=[left_selection, right_selection],
-                ),
-            )
+        transformers = self._build_transformers(
+            transformer_factory=[comp.value for comp in comparisons],
+            input_columns=[left_selection, right_selection],
+        )
 
         return self._with_added_to_current_layer(transformers)
 
@@ -109,7 +101,7 @@ class Pipeline:
     @staticmethod
     def _build_transformers(
         *,
-        transformer_factory: Callable[..., Transformer],
+        transformer_factory: Callable[..., Transformer] | list[Callable[..., Transformer]],
         input_columns: Optional[Iterable[Iterable[str]]] = None,
         kw_params: Optional[dict[str, Iterable[Any]]] = None,
         **kwargs,
@@ -117,6 +109,7 @@ class Pipeline:
 
         transformers: list[Transformer] = []
 
+        factories = transformer_factory if isinstance(transformer_factory, list) else [transformer_factory]
         input_columns = input_columns or [[]]
         kw_params = kw_params or {}
 
@@ -124,11 +117,12 @@ class Pipeline:
         kw_keys = list(kw_params.keys())
         kw_params_positional_combinations = list(product(*kw_params.values()))
 
-        for column_combination in input_columns_positional_combinations:
-            if len(set(column_combination)) != len(column_combination):
-                continue
-            for kw_params_combination in kw_params_positional_combinations:
-                transformer_kwargs = dict(zip(kw_keys, kw_params_combination)) | kwargs
-                transformers.append(transformer_factory(*column_combination, **transformer_kwargs))
+        for transformer_factory in factories:
+            for column_combination in input_columns_positional_combinations:
+                if len(set(column_combination)) != len(column_combination):
+                    continue
+                for kw_params_combination in kw_params_positional_combinations:
+                    transformer_kwargs = dict(zip(kw_keys, kw_params_combination)) | kwargs
+                    transformers.append(transformer_factory(*column_combination, **transformer_kwargs))
 
         return transformers
