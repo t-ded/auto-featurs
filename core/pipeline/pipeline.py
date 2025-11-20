@@ -25,36 +25,26 @@ class Pipeline:
         self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
-        selection = self._get_columns_from_subset(subset)
-
         transformers = self._build_transformers(
             transformer_factory=PolynomialTransformer,
-            input_columns=[selection],
+            input_columns=self._get_selections_from_subsets(subset),
             kw_params={'degree': degrees},
         )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation]) -> Pipeline:
-        operations = order_preserving_unique(operations)
-        left_selection = self._get_columns_from_subset(left_subset)
-        right_selection = self._get_columns_from_subset(right_subset)
-
         transformers = self._build_transformers(
-            transformer_factory=[op.value for op in operations],
-            input_columns=[left_selection, right_selection],
+            transformer_factory=[op.value for op in order_preserving_unique(operations)],
+            input_columns=self._get_selections_from_subsets(left_subset, right_subset),
         )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
-        comparisons = order_preserving_unique(comparisons)
-        left_selection = self._get_columns_from_subset(left_subset)
-        right_selection = self._get_columns_from_subset(right_subset)
-
         transformers = self._build_transformers(
-            transformer_factory=[comp.value for comp in comparisons],
-            input_columns=[left_selection, right_selection],
+            transformer_factory=[comp.value for comp in order_preserving_unique(comparisons)],
+            input_columns=self._get_selections_from_subsets(left_subset, right_subset),
         )
 
         return self._with_added_to_current_layer(transformers)
@@ -75,6 +65,9 @@ class Pipeline:
 
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
+
+    def _get_selections_from_subsets(self, *subsets: str | Sequence[str] | ColumnType) -> list[list[str]]:
+        return [self._get_columns_from_subset(subset) for subset in subsets]
 
     def _get_columns_from_subset(self, subset: str | Sequence[str] | ColumnType) -> list[str]:
         match subset:
