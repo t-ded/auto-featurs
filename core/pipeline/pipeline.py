@@ -25,26 +25,34 @@ class Pipeline:
         self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
+        input_columns = self._get_selections_from_subsets(subset)
+
         transformers = self._build_transformers(
             transformer_factory=PolynomialTransformer,
-            input_columns=self._get_selections_from_subsets(subset),
+            input_columns=input_columns,
             kw_params={'degree': degrees},
         )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation]) -> Pipeline:
+        input_columns = self._get_selections_from_subsets(left_subset, right_subset)
+        transformer_types = [op.value for op in order_preserving_unique(operations)]
+
         transformers = self._build_transformers(
-            transformer_factory=[op.value for op in order_preserving_unique(operations)],
-            input_columns=self._get_selections_from_subsets(left_subset, right_subset),
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
         )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
+        input_columns = self._get_selections_from_subsets(left_subset, right_subset)
+        transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
+
         transformers = self._build_transformers(
-            transformer_factory=[comp.value for comp in order_preserving_unique(comparisons)],
-            input_columns=self._get_selections_from_subsets(left_subset, right_subset),
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
         )
 
         return self._with_added_to_current_layer(transformers)
