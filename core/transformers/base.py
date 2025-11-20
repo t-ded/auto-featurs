@@ -6,7 +6,7 @@ from core.base.column_specification import ColumnType
 
 class Transformer(ABC):
     @abstractmethod
-    def input_type(self) -> ColumnType | tuple[ColumnType, ...]:
+    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
         raise NotImplementedError
 
     @abstractmethod

@@ -12,8 +12,8 @@ class ComparisonTransformer(Transformer, ABC):
         self._left_column = left_column
         self._right_column = right_column
 
-    def input_type(self) -> tuple[ColumnType, ...]:
-        return ColumnType.ANY, ColumnType.ANY
+    def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
+        return ColumnType.ANY(), ColumnType.ANY()
 
     def _return_type(self) -> ColumnType:
         return ColumnType.BOOLEAN

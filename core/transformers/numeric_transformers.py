@@ -12,8 +12,8 @@ class PolynomialTransformer(Transformer):
         self._column = column
         self._degree = degree
 
-    def input_type(self) -> ColumnType:
-        return ColumnType.NUMERIC
+    def input_type(self) -> set[ColumnType]:
+        return {ColumnType.NUMERIC}
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
@@ -30,8 +30,8 @@ class ArithmeticTransformer(Transformer, ABC):
         self._left_column = left_column
         self._right_column = right_column
 
-    def input_type(self) -> tuple[ColumnType, ...]:
-        return ColumnType.NUMERIC, ColumnType.NUMERIC
+    def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
+        return {ColumnType.NUMERIC}, {ColumnType.NUMERIC}
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
