@@ -5,15 +5,13 @@ from typing import Optional
 
 import polars as pl
 
-from core.base.column_types import ColumnType
+from core.base.column_specification import ColumnType
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
 
-
-# TODO: Add commutativity property for the Transformer class -> smarter filtering in pipeline to avoid duplicate columns (e.g. F1_eq_F2 and F2_eq_F1)
 class Pipeline:
     def __init__(
         self,

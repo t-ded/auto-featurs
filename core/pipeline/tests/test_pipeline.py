@@ -2,7 +2,7 @@ import numpy as np
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from core.base.column_types import ColumnType
+from core.base.column_specification import ColumnType
 from core.pipeline.pipeline import Pipeline
 from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation

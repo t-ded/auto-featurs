@@ -3,7 +3,7 @@ from enum import Enum
 
 import polars as pl
 
-from core.base.column_types import ColumnType
+from core.base.column_specification import ColumnType
 from core.transformers.base import Transformer
 
 
