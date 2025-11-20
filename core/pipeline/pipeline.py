@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable, Sequence
+from itertools import product
+from typing import Any
 from typing import Optional
 
 import polars as pl
@@ -22,33 +25,46 @@ class Pipeline:
         self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
-        transformers: list[Transformer] = []
         selection = self._get_columns_from_subset(subset)
-        for column in selection:
-            for degree in degrees:
-                transformers.append(PolynomialTransformer(column=column, degree=degree))
+
+        transformers = self._build_transformers(
+            transformer_factory=PolynomialTransformer,
+            input_columns=[selection],
+            kw_params={'degree': degrees},
+        )
+
         return self._with_added_to_current_layer(transformers)
 
-    def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation], skip_self: bool = True) -> Pipeline:
+    def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation]) -> Pipeline:
         transformers: list[Transformer] = []
         operations = order_preserving_unique(operations)
+        left_selection = self._get_columns_from_subset(left_subset)
+        right_selection = self._get_columns_from_subset(right_subset)
+
         for op in operations:
-            for left_col in self._get_columns_from_subset(left_subset):
-                for right_col in self._get_columns_from_subset(right_subset):
-                    if skip_self and left_col == right_col:
-                        continue
-                    transformers.append(op.value(left_column=left_col, right_column=right_col))
+            transformers.extend(
+                self._build_transformers(
+                    transformer_factory=op.value,
+                    input_columns=[left_selection, right_selection],
+                ),
+            )
+
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
         transformers: list[Transformer] = []
         comparisons = order_preserving_unique(comparisons)
+        left_selection = self._get_columns_from_subset(left_subset)
+        right_selection = self._get_columns_from_subset(right_subset)
+
         for comp in comparisons:
-            for left_col in self._get_columns_from_subset(left_subset):
-                for right_col in self._get_columns_from_subset(right_subset):
-                    if left_col == right_col:
-                        continue
-                    transformers.append(comp.value(left_column=left_col, right_column=right_col))
+            transformers.extend(
+                self._build_transformers(
+                    transformer_factory=comp.value,
+                    input_columns=[left_selection, right_selection],
+                ),
+            )
+
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:
@@ -89,3 +105,30 @@ class Pipeline:
             col_name, col_type = transformer.new_column_type()
             missing_column_types[col_name] = col_type
         return missing_column_types
+
+    @staticmethod
+    def _build_transformers(
+        *,
+        transformer_factory: Callable[..., Transformer],
+        input_columns: Optional[Iterable[Iterable[str]]] = None,
+        kw_params: Optional[dict[str, Iterable[Any]]] = None,
+        **kwargs,
+    ) -> list[Transformer]:
+
+        transformers: list[Transformer] = []
+
+        input_columns = input_columns or [[]]
+        kw_params = kw_params or {}
+
+        input_columns_positional_combinations = list(product(*input_columns))
+        kw_keys = list(kw_params.keys())
+        kw_params_positional_combinations = list(product(*kw_params.values()))
+
+        for column_combination in input_columns_positional_combinations:
+            if len(set(column_combination)) != len(column_combination):
+                continue
+            for kw_params_combination in kw_params_positional_combinations:
+                transformer_kwargs = dict(zip(kw_keys, kw_params_combination)) | kwargs
+                transformers.append(transformer_factory(*column_combination, **transformer_kwargs))
+
+        return transformers

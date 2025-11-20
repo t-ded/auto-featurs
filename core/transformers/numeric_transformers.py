@@ -8,7 +8,7 @@ from core.transformers.base import Transformer
 
 
 class PolynomialTransformer(Transformer):
-    def __init__(self, column: str, degree: int) -> None:
+    def __init__(self, column: str, *, degree: int) -> None:
         self._column = column
         self._degree = degree
 
