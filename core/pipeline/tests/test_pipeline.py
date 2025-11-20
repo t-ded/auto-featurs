@@ -56,16 +56,28 @@ class TestPipeline:
         assert_frame_equal(res_with_polynomial, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}))
 
     def test_basic_sample_with_all_transformers(self) -> None:
-        pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC})
-        pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
-        pipeline = pipeline.with_arithmetic(
-            left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
-            operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT, ArithmeticOperation.MULTIPLY, ArithmeticOperation.DIVIDE],
-        )
-        # TODO: Add tests for other types of input columns
-        pipeline = pipeline.with_comparison(
-            left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
-            comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
+        pipeline = Pipeline(
+            column_types={
+                'NUMERIC_FEATURE': ColumnType.NUMERIC,
+                'NUMERIC_FEATURE_2': ColumnType.NUMERIC,
+                'CATEGORICAL_FEATURE': ColumnType.ORDINAL,
+                'CATEGORICAL_FEATURE_2': ColumnType.NOMINAL,
+            })
+        pipeline = (
+            pipeline
+            .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
+            .with_arithmetic(
+                left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
+                operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT, ArithmeticOperation.MULTIPLY, ArithmeticOperation.DIVIDE],
+            )
+            .with_comparison(
+                left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
+                comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
+            )
+            .with_comparison(
+                left_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], right_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL],
+                comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
+            )
         )
 
         res = pipeline.collect(BASIC_FRAME)
@@ -92,5 +104,11 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_greater_than_NUMERIC_FEATURE': [False, False, False, False, False, False],
                 'NUMERIC_FEATURE_greater_or_equal_NUMERIC_FEATURE_2': [True, True, True, True, True, True],
                 'NUMERIC_FEATURE_2_greater_or_equal_NUMERIC_FEATURE': [True, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_equal_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_2_equal_CATEGORICAL_FEATURE': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
             },
         )

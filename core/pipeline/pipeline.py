@@ -6,6 +6,7 @@ from itertools import product
 from typing import Any
 from typing import Optional
 
+from more_itertools import flatten
 import polars as pl
 
 from core.base.column_specification import ColumnType
@@ -14,6 +15,9 @@ from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
+
+ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+
 
 class Pipeline:
     def __init__(
@@ -24,7 +28,7 @@ class Pipeline:
         self._transformers: list[list[Transformer]] = transformers or [[]]
         self._column_types: dict[str, ColumnType] = column_types or {}
 
-    def with_polynomial(self, subset: str | Sequence[str] | ColumnType, degrees: Iterable[int]) -> Pipeline:
+    def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
         input_columns = self._get_selections_from_subsets(subset)
 
         transformers = self._build_transformers(
@@ -35,7 +39,7 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_arithmetic(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, operations: Iterable[ArithmeticOperation]) -> Pipeline:
+    def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Iterable[ArithmeticOperation]) -> Pipeline:
         input_columns = self._get_selections_from_subsets(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
@@ -46,7 +50,7 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_comparison(self, left_subset: str | Sequence[str] | ColumnType, right_subset: str | Sequence[str] | ColumnType, comparisons: Iterable[Comparisons]) -> Pipeline:
+    def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Iterable[Comparisons]) -> Pipeline:
         input_columns = self._get_selections_from_subsets(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
@@ -74,17 +78,17 @@ class Pipeline:
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
 
-    def _get_selections_from_subsets(self, *subsets: str | Sequence[str] | ColumnType) -> list[list[str]]:
+    def _get_selections_from_subsets(self, *subsets: ColumnSelection) -> list[list[str]]:
         return [self._get_columns_from_subset(subset) for subset in subsets]
 
-    def _get_columns_from_subset(self, subset: str | Sequence[str] | ColumnType) -> list[str]:
+    def _get_columns_from_subset(self, subset: ColumnSelection) -> list[str]:
         match subset:
             case ColumnType():
                 return self._get_columns_of_type(subset)
             case str():
                 return [subset]
             case Sequence():
-                return list(subset)
+                return order_preserving_unique(flatten([self._get_columns_from_subset(col) for col in subset]))
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 
