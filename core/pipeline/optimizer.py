@@ -1,11 +1,20 @@
 from collections.abc import Iterable
 from collections.abc import KeysView
+from enum import IntEnum
 from typing import Iterator
 
 from core.transformers.base import Transformer
 
+class OptimizationLevel(IntEnum):
+    NONE = 0
+    SKIP_SELF = 1
+    DEDUPLICATE_COMMUTATIVE = 2
+
 
 class Optimizer:
+    def __init__(self, optimization_level: OptimizationLevel) -> None:
+        self._optimization_level = optimization_level
+
     @staticmethod
     def deduplicate_transformers_against_layers(present_columns: KeysView[str], current_layer_additions: list[Transformer]) -> list[Transformer]:
         deduplicated_current_layer_additions: list[Transformer] = []
@@ -38,6 +47,9 @@ class Optimizer:
                 yield column_combination
 
     def optimize_input_columns(self, transformer: Transformer, input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
-        optimized = self._skip_self(input_columns_positional_combinations)
-        optimized = self._deduplicate_input_columns_for_transformer(transformer, optimized)
+        optimized = input_columns_positional_combinations
+        if self._optimization_level >= OptimizationLevel.SKIP_SELF:
+            optimized = self._skip_self(input_columns_positional_combinations)
+        if self._optimization_level >= OptimizationLevel.DEDUPLICATE_COMMUTATIVE:
+            optimized = self._deduplicate_input_columns_for_transformer(transformer, optimized)
         yield from optimized
