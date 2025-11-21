@@ -9,6 +9,11 @@ class Transformer(ABC):
     def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def is_commutative(self) -> bool:
+        raise NotImplementedError
+
     @abstractmethod
     def _return_type(self) -> ColumnType:
         raise NotImplementedError

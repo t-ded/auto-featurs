@@ -20,6 +20,10 @@ class ComparisonTransformer(Transformer, ABC):
 
 
 class EqualTransformer(ComparisonTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return True
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) == pl.col(self._right_column)
 
@@ -28,6 +32,10 @@ class EqualTransformer(ComparisonTransformer):
 
 
 class GreaterThanTransformer(ComparisonTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return False
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) > pl.col(self._right_column)
 
@@ -36,6 +44,10 @@ class GreaterThanTransformer(ComparisonTransformer):
 
 
 class GreaterOrEqualTransformer(ComparisonTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return False
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) >= pl.col(self._right_column)
 

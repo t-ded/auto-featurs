@@ -15,6 +15,10 @@ class PolynomialTransformer(Transformer):
     def input_type(self) -> set[ColumnType]:
         return {ColumnType.NUMERIC}
 
+    @property
+    def is_commutative(self) -> bool:
+        return True
+
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
@@ -38,6 +42,10 @@ class ArithmeticTransformer(Transformer, ABC):
 
 
 class AddTransformer(ArithmeticTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return True
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) + pl.col(self._right_column)
 
@@ -46,6 +54,10 @@ class AddTransformer(ArithmeticTransformer):
 
 
 class SubtractTransformer(ArithmeticTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return False
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) - pl.col(self._right_column)
 
@@ -54,6 +66,10 @@ class SubtractTransformer(ArithmeticTransformer):
 
 
 class MultiplyTransformer(ArithmeticTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return True
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) * pl.col(self._right_column)
 
@@ -62,6 +78,10 @@ class MultiplyTransformer(ArithmeticTransformer):
 
 
 class DivideTransformer(ArithmeticTransformer):
+    @property
+    def is_commutative(self) -> bool:
+        return False
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._left_column) / pl.col(self._right_column)
 
