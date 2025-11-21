@@ -17,19 +17,21 @@ from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+ColumnSets = list[list[str]]
+TransformerLayers = list[list[Transformer]]
 
 
 class Pipeline:
     def __init__(
         self,
         column_types: Optional[dict[str, ColumnType]] = None,
-        transformers: Optional[list[list[Transformer]]] = None,
+        transformers: Optional[TransformerLayers] = None,
     ) -> None:
-        self._transformers: list[list[Transformer]] = transformers or [[]]
+        self._transformers: TransformerLayers = transformers or [[]]
         self._column_types: dict[str, ColumnType] = column_types or {}
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
-        input_columns = self._get_selections_from_subsets(subset)
+        input_columns = self._get_column_sets_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=PolynomialTransformer,
@@ -40,7 +42,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Iterable[ArithmeticOperation]) -> Pipeline:
-        input_columns = self._get_selections_from_subsets(left_subset, right_subset)
+        input_columns = self._get_column_sets_from_selections(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
         transformers = self._build_transformers(
@@ -51,7 +53,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Iterable[Comparisons]) -> Pipeline:
-        input_columns = self._get_selections_from_subsets(left_subset, right_subset)
+        input_columns = self._get_column_sets_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
         transformers = self._build_transformers(
@@ -78,17 +80,17 @@ class Pipeline:
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
 
-    def _get_selections_from_subsets(self, *subsets: ColumnSelection) -> list[list[str]]:
-        return [self._get_columns_from_subset(subset) for subset in subsets]
+    def _get_column_sets_from_selections(self, *subsets: ColumnSelection) -> ColumnSets:
+        return [self._get_columns_from_selection(subset) for subset in subsets]
 
-    def _get_columns_from_subset(self, subset: ColumnSelection) -> list[str]:
+    def _get_columns_from_selection(self, subset: ColumnSelection) -> list[str]:
         match subset:
             case ColumnType():
                 return self._get_columns_of_type(subset)
             case str():
                 return [subset]
             case Sequence():
-                return order_preserving_unique(flatten([self._get_columns_from_subset(col) for col in subset]))
+                return order_preserving_unique(flatten([self._get_columns_from_selection(col) for col in subset]))
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 
@@ -107,7 +109,7 @@ class Pipeline:
     def _build_transformers(
         *,
         transformer_factory: Callable[..., Transformer] | list[Callable[..., Transformer]],
-        input_columns: Optional[Iterable[Iterable[str]]] = None,
+        input_columns: Optional[ColumnSets] = None,
         kw_params: Optional[dict[str, Iterable[Any]]] = None,
         **kwargs,
     ) -> list[Transformer]:
@@ -118,7 +120,7 @@ class Pipeline:
         input_columns = input_columns or [[]]
         kw_params = kw_params or {}
 
-        input_columns_positional_combinations = list(product(*input_columns))
+        input_columns_positional_combinations: list[tuple[str, ...]] = list(product(*input_columns))
         kw_keys = list(kw_params.keys())
         kw_params_positional_combinations = list(product(*kw_params.values()))
 
