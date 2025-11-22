@@ -20,8 +20,8 @@ class ComparisonTransformer(Transformer, ABC):
 
 
 class EqualTransformer(ComparisonTransformer):
-    @property
-    def is_commutative(self) -> bool:
+    @classmethod
+    def is_commutative(cls) -> bool:
         return True
 
     def _transform(self) -> pl.Expr:
@@ -32,8 +32,8 @@ class EqualTransformer(ComparisonTransformer):
 
 
 class GreaterThanTransformer(ComparisonTransformer):
-    @property
-    def is_commutative(self) -> bool:
+    @classmethod
+    def is_commutative(cls) -> bool:
         return False
 
     def _transform(self) -> pl.Expr:
@@ -44,8 +44,8 @@ class GreaterThanTransformer(ComparisonTransformer):
 
 
 class GreaterOrEqualTransformer(ComparisonTransformer):
-    @property
-    def is_commutative(self) -> bool:
+    @classmethod
+    def is_commutative(cls) -> bool:
         return False
 
     def _transform(self) -> pl.Expr:

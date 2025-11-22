@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from collections.abc import Iterable, Sequence
 from itertools import product
 from typing import Any
@@ -10,6 +9,8 @@ from more_itertools import flatten
 import polars as pl
 
 from core.base.column_specification import ColumnType
+from core.pipeline.optimizer import OptimizationLevel
+from core.pipeline.optimizer import Optimizer
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
@@ -26,9 +27,11 @@ class Pipeline:
         self,
         column_types: Optional[dict[str, ColumnType]] = None,
         transformers: Optional[TransformerLayers] = None,
+        optimization_level: OptimizationLevel = OptimizationLevel.SKIP_SELF,
     ) -> None:
         self._transformers: TransformerLayers = transformers or [[]]
         self._column_types: dict[str, ColumnType] = column_types or {}
+        self._optimizer = Optimizer(optimization_level)
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
         input_columns = self._get_column_sets_from_selections(subset)
@@ -65,7 +68,11 @@ class Pipeline:
 
     def with_new_layer(self) -> Pipeline:
         current_layer_column_types = self._get_column_types_from_transformers(self._current_layer())
-        return Pipeline(column_types=self._column_types | current_layer_column_types, transformers=self._transformers + [[]])
+        return Pipeline(
+            column_types=self._column_types | current_layer_column_types,
+            transformers=self._transformers + [[]],
+            optimization_level=self._optimizer.optimization_level,
+        )
 
     def collect(self, df: pl.LazyFrame) -> pl.DataFrame:
         for layer in self._transformers:
@@ -75,7 +82,12 @@ class Pipeline:
 
     def _with_added_to_current_layer(self, transformers: Transformer | Iterable[Transformer]) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
-        return Pipeline(column_types=self._column_types, transformers=self._transformers[:-1] + [self._current_layer() + current_layer_additions])
+        current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._column_types.keys(), current_layer_additions)
+        return Pipeline(
+            column_types=self._column_types,
+            transformers=self._transformers[:-1] + [self._current_layer() + current_layer_additions],
+            optimization_level=self._optimizer.optimization_level,
+        )
 
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
@@ -105,16 +117,16 @@ class Pipeline:
             missing_column_types[col_name] = col_type
         return missing_column_types
 
-    @staticmethod
-    def _build_transformers(
+    def _build_transformers[T: Transformer](
+        self,
         *,
-        transformer_factory: Callable[..., Transformer] | list[Callable[..., Transformer]],
+        transformer_factory: type[T] | list[type[T]],
         input_columns: Optional[ColumnSets] = None,
         kw_params: Optional[dict[str, Iterable[Any]]] = None,
         **kwargs,
-    ) -> list[Transformer]:
+    ) -> list[T]:
 
-        transformers: list[Transformer] = []
+        transformers: list[T] = []
 
         factories = transformer_factory if isinstance(transformer_factory, list) else [transformer_factory]
         input_columns = input_columns or [[]]
@@ -125,9 +137,8 @@ class Pipeline:
         kw_params_positional_combinations = list(product(*kw_params.values()))
 
         for transformer_factory in factories:
-            for column_combination in input_columns_positional_combinations:
-                if len(set(column_combination)) != len(column_combination):
-                    continue
+            optimized_combinations = self._optimizer.optimize_input_columns(transformer_factory, input_columns_positional_combinations)
+            for column_combination in optimized_combinations:
                 for kw_params_combination in kw_params_positional_combinations:
                     transformer_kwargs = dict(zip(kw_keys, kw_params_combination)) | kwargs
                     transformers.append(transformer_factory(*column_combination, **transformer_kwargs))

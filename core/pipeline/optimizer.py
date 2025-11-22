@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from collections.abc import KeysView
 from enum import IntEnum
 from typing import Iterator
 
@@ -15,8 +14,12 @@ class Optimizer:
     def __init__(self, optimization_level: OptimizationLevel) -> None:
         self._optimization_level = optimization_level
 
+    @property
+    def optimization_level(self) -> OptimizationLevel:
+        return self._optimization_level
+
     @staticmethod
-    def deduplicate_transformers_against_layers(present_columns: KeysView[str], current_layer_additions: list[Transformer]) -> list[Transformer]:
+    def deduplicate_transformers_against_layers(present_columns: Iterable[str], current_layer_additions: list[Transformer]) -> list[Transformer]:
         deduplicated_current_layer_additions: list[Transformer] = []
         already_present_columns = set(present_columns)
 
@@ -29,8 +32,8 @@ class Optimizer:
         return deduplicated_current_layer_additions
 
     @staticmethod
-    def _deduplicate_input_columns_for_transformer(transformer: Transformer, input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
-        if not transformer.is_commutative:
+    def _deduplicate_input_columns_for_transformer(transformer: type[Transformer], input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
+        if not transformer.is_commutative():
             yield from input_columns_positional_combinations
 
         seen_combinations: set[tuple[str, ...]] = set()
@@ -46,7 +49,7 @@ class Optimizer:
             if len(set(column_combination)) == len(column_combination):
                 yield column_combination
 
-    def optimize_input_columns(self, transformer: Transformer, input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
+    def optimize_input_columns(self, transformer: type[Transformer], input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
         optimized = input_columns_positional_combinations
         if self._optimization_level >= OptimizationLevel.SKIP_SELF:
             optimized = self._skip_self(input_columns_positional_combinations)
