@@ -35,13 +35,13 @@ class Optimizer:
     def _deduplicate_input_columns_for_transformer(transformer: type[Transformer], input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:
         if not transformer.is_commutative():
             yield from input_columns_positional_combinations
-
-        seen_combinations: set[tuple[str, ...]] = set()
-        for column_combination in input_columns_positional_combinations:
-            sorted_column_combination = tuple(sorted(column_combination))
-            if sorted_column_combination not in seen_combinations:
-                seen_combinations.add(sorted_column_combination)
-                yield column_combination
+        else:
+            seen_combinations: set[tuple[str, ...]] = set()
+            for column_combination in input_columns_positional_combinations:
+                sorted_column_combination = tuple(sorted(column_combination))
+                if sorted_column_combination not in seen_combinations:
+                    seen_combinations.add(sorted_column_combination)
+                    yield column_combination
 
     @staticmethod
     def _skip_self(input_columns_positional_combinations: Iterable[tuple[str, ...]]) -> Iterator[tuple[str, ...]]:

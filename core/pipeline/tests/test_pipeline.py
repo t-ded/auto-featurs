@@ -1,8 +1,10 @@
 import numpy as np
 import polars as pl
 from polars.testing import assert_frame_equal
+import pytest
 
 from core.base.column_specification import ColumnType
+from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.pipeline import Pipeline
 from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
@@ -55,6 +57,48 @@ class TestPipeline:
         assert_frame_equal(res, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]}))
         assert_frame_equal(res_with_polynomial, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}))
 
+    @pytest.mark.parametrize(
+        'optimization_level',
+        [
+            OptimizationLevel.NONE,
+            OptimizationLevel.SKIP_SELF,
+            OptimizationLevel.DEDUPLICATE_COMMUTATIVE,
+        ]
+    )
+    def test_pipeline_optimization(self, optimization_level: OptimizationLevel) -> None:
+        pipeline = Pipeline(
+            column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC},
+            optimization_level=optimization_level,
+        )
+        pipeline = pipeline.with_arithmetic(left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC, operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT])
+
+        expected_new_columns = {
+            'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],
+            'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
+            'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],
+            'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE_2': [0, -2, -4, -6, -8, -10],
+            'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],
+            'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE_2': [0, 2, 4, 6, 8, 10],
+            'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE': [0, -2, -4, -6, -8, -10],
+            'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
+        }
+
+        if optimization_level >= OptimizationLevel.SKIP_SELF:
+            expected_new_columns.pop('NUMERIC_FEATURE_add_NUMERIC_FEATURE')
+            expected_new_columns.pop('NUMERIC_FEATURE_2_add_NUMERIC_FEATURE_2')
+            expected_new_columns.pop('NUMERIC_FEATURE_subtract_NUMERIC_FEATURE')
+            expected_new_columns.pop('NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE_2')
+        if optimization_level >= OptimizationLevel.DEDUPLICATE_COMMUTATIVE:
+            expected_new_columns.pop('NUMERIC_FEATURE_2_add_NUMERIC_FEATURE')
+
+        res = pipeline.collect(BASIC_FRAME)
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=res,
+            expected_new_columns=expected_new_columns,
+        )
+
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
             column_types={
@@ -62,7 +106,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2': ColumnType.NUMERIC,
                 'CATEGORICAL_FEATURE': ColumnType.ORDINAL,
                 'CATEGORICAL_FEATURE_2': ColumnType.NOMINAL,
-            })
+            },
+        )
         pipeline = (
             pipeline
             .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
@@ -90,25 +135,45 @@ class TestPipeline:
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
+                'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
                 'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],
+                'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE_2': [0, -2, -4, -6, -8, -10],
+                'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],
                 'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE_2': [0, 2, 4, 6, 8, 10],
                 'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE': [0, -2, -4, -6, -8, -10],
+                'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
+                'NUMERIC_FEATURE_multiply_NUMERIC_FEATURE': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_multiply_NUMERIC_FEATURE_2': [0, -1, -4, -9, -16, -25],
                 'NUMERIC_FEATURE_2_multiply_NUMERIC_FEATURE': [0, -1, -4, -9, -16, -25],
+                'NUMERIC_FEATURE_2_multiply_NUMERIC_FEATURE_2': [0, 1, 4, 9, 16, 25],
+                'NUMERIC_FEATURE_divide_NUMERIC_FEATURE': [np.nan, 1.0, 1.0, 1.0, 1.0, 1.0],
                 'NUMERIC_FEATURE_divide_NUMERIC_FEATURE_2': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0],
                 'NUMERIC_FEATURE_2_divide_NUMERIC_FEATURE': [np.nan, -1.0, -1.0, -1.0, -1.0, -1.0],
+                'NUMERIC_FEATURE_2_divide_NUMERIC_FEATURE_2': [np.nan, 1.0, 1.0, 1.0, 1.0, 1.0],
+                'NUMERIC_FEATURE_equal_NUMERIC_FEATURE': [True, True, True, True, True, True],
                 'NUMERIC_FEATURE_equal_NUMERIC_FEATURE_2': [True, False, False, False, False, False],
                 'NUMERIC_FEATURE_2_equal_NUMERIC_FEATURE': [True, False, False, False, False, False],
+                'NUMERIC_FEATURE_2_equal_NUMERIC_FEATURE_2': [True, True, True, True, True, True],
+                'NUMERIC_FEATURE_greater_than_NUMERIC_FEATURE': [False, False, False, False, False, False],
                 'NUMERIC_FEATURE_greater_than_NUMERIC_FEATURE_2': [False, True, True, True, True, True],
                 'NUMERIC_FEATURE_2_greater_than_NUMERIC_FEATURE': [False, False, False, False, False, False],
+                'NUMERIC_FEATURE_2_greater_than_NUMERIC_FEATURE_2': [False, False, False, False, False, False],
+                'NUMERIC_FEATURE_greater_or_equal_NUMERIC_FEATURE': [True, True, True, True, True, True],
                 'NUMERIC_FEATURE_greater_or_equal_NUMERIC_FEATURE_2': [True, True, True, True, True, True],
                 'NUMERIC_FEATURE_2_greater_or_equal_NUMERIC_FEATURE': [True, False, False, False, False, False],
+                'NUMERIC_FEATURE_2_greater_or_equal_NUMERIC_FEATURE_2': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
                 'CATEGORICAL_FEATURE_equal_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_2_equal_CATEGORICAL_FEATURE': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_2_equal_CATEGORICAL_FEATURE_2': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
+                'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
                 'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE_2': [True, True, True, True, True, True],
             },
         )

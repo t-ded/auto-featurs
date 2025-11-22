@@ -27,7 +27,7 @@ class Pipeline:
         self,
         column_types: Optional[dict[str, ColumnType]] = None,
         transformers: Optional[TransformerLayers] = None,
-        optimization_level: OptimizationLevel = OptimizationLevel.SKIP_SELF,
+        optimization_level: OptimizationLevel = OptimizationLevel.NONE,
     ) -> None:
         self._transformers: TransformerLayers = transformers or [[]]
         self._column_types: dict[str, ColumnType] = column_types or {}
