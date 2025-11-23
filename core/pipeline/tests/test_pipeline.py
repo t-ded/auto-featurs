@@ -123,6 +123,8 @@ class TestPipeline:
                 left_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], right_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL],
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
+            .with_lagged(subset=ColumnType.NUMERIC, lags=[1, 2], fill_value=0)
+            .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1], fill_value='missing')
         )
 
         res = pipeline.collect(BASIC_FRAME)
@@ -168,12 +170,18 @@ class TestPipeline:
                 'CATEGORICAL_FEATURE_2_equal_CATEGORICAL_FEATURE': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_2_equal_CATEGORICAL_FEATURE_2': [True, True, True, True, True, True],
                 'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE': [False, False, False, False, False, False],
-                'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
-                'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, True, True, True],
+                'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE': [True, True, True, False, False, False],
                 'CATEGORICAL_FEATURE_2_greater_than_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
                 'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
-                'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE_2': [False, False, False, False, False, False],
-                'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, True, True, True],
+                'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE_2': [False, False, False, True, True, True],
+                'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, False, False, False],
                 'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE_2': [True, True, True, True, True, True],
+                'NUMERIC_FEATURE_lagged_1': [0, 0, 1, 2, 3, 4],
+                'NUMERIC_FEATURE_lagged_2': [0, 0, 0, 1, 2, 3],
+                'NUMERIC_FEATURE_2_lagged_1': [0, 0, -1, -2, -3, -4],
+                'NUMERIC_FEATURE_2_lagged_2': [0, 0, 0, -1, -2, -3],
+                'CATEGORICAL_FEATURE_lagged_1': ['missing', 'A', 'B', 'C', 'D', 'E'],
+                'CATEGORICAL_FEATURE_2_lagged_1': ['missing', 'F', 'E', 'D', 'C', 'B'],
             },
         )

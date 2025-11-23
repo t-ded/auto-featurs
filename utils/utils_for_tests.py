@@ -9,7 +9,7 @@ BASIC_FRAME = pl.LazyFrame(
         'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
         'NUMERIC_FEATURE_2': [0, -1, -2, -3, -4, -5],
         'CATEGORICAL_FEATURE': ['A', 'B', 'C', 'D', 'E', 'F'],
-        'CATEGORICAL_FEATURE_2': ['f', 'e', 'd', 'c', 'b', 'a'],
+        'CATEGORICAL_FEATURE_2': ['F', 'E', 'D', 'C', 'B', 'A'],
     },
 )
 
