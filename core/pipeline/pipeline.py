@@ -20,7 +20,7 @@ from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
-ColumnSets = list[list[ColumnSpecification]]
+ColumnSet = list[ColumnSpecification]
 TransformerLayers = list[list[Transformer]]
 Schema = list[ColumnSpecification]
 
@@ -37,7 +37,7 @@ class Pipeline:
         self._optimizer = Optimizer(optimization_level)
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
-        input_columns = self._get_column_sets_from_selections(subset)
+        input_columns = self._get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=PolynomialTransformer,
@@ -48,7 +48,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Iterable[ArithmeticOperation]) -> Pipeline:
-        input_columns = self._get_column_sets_from_selections(left_subset, right_subset)
+        input_columns = self._get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
         transformers = self._build_transformers(
@@ -59,7 +59,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Iterable[Comparisons]) -> Pipeline:
-        input_columns = self._get_column_sets_from_selections(left_subset, right_subset)
+        input_columns = self._get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
         transformers = self._build_transformers(
@@ -70,7 +70,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], fill_value: Any = None) -> Pipeline:
-        input_columns = self._get_column_sets_from_selections(subset)
+        input_columns = self._get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=LaggedTransformer,
@@ -107,10 +107,10 @@ class Pipeline:
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
 
-    def _get_column_sets_from_selections(self, *subsets: ColumnSelection) -> ColumnSets:
+    def _get_combinations_from_selections(self, *subsets: ColumnSelection) -> list[ColumnSet]:
         return [self._get_columns_from_selection(subset) for subset in subsets]
 
-    def _get_columns_from_selection(self, subset: ColumnSelection) -> list[ColumnSpecification]:
+    def _get_columns_from_selection(self, subset: ColumnSelection) -> ColumnSet:
         match subset:
             case ColumnType():
                 return self._get_columns_of_type(subset)
@@ -121,7 +121,7 @@ class Pipeline:
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 
-    def _get_columns_of_type(self, column_type: ColumnType) -> list[ColumnSpecification]:
+    def _get_columns_of_type(self, column_type: ColumnType) -> ColumnSet:
         return [col_spec for col_spec in self._schema if col_spec.column_type == column_type]
 
     def _get_column_by_name(self, column_name: str) -> ColumnSpecification:
@@ -138,7 +138,7 @@ class Pipeline:
         self,
         *,
         transformer_factory: type[T] | list[type[T]],
-        input_columns: Optional[ColumnSets] = None,
+        input_columns: Optional[list[ColumnSet]] = None,
         kw_params: Optional[dict[str, Iterable[Any]]] = None,
         **kwargs,
     ) -> list[T]:
