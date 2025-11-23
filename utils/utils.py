@@ -13,5 +13,5 @@ def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
     return result
 
 
-def get_names_from_column_specs(columns: Iterable[ColumnSpecification]) -> list[str]:
-    return [column.name for column in columns]
+def get_names_from_column_specs(columns: Iterable[str | ColumnSpecification]) -> list[str]:
+    return [column.name if isinstance(column, ColumnSpecification) else column for column in columns]

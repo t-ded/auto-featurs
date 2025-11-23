@@ -8,17 +8,32 @@ from utils.utils_for_tests import assert_new_columns_in_frame
 class TestLaggedTransformer:
     def setup_method(self) -> None:
         self._lagged_1_categorical_transformer = LaggedTransformer(column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'), lag=1)
+        self._lagged_1_over_grouping_num_transformer = LaggedTransformer(
+            column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+            lag=1,
+            over_columns=['GROUPING_FEATURE_NUM'],
+        )
+        self._lagged_1_over_grouping_num_cat_transformer = LaggedTransformer(
+            column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+            lag=1,
+            over_columns=['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2'],
+        )
         self._lagged_1_transformer = LaggedTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), lag=1)
         self._lagged_2_transformer = LaggedTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), lag=2)
 
     def test_name_and_output_type(self) -> None:
         assert self._lagged_1_categorical_transformer.output_column_specification == ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE_lagged_1')
+        assert self._lagged_1_over_grouping_num_transformer.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM')
+        assert (self._lagged_1_over_grouping_num_cat_transformer.output_column_specification ==
+                ColumnSpecification.numeric(name='NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2'))
         assert self._lagged_1_transformer.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_lagged_1')
         assert self._lagged_2_transformer.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_lagged_2')
 
     def test_lagged_transform(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._lagged_1_categorical_transformer.transform(),
+            self._lagged_1_over_grouping_num_transformer.transform(),
+            self._lagged_1_over_grouping_num_cat_transformer.transform(),
             self._lagged_1_transformer.transform(),
             self._lagged_2_transformer.transform(),
         )
@@ -28,6 +43,8 @@ class TestLaggedTransformer:
             new_frame=df,
             expected_new_columns={
                 'CATEGORICAL_FEATURE_lagged_1': [None, 'A', 'B', 'C', 'D', 'E'],
+                'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM': [None, None, None, 1, 2, 3],
+                'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, None, None, None, 2, 1],
                 'NUMERIC_FEATURE_lagged_1': [None, 0, 1, 2, 3, 4],
                 'NUMERIC_FEATURE_lagged_2': [None, None, 0, 1, 2, 3],
             },
