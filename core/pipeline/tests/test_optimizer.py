@@ -59,8 +59,8 @@ class TestOptimizer:
         self._zero_level_optimizer = Optimizer(OptimizationLevel.NONE)
         self._skip_self_level_optimizer = Optimizer(OptimizationLevel.SKIP_SELF)
         self._deduplicate_commutative_level_optimizer = Optimizer(OptimizationLevel.DEDUPLICATE_COMMUTATIVE)
-        a_col = ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)
-        b_col = ColumnSpecification(name='b', column_type=ColumnType.NUMERIC)
+        a_col = ColumnSpecification.numeric(name='a')
+        b_col = ColumnSpecification.numeric(name='b')
         self._input_columns = [(a_col, a_col), (a_col, b_col), (b_col, a_col), (b_col, b_col)]
 
     @staticmethod
@@ -76,7 +76,7 @@ class TestOptimizer:
         assert self._zero_level_optimizer.deduplicate_transformers_against_layers(present_columns, current_layer_additions) == [mock_1]
 
     def test_deduplicates_transformers_across_layers(self) -> None:
-        present_columns: list[ColumnSpecification] = [ColumnSpecification(name='a_commutative_mock_b', column_type=ColumnType.NUMERIC)]
+        present_columns: list[ColumnSpecification] = [ColumnSpecification.numeric(name='a_commutative_mock_b')]
         mock_1 = MockCommutativeTransformer('a', 'b')
         mock_2 = MockNonCommutativeTransformer('a', 'b')
         current_layer_additions = [mock_1, mock_2]

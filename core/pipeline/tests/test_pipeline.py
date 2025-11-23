@@ -17,7 +17,7 @@ from utils.utils_for_tests import assert_new_columns_in_frame
 class TestPipeline:
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
-            schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)],
+            schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')],
             transformers=[[PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)]],
         )
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
@@ -30,7 +30,7 @@ class TestPipeline:
         )
 
     def test_basic_layering(self) -> None:
-        pipeline = Pipeline(schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)])
+        pipeline = Pipeline(schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         pipeline = pipeline.with_new_layer()
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
@@ -48,7 +48,7 @@ class TestPipeline:
         )
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
-        pipeline = Pipeline(schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)])
+        pipeline = Pipeline(schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
         pipeline_with_polynomial = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
@@ -69,8 +69,8 @@ class TestPipeline:
     def test_pipeline_optimization(self, optimization_level: OptimizationLevel) -> None:
         pipeline = Pipeline(
             schema=[
-                ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC),
-                ColumnSpecification(name='NUMERIC_FEATURE_2', column_type=ColumnType.NUMERIC),
+                ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+                ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
             ],
             optimization_level=optimization_level,
         )
@@ -106,10 +106,10 @@ class TestPipeline:
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
             schema=[
-                ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC),
-                ColumnSpecification(name='NUMERIC_FEATURE_2', column_type=ColumnType.NUMERIC),
-                ColumnSpecification(name='CATEGORICAL_FEATURE', column_type=ColumnType.ORDINAL),
-                ColumnSpecification(name='CATEGORICAL_FEATURE_2', column_type=ColumnType.NOMINAL),
+                ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+                ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+                ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+                ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
             ],
         )
         pipeline = (
