@@ -19,13 +19,13 @@ class Optimizer:
         return self._optimization_level
 
     @staticmethod
-    def deduplicate_transformers_against_layers(present_columns: Iterable[str], current_layer_additions: list[Transformer]) -> list[Transformer]:
+    def deduplicate_transformers_against_layers(present_columns: Iterable[str], current_layer_additions: Iterable[Transformer]) -> list[Transformer]:
         deduplicated_current_layer_additions: list[Transformer] = []
         already_present_columns = set(present_columns)
 
         for transformer in current_layer_additions:
             col_name = transformer.new_column_type()[0]
-            if col_name not in present_columns:
+            if col_name not in already_present_columns:
                 deduplicated_current_layer_additions.append(transformer)
                 already_present_columns.add(col_name)
 
