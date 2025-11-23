@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from itertools import product
 from typing import Any
 from typing import Optional
@@ -38,7 +38,7 @@ class Pipeline:
         self._transformers: TransformerLayers = transformers or [[]]
         self._optimizer = Optimizer(optimization_level)
 
-    def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
+    def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
@@ -49,7 +49,7 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Iterable[ArithmeticOperation]) -> Pipeline:
+    def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Sequence[ArithmeticOperation]) -> Pipeline:
         input_columns = self._get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
@@ -60,7 +60,7 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Iterable[Comparisons]) -> Pipeline:
+    def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Sequence[Comparisons]) -> Pipeline:
         input_columns = self._get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
@@ -71,7 +71,7 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], over_columns_combinations: Iterable[Iterable[str | ColumnSpecification]] = (), fill_value: Any = None) -> Pipeline:
+    def with_lagged(self, subset: ColumnSelection, lags: Sequence[int], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (), fill_value: Any = None) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
 
         lagged_transformers = self._build_transformers(
@@ -100,7 +100,7 @@ class Pipeline:
             df = df.with_columns(*exprs)
         return df.collect()
 
-    def _with_added_to_current_layer(self, transformers: Transformer | Iterable[Transformer]) -> Pipeline:
+    def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer]) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
         current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._schema, current_layer_additions)
         return Pipeline(
@@ -136,15 +136,14 @@ class Pipeline:
         raise KeyError(f'Column "{column_name}" not found in schema.')
 
     @staticmethod
-    def _get_schema_from_transformers(transformers: Iterable[Transformer]) -> Schema:
+    def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
         return [transformer.output_column_specification for transformer in transformers]
 
-    def _get_over_transformers(self, aggregating_transformers: list[AggregatingTransformer], over_columns_combinations: Iterable[Iterable[str | ColumnSpecification]]):
-        over_combinations = list(over_columns_combinations)
+    def _get_over_transformers(self, aggregating_transformers: Sequence[AggregatingTransformer], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]]):
         all_transformers: list[Transformer] = []
 
-        non_empty_over_columns_combinations = [combination for combination in over_combinations if combination]
-        if len(non_empty_over_columns_combinations) != len(over_combinations):
+        non_empty_over_columns_combinations = [combination for combination in over_columns_combinations if combination]
+        if len(non_empty_over_columns_combinations) != len(over_columns_combinations):
             all_transformers.extend(aggregating_transformers)
 
         if non_empty_over_columns_combinations:
@@ -161,8 +160,8 @@ class Pipeline:
         self,
         *,
         transformer_factory: type[T] | list[type[T]],
-        input_columns: Optional[list[ColumnSet]] = None,
-        kw_params: Optional[dict[str, Iterable[Any]]] = None,
+        input_columns: Optional[Sequence[ColumnSet]] = None,
+        kw_params: Optional[dict[str, Sequence[Any]]] = None,
         **kwargs,
     ) -> list[T]:
 

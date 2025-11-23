@@ -31,7 +31,7 @@ class PolynomialTransformer(Transformer):
 
 
 class ArithmeticTransformer(Transformer, ABC):
-    def __init__(self, left_column: ColumnSpecification, right_column: ColumnSpecification) -> None:
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
         self._left_column = left_column if isinstance(left_column, str) else left_column.name
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
