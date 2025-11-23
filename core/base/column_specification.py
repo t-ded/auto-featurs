@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from enum import auto
 
@@ -15,3 +16,9 @@ class ColumnType(Enum):
     @classmethod
     def ANY(cls) -> set[ColumnType]:
         return set(cls)
+
+
+@dataclass(kw_only=True, frozen=True, slots=True)
+class ColumnSpecification:
+    name: str
+    column_type: ColumnType

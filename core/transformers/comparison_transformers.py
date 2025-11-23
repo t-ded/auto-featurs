@@ -3,14 +3,15 @@ from enum import Enum
 
 import polars as pl
 
+from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.transformers.base import Transformer
 
 
 class ComparisonTransformer(Transformer, ABC):
-    def __init__(self, left_column: str, right_column: str) -> None:
-        self._left_column = left_column
-        self._right_column = right_column
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
+        self._left_column = left_column if isinstance(left_column, str) else left_column.name
+        self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
     def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
         return ColumnType.ANY(), ColumnType.ANY()

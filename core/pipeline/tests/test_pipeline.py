@@ -3,6 +3,7 @@ import polars as pl
 from polars.testing import assert_frame_equal
 import pytest
 
+from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.pipeline import Pipeline
@@ -16,7 +17,7 @@ from utils.utils_for_tests import assert_new_columns_in_frame
 class TestPipeline:
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
-            column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC},
+            schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)],
             transformers=[[PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)]],
         )
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
@@ -29,7 +30,7 @@ class TestPipeline:
         )
 
     def test_basic_layering(self) -> None:
-        pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
+        pipeline = Pipeline(schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)])
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         pipeline = pipeline.with_new_layer()
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
@@ -47,7 +48,7 @@ class TestPipeline:
         )
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
-        pipeline = Pipeline(column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC})
+        pipeline = Pipeline(schema=[ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC)])
         pipeline_with_polynomial = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
@@ -67,7 +68,10 @@ class TestPipeline:
     )
     def test_pipeline_optimization(self, optimization_level: OptimizationLevel) -> None:
         pipeline = Pipeline(
-            column_types={'NUMERIC_FEATURE': ColumnType.NUMERIC, 'NUMERIC_FEATURE_2': ColumnType.NUMERIC},
+            schema=[
+                ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC),
+                ColumnSpecification(name='NUMERIC_FEATURE_2', column_type=ColumnType.NUMERIC),
+            ],
             optimization_level=optimization_level,
         )
         pipeline = pipeline.with_arithmetic(left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC, operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT])
@@ -101,12 +105,12 @@ class TestPipeline:
 
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
-            column_types={
-                'NUMERIC_FEATURE': ColumnType.NUMERIC,
-                'NUMERIC_FEATURE_2': ColumnType.NUMERIC,
-                'CATEGORICAL_FEATURE': ColumnType.ORDINAL,
-                'CATEGORICAL_FEATURE_2': ColumnType.NOMINAL,
-            },
+            schema=[
+                ColumnSpecification(name='NUMERIC_FEATURE', column_type=ColumnType.NUMERIC),
+                ColumnSpecification(name='NUMERIC_FEATURE_2', column_type=ColumnType.NUMERIC),
+                ColumnSpecification(name='CATEGORICAL_FEATURE', column_type=ColumnType.ORDINAL),
+                ColumnSpecification(name='CATEGORICAL_FEATURE_2', column_type=ColumnType.NOMINAL),
+            ],
         )
         pipeline = (
             pipeline

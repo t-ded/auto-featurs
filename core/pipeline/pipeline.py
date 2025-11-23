@@ -8,6 +8,7 @@ from typing import Optional
 from more_itertools import flatten
 import polars as pl
 
+from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.optimizer import Optimizer
@@ -19,19 +20,20 @@ from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
-ColumnSets = list[list[str]]
+ColumnSets = list[list[ColumnSpecification]]
 TransformerLayers = list[list[Transformer]]
+Schema = list[ColumnSpecification]
 
 
 class Pipeline:
     def __init__(
         self,
-        column_types: Optional[dict[str, ColumnType]] = None,
+        schema: Optional[Schema] = None,
         transformers: Optional[TransformerLayers] = None,
         optimization_level: OptimizationLevel = OptimizationLevel.NONE,
     ) -> None:
+        self._schema: Schema = schema or []
         self._transformers: TransformerLayers = transformers or [[]]
-        self._column_types: dict[str, ColumnType] = column_types or {}
         self._optimizer = Optimizer(optimization_level)
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Iterable[int]) -> Pipeline:
@@ -75,15 +77,14 @@ class Pipeline:
             input_columns=input_columns,
             kw_params={'lag': lags},
             fill_value=fill_value,
-            column_type=None,  # TODO: More robust handling of columns (tie name + type and use that as input to Transformers)
         )
 
         return self._with_added_to_current_layer(transformers)
 
     def with_new_layer(self) -> Pipeline:
-        current_layer_column_types = self._get_column_types_from_transformers(self._current_layer())
+        new_layer_schema = self._get_schema_from_transformers(self._current_layer())
         return Pipeline(
-            column_types=self._column_types | current_layer_column_types,
+            schema=self._schema + new_layer_schema,
             transformers=self._transformers + [[]],
             optimization_level=self._optimizer.optimization_level,
         )
@@ -96,9 +97,9 @@ class Pipeline:
 
     def _with_added_to_current_layer(self, transformers: Transformer | Iterable[Transformer]) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
-        current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._column_types.keys(), current_layer_additions)
+        current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._schema, current_layer_additions)
         return Pipeline(
-            column_types=self._column_types,
+            schema=self._schema,
             transformers=self._transformers[:-1] + [self._current_layer() + current_layer_additions],
             optimization_level=self._optimizer.optimization_level,
         )
@@ -109,27 +110,29 @@ class Pipeline:
     def _get_column_sets_from_selections(self, *subsets: ColumnSelection) -> ColumnSets:
         return [self._get_columns_from_selection(subset) for subset in subsets]
 
-    def _get_columns_from_selection(self, subset: ColumnSelection) -> list[str]:
+    def _get_columns_from_selection(self, subset: ColumnSelection) -> list[ColumnSpecification]:
         match subset:
             case ColumnType():
                 return self._get_columns_of_type(subset)
             case str():
-                return [subset]
+                return [self._get_column_by_name(subset)]
             case Sequence():
                 return order_preserving_unique(flatten([self._get_columns_from_selection(col) for col in subset]))
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 
-    def _get_columns_of_type(self, column_type: ColumnType) -> list[str]:
-        return [col for col, col_type in self._column_types.items() if col_type == column_type]
+    def _get_columns_of_type(self, column_type: ColumnType) -> list[ColumnSpecification]:
+        return [col_spec for col_spec in self._schema if col_spec.column_type == column_type]
+
+    def _get_column_by_name(self, column_name: str) -> ColumnSpecification:
+        for col_spec in self._schema:
+            if col_spec.name == column_name:
+                return col_spec
+        raise KeyError(f'Column "{column_name}" not found in schema.')
 
     @staticmethod
-    def _get_column_types_from_transformers(transformers: Iterable[Transformer]) -> dict[str, ColumnType]:
-        missing_column_types: dict[str, ColumnType] = {}
-        for transformer in transformers:
-            col_name, col_type = transformer.new_column_type()
-            missing_column_types[col_name] = col_type
-        return missing_column_types
+    def _get_schema_from_transformers(transformers: Iterable[Transformer]) -> Schema:
+        return [transformer.output_column_specification for transformer in transformers]
 
     def _build_transformers[T: Transformer](
         self,
@@ -146,7 +149,7 @@ class Pipeline:
         input_columns = input_columns or [[]]
         kw_params = kw_params or {}
 
-        input_columns_positional_combinations: list[tuple[str, ...]] = list(product(*input_columns))
+        input_columns_positional_combinations: list[tuple[ColumnSpecification, ...]] = list(product(*input_columns))
         kw_keys = list(kw_params.keys())
         kw_params_positional_combinations = list(product(*kw_params.values()))
 

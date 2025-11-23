@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
+from functools import cached_property
+
 import polars as pl
 
+from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 
 
@@ -29,5 +32,9 @@ class Transformer(ABC):
     def transform(self) -> pl.Expr:
         return self._name(self._transform())
 
-    def new_column_type(self) -> tuple[str, ColumnType]:
-        return self.transform().meta.output_name(), self._return_type()
+    @cached_property
+    def output_column_specification(self) -> ColumnSpecification:
+        return ColumnSpecification(
+            name=self.transform().meta.output_name(),
+            column_type=self._return_type(),
+        )
