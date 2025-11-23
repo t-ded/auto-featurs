@@ -13,6 +13,7 @@ from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.optimizer import Optimizer
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
+from core.transformers.lagged_transformer import LaggedTransformer
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from utils.utils import order_preserving_unique
@@ -62,6 +63,19 @@ class Pipeline:
         transformers = self._build_transformers(
             transformer_factory=transformer_types,
             input_columns=input_columns,
+        )
+
+        return self._with_added_to_current_layer(transformers)
+
+    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], fill_value: Any = None) -> Pipeline:
+        input_columns = self._get_column_sets_from_selections(subset)
+
+        transformers = self._build_transformers(
+            transformer_factory=LaggedTransformer,
+            input_columns=input_columns,
+            kw_params={'lag': lags},
+            fill_value=fill_value,
+            column_type=None,  # TODO: More robust handling of columns (tie name + type and use that as input to Transformers)
         )
 
         return self._with_added_to_current_layer(transformers)
