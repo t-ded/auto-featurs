@@ -69,13 +69,13 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], fill_value: Any = None) -> Pipeline:
+    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], over_columns_combinations: Iterable[Optional[Iterable[str | ColumnSpecification]]] = (None, ), fill_value: Any = None) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=LaggedTransformer,
             input_columns=input_columns,
-            kw_params={'lag': lags},
+            kw_params={'lag': lags, 'over_columns': over_columns_combinations},
             fill_value=fill_value,
         )
 
