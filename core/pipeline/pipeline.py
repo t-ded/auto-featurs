@@ -12,11 +12,12 @@ from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.optimizer import Optimizer
+from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
-from core.transformers.lagged_transformer import LaggedTransformer
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
+from core.transformers.over_wrapper import OverWrapper
 from utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
@@ -69,17 +70,32 @@ class Pipeline:
 
         return self._with_added_to_current_layer(transformers)
 
-    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], over_columns_combinations: Iterable[Optional[Iterable[str | ColumnSpecification]]] = (None, ), fill_value: Any = None) -> Pipeline:
+    def with_lagged(self, subset: ColumnSelection, lags: Iterable[int], over_columns_combinations: Iterable[Iterable[str | ColumnSpecification]] = (), fill_value: Any = None) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
+        over_combinations = list(over_columns_combinations)
 
-        transformers = self._build_transformers(
+        all_transformers: list[Transformer] = []
+
+        lagged_transformers = self._build_transformers(
             transformer_factory=LaggedTransformer,
             input_columns=input_columns,
-            kw_params={'lag': lags, 'over_columns': over_columns_combinations},
+            kw_params={'lag': lags},
             fill_value=fill_value,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        non_empty_over_columns_combinations = [combination for combination in over_combinations if combination]
+        if not over_combinations or len(non_empty_over_columns_combinations) != len(over_combinations):
+            all_transformers.extend(lagged_transformers)
+
+        if non_empty_over_columns_combinations:
+            lagged_over_transformers = self._build_transformers(
+                transformer_factory=OverWrapper,
+                input_columns=None,
+                kw_params={'inner_transformer': lagged_transformers, 'over_columns': non_empty_over_columns_combinations},
+            )
+            all_transformers.extend(lagged_over_transformers)
+
+        return self._with_added_to_current_layer(all_transformers)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
@@ -146,7 +162,7 @@ class Pipeline:
         transformers: list[T] = []
 
         factories = transformer_factory if isinstance(transformer_factory, list) else [transformer_factory]
-        input_columns = input_columns or [[]]
+        input_columns = input_columns or []
         kw_params = kw_params or {}
 
         input_columns_positional_combinations: list[tuple[ColumnSpecification, ...]] = list(product(*input_columns))
