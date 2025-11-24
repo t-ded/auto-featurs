@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import numpy as np
 import polars as pl
 import pytest
@@ -111,6 +113,7 @@ class TestPipeline:
                 ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
                 ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
                 ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
+                ColumnSpecification.datetime(name='DATE_FEATURE'),
             ],
         )
         pipeline = (
@@ -141,6 +144,13 @@ class TestPipeline:
                 aggregations=[ArithmeticAggregations.COUNT],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM']],
                 cumulative=True,
+            )
+            .with_arithmetic_aggregation(
+                subset='NUMERIC_FEATURE',
+                aggregations=[ArithmeticAggregations.COUNT],
+                time_windows=['2d', timedelta(days=2, hours=1)],
+                index_column_name='DATE_FEATURE',
+                # over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],  # TODO: Uncomment this with new polars release (allowing window expressions in aggregation)
             )
         )
 
@@ -230,5 +240,7 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
                 'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'NUMERIC_FEATURE_count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
+                'NUMERIC_FEATURE_count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
             },
         )
