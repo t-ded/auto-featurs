@@ -9,21 +9,21 @@ from typing import Optional
 import polars as pl
 from more_itertools import flatten
 
-from core.base.column_specification import ColumnSpecification
-from core.base.column_specification import ColumnType
-from core.pipeline.optimizer import OptimizationLevel
-from core.pipeline.optimizer import Optimizer
-from core.transformers.aggregating_transformers import AggregatingTransformer
-from core.transformers.aggregating_transformers import ArithmeticAggregations
-from core.transformers.aggregating_transformers import FirstValueTransformer
-from core.transformers.aggregating_transformers import LaggedTransformer
-from core.transformers.base import Transformer
-from core.transformers.comparison_transformers import Comparisons
-from core.transformers.numeric_transformers import ArithmeticOperation
-from core.transformers.numeric_transformers import PolynomialTransformer
-from core.transformers.over_wrapper import OverWrapper
-from core.transformers.rolling_wrapper import RollingWrapper
-from utils.utils import order_preserving_unique
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.core.pipeline.optimizer import OptimizationLevel
+from auto_featurs.core.pipeline.optimizer import Optimizer
+from auto_featurs.core.transformers.aggregating_transformers import AggregatingTransformer
+from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregations
+from auto_featurs.core.transformers.aggregating_transformers import FirstValueTransformer
+from auto_featurs.core.transformers.aggregating_transformers import LaggedTransformer
+from auto_featurs.core.transformers.base import Transformer
+from auto_featurs.core.transformers.comparison_transformers import Comparisons
+from auto_featurs.core.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.core.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.core.transformers.over_wrapper import OverWrapper
+from auto_featurs.core.transformers.rolling_wrapper import RollingWrapper
+from auto_featurs.utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
 ColumnSet = list[ColumnSpecification]

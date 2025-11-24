@@ -5,16 +5,16 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from core.base.column_specification import ColumnSpecification
-from core.base.column_specification import ColumnType
-from core.pipeline.optimizer import OptimizationLevel
-from core.pipeline.pipeline import Pipeline
-from core.transformers.aggregating_transformers import ArithmeticAggregations
-from core.transformers.comparison_transformers import Comparisons
-from core.transformers.numeric_transformers import ArithmeticOperation
-from core.transformers.numeric_transformers import PolynomialTransformer
-from utils.utils_for_tests import BASIC_FRAME
-from utils.utils_for_tests import assert_new_columns_in_frame
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.core.pipeline.optimizer import OptimizationLevel
+from auto_featurs.core.pipeline.pipeline import Pipeline
+from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregations
+from auto_featurs.core.transformers.comparison_transformers import Comparisons
+from auto_featurs.core.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.core.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.utils.utils_for_tests import BASIC_FRAME
+from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestPipeline:

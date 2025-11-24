@@ -1,9 +1,9 @@
 from datetime import timedelta
 
-from core.base.column_specification import ColumnSpecification
-from utils.utils import format_timedelta
-from utils.utils import get_names_from_column_specs
-from utils.utils import order_preserving_unique
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.utils.utils import format_timedelta
+from auto_featurs.utils.utils import get_names_from_column_specs
+from auto_featurs.utils.utils import order_preserving_unique
 
 
 def test_order_preserving_unique() -> None:

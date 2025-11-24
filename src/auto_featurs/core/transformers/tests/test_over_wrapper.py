@@ -1,16 +1,16 @@
 import pytest
 
-from core.base.column_specification import ColumnSpecification
-from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
-from core.transformers.aggregating_transformers import CountTransformer
-from core.transformers.aggregating_transformers import FirstValueTransformer
-from core.transformers.aggregating_transformers import LaggedTransformer
-from core.transformers.aggregating_transformers import MeanTransformer
-from core.transformers.aggregating_transformers import StdTransformer
-from core.transformers.aggregating_transformers import SumTransformer
-from core.transformers.over_wrapper import OverWrapper
-from utils.utils_for_tests import BASIC_FRAME
-from utils.utils_for_tests import assert_new_columns_in_frame
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
+from auto_featurs.core.transformers.aggregating_transformers import CountTransformer
+from auto_featurs.core.transformers.aggregating_transformers import FirstValueTransformer
+from auto_featurs.core.transformers.aggregating_transformers import LaggedTransformer
+from auto_featurs.core.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.core.transformers.aggregating_transformers import StdTransformer
+from auto_featurs.core.transformers.aggregating_transformers import SumTransformer
+from auto_featurs.core.transformers.over_wrapper import OverWrapper
+from auto_featurs.utils.utils_for_tests import BASIC_FRAME
+from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestOverWrapper:

@@ -3,10 +3,10 @@ from typing import Any
 
 import polars as pl
 
-from core.base.column_specification import ColumnSpecification
-from core.base.column_specification import ColumnType
-from core.transformers.aggregating_transformers import AggregatingTransformer
-from utils.utils import format_timedelta
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.core.transformers.aggregating_transformers import AggregatingTransformer
+from auto_featurs.utils.utils import format_timedelta
 
 
 class RollingWrapper(AggregatingTransformer):

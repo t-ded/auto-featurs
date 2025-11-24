@@ -3,9 +3,9 @@ from enum import Enum
 
 import polars as pl
 
-from core.base.column_specification import ColumnSpecification
-from core.base.column_specification import ColumnType
-from core.transformers.base import Transformer
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.core.transformers.base import Transformer
 
 
 class ComparisonTransformer(Transformer, ABC):

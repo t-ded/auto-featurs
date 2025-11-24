@@ -1,11 +1,11 @@
 import pytest
 
-from core.transformers.comparison_transformers import ComparisonTransformer
-from core.transformers.comparison_transformers import EqualTransformer
-from core.transformers.comparison_transformers import GreaterOrEqualTransformer
-from core.transformers.comparison_transformers import GreaterThanTransformer
-from utils.utils_for_tests import BASIC_FRAME
-from utils.utils_for_tests import assert_new_columns_in_frame
+from auto_featurs.core.transformers.comparison_transformers import ComparisonTransformer
+from auto_featurs.core.transformers.comparison_transformers import EqualTransformer
+from auto_featurs.core.transformers.comparison_transformers import GreaterOrEqualTransformer
+from auto_featurs.core.transformers.comparison_transformers import GreaterThanTransformer
+from auto_featurs.utils.utils_for_tests import BASIC_FRAME
+from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestComparisonTransformers:

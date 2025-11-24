@@ -1,12 +1,12 @@
 from collections.abc import Iterable
 from datetime import timedelta
 
-from core.base.column_specification import ColumnSpecification
-from utils.constants import SECONDS_IN_DAY
-from utils.constants import SECONDS_IN_HOUR
-from utils.constants import SECONDS_IN_MINUTE
-from utils.constants import SECONDS_IN_MONTH
-from utils.constants import SECONDS_IN_YEAR
+from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.utils.constants import SECONDS_IN_DAY
+from auto_featurs.utils.constants import SECONDS_IN_HOUR
+from auto_featurs.utils.constants import SECONDS_IN_MINUTE
+from auto_featurs.utils.constants import SECONDS_IN_MONTH
+from auto_featurs.utils.constants import SECONDS_IN_YEAR
 
 
 def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
