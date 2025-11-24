@@ -119,13 +119,13 @@ class TestOverWrapper:
             inner_transformer_type: type[ArithmeticAggregationTransformer],
             expected_new_columns: dict[str, list[int] | list[float]],
     ) -> None:
-        arithmetic_transformer = inner_transformer_type(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), cumulative=True)
-        arithmetic_over_grouping_num_transformer = OverWrapper(inner_transformer=arithmetic_transformer, over_columns=self._num_group)
-        arithmetic_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=arithmetic_transformer, over_columns=self._num_cat_group)
+        cumulative_arithmetic_transformer = inner_transformer_type(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), cumulative=True)
+        cumulative_arithmetic_over_grouping_num_transformer = OverWrapper(inner_transformer=cumulative_arithmetic_transformer, over_columns=self._num_group)
+        cumulative_arithmetic_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=cumulative_arithmetic_transformer, over_columns=self._num_cat_group)
 
         df = BASIC_FRAME.with_columns(
-            arithmetic_over_grouping_num_transformer.transform(),
-            arithmetic_over_grouping_num_cat_transformer.transform(),
+            cumulative_arithmetic_over_grouping_num_transformer.transform(),
+            cumulative_arithmetic_over_grouping_num_cat_transformer.transform(),
         )
 
         assert_new_columns_in_frame(

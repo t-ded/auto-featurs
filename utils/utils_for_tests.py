@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 import polars as pl
@@ -11,6 +12,7 @@ BASIC_FRAME = pl.LazyFrame(
         'CATEGORICAL_FEATURE_2': ['F', 'E', 'D', 'C', 'B', 'A'],
         'GROUPING_FEATURE_NUM': ['ZERO', 'ODD', 'EVEN', 'ODD', 'EVEN', 'ODD'],
         'GROUPING_FEATURE_CAT_2': ['CONSONANT', 'VOWEL', 'CONSONANT', 'CONSONANT', 'CONSONANT', 'VOWEL'],
+        'DATE_FEATURE': [datetime(year=2_000, month=1, day=i) for i in range(1, 7)],
     },
 )
 
