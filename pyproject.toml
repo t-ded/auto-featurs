@@ -69,6 +69,7 @@ select = [
     'UP', # pyupgrade
     'W', # pycodestyle / Warning
     'ANN', # function typing
+    'Q001', # single quotes
 ]
 
 [tool.ruff.lint.flake8-annotations]

@@ -72,3 +72,44 @@ class TestOverWrapper:
             new_frame=df,
             expected_new_columns=expected_new_columns,
         )
+
+    @pytest.mark.parametrize(
+        ('inner_transformer_type', 'expected_new_columns'),
+        [
+            (CountTransformer, {
+                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 2, 2],
+            }),
+            (SumTransformer, {
+                'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM': [0, 1, 2, 4, 6, 9],
+                'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 6, 6],
+            }),
+            (MeanTransformer, {
+                'NUMERIC_FEATURE_cum_mean_over_GROUPING_FEATURE_NUM': [0.0, 1.0, 2.0, 2.0, 3.0, 3.0],
+                'NUMERIC_FEATURE_cum_mean_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 1.0, 2.0, 3.0, 3.0, 3.0],
+            }),
+            (StdTransformer, {
+                'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM': [0.0, 0.0, 0.0, 1.0, 1.0, 2.236068],
+                'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 0.0, 0.0, 0.0, 1.0, 2.0],
+            }),
+        ],
+    )
+    def test_grouped_cumulative_arithmetic_aggregation_transform(
+            self,
+            inner_transformer_type: type[ArithmeticAggregationTransformer],
+            expected_new_columns: dict[str, list[int] | list[float]],
+    ) -> None:
+        arithmetic_transformer = inner_transformer_type(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), cumulative=True)
+        arithmetic_over_grouping_num_transformer = OverWrapper(inner_transformer=arithmetic_transformer, over_columns=self._num_group)
+        arithmetic_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=arithmetic_transformer, over_columns=self._num_cat_group)
+
+        df = BASIC_FRAME.with_columns(
+            arithmetic_over_grouping_num_transformer.transform(),
+            arithmetic_over_grouping_num_cat_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns=expected_new_columns,
+        )

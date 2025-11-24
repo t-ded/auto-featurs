@@ -3,7 +3,6 @@ from typing import Any
 import polars as pl
 from polars.testing import assert_frame_equal
 
-
 BASIC_FRAME = pl.LazyFrame(
     {
         'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
