@@ -37,6 +37,27 @@ class LaggedTransformer(AggregatingTransformer):
         return transform.alias(f'{self._column.name}_lagged_{self._lag}')
 
 
+class FirstValueTransformer(AggregatingTransformer):
+    def __init__(self, column: ColumnSpecification) -> None:
+        self._column = column
+
+    def input_type(self) -> set[ColumnType]:
+        return ColumnType.ANY()
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _return_type(self) -> ColumnType:
+        return self._column.column_type
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column.name).first()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column.name}_first_value')
+
+
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
     def __init__(self, column: str | ColumnSpecification, cumulative: bool = False) -> None:
         self._column = column if isinstance(column, str) else column.name

@@ -4,6 +4,7 @@ from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from core.transformers.aggregating_transformers import CountTransformer
+from core.transformers.aggregating_transformers import FirstValueTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.aggregating_transformers import MeanTransformer
 from core.transformers.aggregating_transformers import StdTransformer
@@ -49,6 +50,31 @@ class TestLaggedTransformer:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns={'NUMERIC_FEATURE_lagged_2': [0, 0, 0, 1, 2, 3]},
+        )
+
+
+class TestFirstValueTransformer:
+    def setup_method(self) -> None:
+        self._first_value_transformer_ordinal = FirstValueTransformer(column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'))
+        self._first_value_transformer_numeric = FirstValueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
+
+    def test_name_and_output_type(self) -> None:
+        assert self._first_value_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE_first_value')
+        assert self._first_value_transformer_numeric.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_first_value')
+
+    def test_lagged_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._first_value_transformer_ordinal.transform(),
+            self._first_value_transformer_numeric.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'CATEGORICAL_FEATURE_first_value': ['A', 'A', 'A', 'A', 'A', 'A'],
+                'NUMERIC_FEATURE_first_value': [0, 0, 0, 0, 0, 0],
+            },
         )
 
 
