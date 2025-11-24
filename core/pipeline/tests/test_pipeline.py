@@ -7,6 +7,7 @@ from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.pipeline import Pipeline
+from core.transformers.aggregating_transformers import ArithmeticAggregations
 from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
@@ -129,6 +130,11 @@ class TestPipeline:
             )
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM','GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
+            .with_arithmetic_aggregation(
+                subset=ColumnType.NUMERIC,
+                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
+                over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM','GROUPING_FEATURE_CAT_2']],
+            )
         )
 
         res = pipeline.collect(BASIC_FRAME)
@@ -191,5 +197,17 @@ class TestPipeline:
                 'CATEGORICAL_FEATURE_lagged_2': ['missing', 'missing', 'A', 'B', 'C', 'D'],
                 'CATEGORICAL_FEATURE_2_lagged_1': ['missing', 'F', 'E', 'D', 'C', 'B'],
                 'CATEGORICAL_FEATURE_2_lagged_2': ['missing', 'missing', 'F', 'E', 'D', 'C'],
+                'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
+                'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
+                'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
+                'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -6, -6, -3, -6, -6],
+                'NUMERIC_FEATURE_mean_over_GROUPING_FEATURE_NUM': [0.0, 3.0, 3.0, 3.0, 3.0, 3.0],
+                'NUMERIC_FEATURE_mean_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 3.0, 3.0, 3.0, 3.0, 3.0],
+                'NUMERIC_FEATURE_2_mean_over_GROUPING_FEATURE_NUM': [0.0, -3.0, -3.0, -3.0, -3.0, -3.0],
+                'NUMERIC_FEATURE_2_mean_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, -3.0, -3.0, -3.0, -3.0, -3.0],
+                'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
+                'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
+                'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
+                'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
             },
         )

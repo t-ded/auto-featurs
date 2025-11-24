@@ -13,6 +13,7 @@ from core.base.column_specification import ColumnType
 from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.optimizer import Optimizer
 from core.transformers.aggregating_transformers import AggregatingTransformer
+from core.transformers.aggregating_transformers import ArithmeticAggregations
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
@@ -86,6 +87,22 @@ class Pipeline:
         else:
             return self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
 
+    def with_arithmetic_aggregation(
+            self,
+            subset: ColumnSelection,
+            aggregations: Sequence[ArithmeticAggregations],
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
+    ) -> Pipeline:
+        input_columns = self._get_combinations_from_selections(subset)
+        transformer_types = [op.value for op in order_preserving_unique(aggregations)]
+
+        aggregating_transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
+        )
+
+        return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
+
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
         return Pipeline(
@@ -147,12 +164,12 @@ class Pipeline:
             all_transformers.extend(aggregating_transformers)
 
         if non_empty_over_columns_combinations:
-            lagged_over_transformers = self._build_transformers(
+            aggregated_over_transformers = self._build_transformers(
                 transformer_factory=OverWrapper,
                 input_columns=None,
                 kw_params={'inner_transformer': aggregating_transformers, 'over_columns': non_empty_over_columns_combinations},
             )
-            all_transformers.extend(lagged_over_transformers)
+            all_transformers.extend(aggregated_over_transformers)
 
         return self._with_added_to_current_layer(all_transformers)
 
