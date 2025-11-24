@@ -14,6 +14,7 @@ from core.pipeline.optimizer import OptimizationLevel
 from core.pipeline.optimizer import Optimizer
 from core.transformers.aggregating_transformers import AggregatingTransformer
 from core.transformers.aggregating_transformers import ArithmeticAggregations
+from core.transformers.aggregating_transformers import FirstValueTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.base import Transformer
 from core.transformers.comparison_transformers import Comparisons
@@ -86,6 +87,19 @@ class Pipeline:
             return self._with_added_to_current_layer(lagged_transformers)
         else:
             return self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
+
+    def with_first_value(self, subset: ColumnSelection, over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = ()) -> Pipeline:
+        input_columns = self._get_combinations_from_selections(subset)
+
+        first_value_transformers = self._build_transformers(
+            transformer_factory=FirstValueTransformer,
+            input_columns=input_columns,
+        )
+
+        if not over_columns_combinations:
+            return self._with_added_to_current_layer(first_value_transformers)
+        else:
+            return self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
 
     def with_arithmetic_aggregation(
             self,

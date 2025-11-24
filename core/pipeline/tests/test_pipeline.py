@@ -130,6 +130,7 @@ class TestPipeline:
             )
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
+            .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
@@ -197,6 +198,15 @@ class TestPipeline:
                 'CATEGORICAL_FEATURE_lagged_2': ['missing', 'missing', 'A', 'B', 'C', 'D'],
                 'CATEGORICAL_FEATURE_2_lagged_1': ['missing', 'F', 'E', 'D', 'C', 'B'],
                 'CATEGORICAL_FEATURE_2_lagged_2': ['missing', 'missing', 'F', 'E', 'D', 'C'],
+                'NUMERIC_FEATURE_first_value': [0, 0, 0, 0, 0, 0],
+                'NUMERIC_FEATURE_2_first_value': [0, 0, 0, 0, 0, 0],
+                'CATEGORICAL_FEATURE_first_value': ['A', 'A', 'A', 'A', 'A', 'A'],
+                'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 1],
+                'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 2, 1],
+                'NUMERIC_FEATURE_2_first_value_over_GROUPING_FEATURE_NUM': [0, -1, -2, -1, -2, -1],
+                'NUMERIC_FEATURE_2_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -1, -2, -3, -2, -1],
+                'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM': ['A', 'B', 'C', 'B', 'C', 'B'],
+                'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': ['A', 'B', 'C', 'D', 'C', 'B'],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
