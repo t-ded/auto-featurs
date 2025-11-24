@@ -22,6 +22,7 @@ from core.transformers.comparison_transformers import Comparisons
 from core.transformers.numeric_transformers import ArithmeticOperation
 from core.transformers.numeric_transformers import PolynomialTransformer
 from core.transformers.over_wrapper import OverWrapper
+from core.transformers.rolling_wrapper import RollingWrapper
 from utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
@@ -84,13 +85,18 @@ class Pipeline:
             fill_value=fill_value,
         )
 
-        return self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
+        lagged_over = self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
+        return self._with_added_to_current_layer(lagged_over)
 
     def with_first_value(
             self,
             subset: ColumnSelection,
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
     ) -> Pipeline:
+        index_column = self._get_column_by_name(index_column_name) if index_column_name else None
+        self._validate_time_window_index_column(time_windows, index_column)
         input_columns = self._get_combinations_from_selections(subset)
 
         first_value_transformers = self._build_transformers(
@@ -98,15 +104,21 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        return self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
+        first_value_over = self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
+        rolling_first_value_over = self._get_rolling_transformers(aggregating_transformers=first_value_over, index_column=index_column, time_windows=time_windows)
+        return self._with_added_to_current_layer(rolling_first_value_over)
 
     def with_arithmetic_aggregation(
             self,
             subset: ColumnSelection,
             aggregations: Sequence[ArithmeticAggregations],
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
             cumulative: bool = False,
     ) -> Pipeline:
+        index_column = self._get_column_by_name(index_column_name) if index_column_name else None
+        self._validate_time_window_index_column(time_windows, index_column)
         input_columns = self._get_combinations_from_selections(subset)
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]
 
@@ -116,7 +128,9 @@ class Pipeline:
             cumulative=cumulative,
         )
 
-        return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
+        arithmetic_aggregations_over = self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
+        rolling_aggregations_over = self._get_rolling_transformers(aggregating_transformers=arithmetic_aggregations_over, index_column=index_column, time_windows=time_windows)
+        return self._with_added_to_current_layer(rolling_aggregations_over)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
@@ -171,8 +185,19 @@ class Pipeline:
     def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
         return [transformer.output_column_specification for transformer in transformers]
 
-    def _get_over_transformers(self, aggregating_transformers: Sequence[AggregatingTransformer], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]]) -> Pipeline:
-        all_transformers: list[Transformer] = []
+    @staticmethod
+    def _validate_time_window_index_column(time_windows: Sequence[Optional[str | timedelta]], index_column: Optional[ColumnSpecification]) -> None:
+        if time_windows and time_windows[0] is not None and index_column is None:
+            raise ValueError('Time window specified without index column.')
+        if index_column is not None and index_column.column_type != ColumnType.DATETIME:
+            raise ValueError(f'Currently only {ColumnType.DATETIME} columns are supported for rolling aggregation but {index_column.column_type} was passed for {index_column.name}.')
+
+    def _get_over_transformers(
+            self,
+            aggregating_transformers: Sequence[AggregatingTransformer],
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
+    ) -> list[AggregatingTransformer | OverWrapper]:
+        all_transformers: list[AggregatingTransformer | OverWrapper] = []
 
         non_empty_over_columns_combinations = [combination for combination in over_columns_combinations if combination]
         if not over_columns_combinations or (len(non_empty_over_columns_combinations) != len(over_columns_combinations)):
@@ -186,7 +211,30 @@ class Pipeline:
             )
             all_transformers.extend(aggregated_over_transformers)
 
-        return self._with_added_to_current_layer(all_transformers)
+        return all_transformers
+
+    def _get_rolling_transformers(
+            self,
+            aggregating_transformers: Sequence[AggregatingTransformer],
+            index_column: ColumnSpecification,
+            time_windows: Sequence[Optional[str | timedelta]],
+    ) -> list[AggregatingTransformer | RollingWrapper]:
+        all_transformers: list[AggregatingTransformer | RollingWrapper] = []
+
+        non_null_time_windows = [time_window for time_window in time_windows if time_window is not None]
+        if not time_windows or (len(non_null_time_windows) != len(time_windows)):
+            all_transformers.extend(aggregating_transformers)
+
+        if non_null_time_windows:
+            aggregated_rolling_transformers = self._build_transformers(
+                transformer_factory=RollingWrapper,
+                input_columns=None,
+                kw_params={'inner_transformer': aggregating_transformers, 'time_window': non_null_time_windows},
+                index_column=index_column,
+            )
+            all_transformers.extend(aggregated_rolling_transformers)
+
+        return all_transformers
 
     def _build_transformers[T: Transformer](
         self,
