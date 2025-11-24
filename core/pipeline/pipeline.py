@@ -105,7 +105,8 @@ class Pipeline:
             self,
             subset: ColumnSelection,
             aggregations: Sequence[ArithmeticAggregations],
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            cumulative: bool = False,
     ) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]
@@ -113,9 +114,13 @@ class Pipeline:
         aggregating_transformers = self._build_transformers(
             transformer_factory=transformer_types,
             input_columns=input_columns,
+            cumulative=cumulative,
         )
 
-        return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
+        if not over_columns_combinations:
+            return self._with_added_to_current_layer(aggregating_transformers)
+        else:
+            return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())

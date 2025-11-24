@@ -133,8 +133,14 @@ class TestPipeline:
             .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
-                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
+                aggregations=[ArithmeticAggregations.COUNT, ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
+            )
+            .with_arithmetic_aggregation(
+                subset='NUMERIC_FEATURE',
+                aggregations=[ArithmeticAggregations.COUNT],
+                over_columns_combinations=[['GROUPING_FEATURE_NUM']],
+                cumulative=True,
             )
         )
 
@@ -207,6 +213,10 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -1, -2, -3, -2, -1],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM': ['A', 'B', 'C', 'B', 'C', 'B'],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': ['A', 'B', 'C', 'D', 'C', 'B'],
+                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
+                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
+                'NUMERIC_FEATURE_2_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
+                'NUMERIC_FEATURE_2_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
@@ -219,5 +229,6 @@ class TestPipeline:
                 'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
+                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
             },
         )
