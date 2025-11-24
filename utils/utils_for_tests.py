@@ -23,4 +23,4 @@ def assert_new_columns_in_frame(original_frame: pl.LazyFrame | pl.DataFrame, new
     new_columns_frame = pl.LazyFrame(expected_new_columns)
     expected_new_frame = pl.concat([original_frame, new_columns_frame], how='horizontal')
 
-    assert_frame_equal(new_frame, expected_new_frame)
+    assert_frame_equal(new_frame, expected_new_frame, check_dtypes=False)

@@ -2,6 +2,7 @@ import pytest
 
 from core.base.column_specification import ColumnSpecification
 from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
+from core.transformers.aggregating_transformers import CountTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.aggregating_transformers import MeanTransformer
 from core.transformers.aggregating_transformers import StdTransformer
@@ -38,6 +39,10 @@ class TestOverWrapper:
     @pytest.mark.parametrize(
         'inner_transformer_type, expected_new_columns',
         [
+            (CountTransformer, {
+                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
+                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
+            }),
             (SumTransformer, {
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],

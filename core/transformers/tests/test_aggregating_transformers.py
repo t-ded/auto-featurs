@@ -3,6 +3,7 @@ import pytest
 from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
 from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
+from core.transformers.aggregating_transformers import CountTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.aggregating_transformers import MeanTransformer
 from core.transformers.aggregating_transformers import StdTransformer
@@ -55,6 +56,7 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         'transformer_type, expected_new_columns',
         [
+            (CountTransformer, {'NUMERIC_FEATURE_count': [6, 6, 6, 6, 6, 6]}),
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_std': [1.870829, 1.870829, 1.870829, 1.870829, 1.870829, 1.870829]}),
