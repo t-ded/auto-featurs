@@ -66,3 +66,17 @@ class TestArithmeticAggregationTransformers:
         transformer = transformer_type(column='NUMERIC_FEATURE')
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+    @pytest.mark.parametrize(
+        ('transformer_type', 'expected_new_columns'),
+        [
+            (CountTransformer, {'NUMERIC_FEATURE_cum_count': [1, 2, 3, 4, 5, 6]}),
+            (SumTransformer, {'NUMERIC_FEATURE_cum_sum': [0, 1, 3, 6, 10, 15]}),
+            (MeanTransformer, {'NUMERIC_FEATURE_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
+            (StdTransformer, {'NUMERIC_FEATURE_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),
+        ],
+    )
+    def test_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(column='NUMERIC_FEATURE', cumulative=True)
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
