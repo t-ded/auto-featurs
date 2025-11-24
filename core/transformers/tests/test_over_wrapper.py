@@ -3,6 +3,7 @@ import pytest
 from core.base.column_specification import ColumnSpecification
 from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from core.transformers.aggregating_transformers import CountTransformer
+from core.transformers.aggregating_transformers import FirstValueTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
 from core.transformers.aggregating_transformers import MeanTransformer
 from core.transformers.aggregating_transformers import StdTransformer
@@ -33,6 +34,25 @@ class TestOverWrapper:
             expected_new_columns={
                 'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM': [None, None, None, 1, 2, 3],
                 'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, None, None, None, 2, 1],
+            },
+        )
+
+    def test_grouped_first_value_transform(self) -> None:
+        first_value_transformer = FirstValueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
+        first_value_over_grouping_num_transformer = OverWrapper(inner_transformer=first_value_transformer, over_columns=self._num_group)
+        first_value_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=first_value_transformer, over_columns=self._num_cat_group)
+
+        df = BASIC_FRAME.with_columns(
+            first_value_over_grouping_num_transformer.transform(),
+            first_value_over_grouping_num_cat_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 1],
+                'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 2, 1],
             },
         )
 
