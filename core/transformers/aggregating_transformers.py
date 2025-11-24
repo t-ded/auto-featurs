@@ -37,8 +37,9 @@ class LaggedTransformer(AggregatingTransformer):
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
-    def __init__(self, column: str | ColumnSpecification) -> None:
+    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False) -> None:
         self._column = column if isinstance(column, str) else column.name
+        self._cumulative = cumulative
 
     def input_type(self) -> set[ColumnType]:
         return {ColumnType.NUMERIC}
@@ -53,26 +54,46 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
 
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
+        if self._cumulative:
+            return pl.col(self._column).cum_sum()
         return pl.col(self._column).sum()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_sum')
+        operation = 'cum_sum' if self._cumulative else 'sum'
+        return transform.alias(f'{self._column}_{operation}')
 
 
 class MeanTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column).mean()
+        col = pl.col(self._column)
+        if self._cumulative:
+            cum_sum = col.cum_sum()
+            cum_count = col.cum_count()
+            return cum_sum.truediv(cum_count)
+        return col.mean()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_mean')
+        operation = 'cum_mean' if self._cumulative else 'mean'
+        return transform.alias(f'{self._column}_{operation}')
 
 
 class StdTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column).std()
+        col = pl.col(self._column)
+        if self._cumulative:
+            cum_sum = col.cum_sum()
+            cum_count = col.cum_count()
+            cum_mean = cum_sum.truediv(cum_count)
+
+            mean_diff = col - cum_mean
+            cum_sum_squared_mean_diff = mean_diff.pow(2).cum_sum()
+
+            return cum_sum_squared_mean_diff.sqrt()
+        return col.std()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_std')
+        operation = 'cum_std' if self._cumulative else 'std'
+        return transform.alias(f'{self._column}_{operation}')
 
 
 class ArithmeticAggregations(Enum):
