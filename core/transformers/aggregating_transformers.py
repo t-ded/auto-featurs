@@ -52,6 +52,17 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
         return ColumnType.NUMERIC
 
 
+class CountTransformer(ArithmeticAggregationTransformer):
+    def _transform(self) -> pl.Expr:
+        if self._cumulative:
+            return pl.col(self._column).cum_count()
+        return pl.col(self._column).len()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        operation = 'cum_count' if self._cumulative else 'count'
+        return transform.alias(f'{self._column}_{operation}')
+
+
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
         if self._cumulative:
@@ -97,6 +108,7 @@ class StdTransformer(ArithmeticAggregationTransformer):
 
 
 class ArithmeticAggregations(Enum):
+    COUNT = CountTransformer
     SUM = SumTransformer
     MEAN = MeanTransformer
     STD = StdTransformer
