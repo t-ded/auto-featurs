@@ -7,6 +7,7 @@ from core.transformers.aggregating_transformers import FirstValueTransformer
 from core.transformers.aggregating_transformers import MeanTransformer
 from core.transformers.aggregating_transformers import StdTransformer
 from core.transformers.aggregating_transformers import SumTransformer
+from core.transformers.over_wrapper import OverWrapper
 from core.transformers.rolling_wrapper import RollingWrapper
 from utils.utils_for_tests import BASIC_FRAME
 from utils.utils_for_tests import assert_new_columns_in_frame
@@ -48,4 +49,18 @@ class TestRollingWrapper:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns=expected_new_columns,
+        )
+
+    @pytest.mark.skip(reason='Waiting for Polars to support nested window + aggregation expressions (next release)')
+    def test_rolling_combined_with_over(self) -> None:
+        first_value_transformer = FirstValueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
+        first_value_over_transformer = OverWrapper(inner_transformer=first_value_transformer, over_columns=['GROUPING_FEATURE_NUM'])
+        first_value_over_rolling_transformer = RollingWrapper(inner_transformer=first_value_over_transformer, index_column=self._index_col, time_window=self._time_window)
+
+        df = BASIC_FRAME.with_columns(first_value_over_rolling_transformer.transform())
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM_in_the_last_2d1h': [0, 1, 2, 1, 2, 3]},
         )
