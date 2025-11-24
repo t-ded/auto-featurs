@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Any
 
 import polars as pl
 
@@ -10,7 +11,7 @@ from utils.utils import get_names_from_column_specs
 
 
 class OverWrapper(Transformer):
-    def __init__(self, inner_transformer: AggregatingTransformer, over_columns: Iterable[str | ColumnSpecification], *args) -> None:
+    def __init__(self, inner_transformer: AggregatingTransformer, over_columns: Iterable[str | ColumnSpecification], *args: Any) -> None:
         self._inner_transformer = inner_transformer
         self._over_columns: list[str] = get_names_from_column_specs(over_columns)
 

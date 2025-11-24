@@ -37,7 +37,7 @@ class TestOverWrapper:
         )
 
     @pytest.mark.parametrize(
-        'inner_transformer_type, expected_new_columns',
+        ('inner_transformer_type', 'expected_new_columns'),
         [
             (CountTransformer, {
                 'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],

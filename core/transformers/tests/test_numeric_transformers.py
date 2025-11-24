@@ -1,12 +1,14 @@
 import numpy as np
 import pytest
 
-from core.transformers.numeric_transformers import AddTransformer, PolynomialTransformer
+from core.transformers.numeric_transformers import AddTransformer
 from core.transformers.numeric_transformers import ArithmeticTransformer
 from core.transformers.numeric_transformers import DivideTransformer
 from core.transformers.numeric_transformers import MultiplyTransformer
+from core.transformers.numeric_transformers import PolynomialTransformer
 from core.transformers.numeric_transformers import SubtractTransformer
-from utils.utils_for_tests import BASIC_FRAME, assert_new_columns_in_frame
+from utils.utils_for_tests import BASIC_FRAME
+from utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestPolynomialTransformer:
@@ -39,7 +41,7 @@ class TestPolynomialTransformer:
 
 class TestArithmeticTransformers:
     @pytest.mark.parametrize(
-        'transformer_type, expected_new_columns',
+        ('transformer_type', 'expected_new_columns'),
         [
             (AddTransformer, {'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0]}),
             (SubtractTransformer, {'NUMERIC_FEATURE_subtract_NUMERIC_FEATURE_2': [0, 2, 4, 6, 8, 10]}),
@@ -53,7 +55,7 @@ class TestArithmeticTransformers:
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
 
     @pytest.mark.parametrize(
-        'transformer_type, expected_new_columns',
+        ('transformer_type', 'expected_new_columns'),
         [
             (AddTransformer, {'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0]}),
             (SubtractTransformer, {'NUMERIC_FEATURE_2_subtract_NUMERIC_FEATURE': [0, -2, -4, -6, -8, -10]}),

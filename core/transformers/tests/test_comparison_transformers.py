@@ -1,17 +1,16 @@
 import pytest
 
-from core.transformers.comparison_transformers import (
-    ComparisonTransformer,
-    EqualTransformer,
-    GreaterOrEqualTransformer,
-    GreaterThanTransformer,
-)
-from utils.utils_for_tests import BASIC_FRAME, assert_new_columns_in_frame
+from core.transformers.comparison_transformers import ComparisonTransformer
+from core.transformers.comparison_transformers import EqualTransformer
+from core.transformers.comparison_transformers import GreaterOrEqualTransformer
+from core.transformers.comparison_transformers import GreaterThanTransformer
+from utils.utils_for_tests import BASIC_FRAME
+from utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestComparisonTransformers:
     @pytest.mark.parametrize(
-        'transformer_type, expected_new_columns',
+        ('transformer_type', 'expected_new_columns'),
         [
             (EqualTransformer, {'NUMERIC_FEATURE_equal_NUMERIC_FEATURE_2': [True, False, False, False, False, False]}),
             (GreaterThanTransformer, {'NUMERIC_FEATURE_greater_than_NUMERIC_FEATURE_2': [False, True, True, True, True, True]}),
@@ -24,7 +23,7 @@ class TestComparisonTransformers:
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
 
     @pytest.mark.parametrize(
-        'transformer_type, expected_new_columns',
+        ('transformer_type', 'expected_new_columns'),
         [
             (EqualTransformer, {'NUMERIC_FEATURE_2_equal_NUMERIC_FEATURE': [True, False, False, False, False, False]}),
             (GreaterThanTransformer, {'NUMERIC_FEATURE_2_greater_than_NUMERIC_FEATURE': [False, False, False, False, False, False]}),

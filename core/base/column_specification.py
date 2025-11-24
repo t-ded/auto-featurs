@@ -14,7 +14,7 @@ class ColumnType(Enum):
     DATETIME = auto()
 
     @classmethod
-    def ANY(cls) -> set[ColumnType]:
+    def ANY(cls) -> set[ColumnType]:  # noqa: N802
         return set(cls)
 
 

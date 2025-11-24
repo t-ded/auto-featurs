@@ -1,7 +1,7 @@
 import numpy as np
 import polars as pl
-from polars.testing import assert_frame_equal
 import pytest
+from polars.testing import assert_frame_equal
 
 from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
@@ -45,7 +45,7 @@ class TestPipeline:
                 'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
                 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_pow_2_pow_2': [0, 1, 16, 81, 256, 625],
-            })
+            }),
         )
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
@@ -65,7 +65,7 @@ class TestPipeline:
             OptimizationLevel.NONE,
             OptimizationLevel.SKIP_SELF,
             OptimizationLevel.DEDUPLICATE_COMMUTATIVE,
-        ]
+        ],
     )
     def test_pipeline_optimization(self, optimization_level: OptimizationLevel) -> None:
         pipeline = Pipeline(
@@ -128,12 +128,12 @@ class TestPipeline:
                 left_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], right_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL],
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
-            .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM','GROUPING_FEATURE_CAT_2']], fill_value=0)
+            .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
-                over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM','GROUPING_FEATURE_CAT_2']],
+                over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
         )
 

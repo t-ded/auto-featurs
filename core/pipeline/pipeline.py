@@ -5,8 +5,8 @@ from itertools import product
 from typing import Any
 from typing import Optional
 
-from more_itertools import flatten
 import polars as pl
+from more_itertools import flatten
 
 from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
@@ -156,7 +156,7 @@ class Pipeline:
     def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
         return [transformer.output_column_specification for transformer in transformers]
 
-    def _get_over_transformers(self, aggregating_transformers: Sequence[AggregatingTransformer], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]]):
+    def _get_over_transformers(self, aggregating_transformers: Sequence[AggregatingTransformer], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]]) -> Pipeline:
         all_transformers: list[Transformer] = []
 
         non_empty_over_columns_combinations = [combination for combination in over_columns_combinations if combination]
@@ -179,7 +179,7 @@ class Pipeline:
         transformer_factory: type[T] | list[type[T]],
         input_columns: Optional[Sequence[ColumnSet]] = None,
         kw_params: Optional[dict[str, Sequence[Any]]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[T]:
 
         transformers: list[T] = []
@@ -196,7 +196,7 @@ class Pipeline:
             optimized_combinations = self._optimizer.optimize_input_columns(transformer_factory, input_columns_positional_combinations)
             for column_combination in optimized_combinations:
                 for kw_params_combination in kw_params_positional_combinations:
-                    transformer_kwargs = dict(zip(kw_keys, kw_params_combination)) | kwargs
+                    transformer_kwargs = dict(zip(kw_keys, kw_params_combination, strict=True)) | kwargs
                     transformers.append(transformer_factory(*column_combination, **transformer_kwargs))
 
         return transformers

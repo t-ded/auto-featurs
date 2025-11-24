@@ -54,7 +54,7 @@ class TestLaggedTransformer:
 
 class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
-        'transformer_type, expected_new_columns',
+        ('transformer_type', 'expected_new_columns'),
         [
             (CountTransformer, {'NUMERIC_FEATURE_count': [6, 6, 6, 6, 6, 6]}),
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),

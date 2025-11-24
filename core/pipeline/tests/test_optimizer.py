@@ -97,7 +97,6 @@ class TestOptimizer:
         assert commutative_optimized == [['a', 'b'], ['b', 'a']]
         assert non_commutative_optimized == [['a', 'b'], ['b', 'a']]
 
-
     def test_deduplicate_commutative_level_optimize_input_columns(self) -> None:
         commutative_optimized = self._flatten_to_names(self._deduplicate_commutative_level_optimizer.optimize_input_columns(MockCommutativeTransformer, self._input_columns))
         non_commutative_optimized = self._flatten_to_names(self._deduplicate_commutative_level_optimizer.optimize_input_columns(MockNonCommutativeTransformer, self._input_columns))

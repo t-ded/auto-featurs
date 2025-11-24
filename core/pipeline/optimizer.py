@@ -1,9 +1,10 @@
 from collections.abc import Iterable
+from collections.abc import Iterator
 from enum import IntEnum
-from typing import Iterator
 
 from core.base.column_specification import ColumnSpecification
 from core.transformers.base import Transformer
+
 
 class OptimizationLevel(IntEnum):
     NONE = 0

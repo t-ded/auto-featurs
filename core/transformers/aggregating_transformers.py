@@ -1,8 +1,9 @@
 from abc import ABC
 from enum import Enum
-from typing import Any
+from typing import Optional
 
 import polars as pl
+from polars._typing import IntoExpr
 
 from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
@@ -14,7 +15,7 @@ class AggregatingTransformer(Transformer, ABC):
 
 
 class LaggedTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification, lag: int, fill_value: Any = None) -> None:
+    def __init__(self, column: ColumnSpecification, lag: int, fill_value: Optional[IntoExpr] = None) -> None:
         self._column = column
         self._lag = lag
         self._fill_value = fill_value
