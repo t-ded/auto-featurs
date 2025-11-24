@@ -1,6 +1,12 @@
+import pytest
+
 from core.base.column_specification import ColumnSpecification
 from core.base.column_specification import ColumnType
+from core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from core.transformers.aggregating_transformers import LaggedTransformer
+from core.transformers.aggregating_transformers import MeanTransformer
+from core.transformers.aggregating_transformers import StdTransformer
+from core.transformers.aggregating_transformers import SumTransformer
 from utils.utils_for_tests import BASIC_FRAME
 from utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -43,3 +49,18 @@ class TestLaggedTransformer:
             new_frame=df,
             expected_new_columns={'NUMERIC_FEATURE_lagged_2': [0, 0, 0, 1, 2, 3]},
         )
+
+
+class TestArithmeticAggregationTransformers:
+    @pytest.mark.parametrize(
+        'transformer_type, expected_new_columns',
+        [
+            (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
+            (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
+            (StdTransformer, {'NUMERIC_FEATURE_std': [1.870829, 1.870829, 1.870829, 1.870829, 1.870829, 1.870829]}),
+        ],
+    )
+    def test_basic_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(column='NUMERIC_FEATURE')
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
