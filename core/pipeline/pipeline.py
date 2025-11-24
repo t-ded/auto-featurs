@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import timedelta
 from itertools import product
 from typing import Any
 from typing import Optional
@@ -83,12 +84,13 @@ class Pipeline:
             fill_value=fill_value,
         )
 
-        if not over_columns_combinations:
-            return self._with_added_to_current_layer(lagged_transformers)
-        else:
-            return self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
+        return self._get_over_transformers(aggregating_transformers=lagged_transformers, over_columns_combinations=over_columns_combinations)
 
-    def with_first_value(self, subset: ColumnSelection, over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = ()) -> Pipeline:
+    def with_first_value(
+            self,
+            subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+    ) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
 
         first_value_transformers = self._build_transformers(
@@ -96,10 +98,7 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        if not over_columns_combinations:
-            return self._with_added_to_current_layer(first_value_transformers)
-        else:
-            return self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
+        return self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
 
     def with_arithmetic_aggregation(
             self,
@@ -117,10 +116,7 @@ class Pipeline:
             cumulative=cumulative,
         )
 
-        if not over_columns_combinations:
-            return self._with_added_to_current_layer(aggregating_transformers)
-        else:
-            return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
+        return self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
@@ -179,7 +175,7 @@ class Pipeline:
         all_transformers: list[Transformer] = []
 
         non_empty_over_columns_combinations = [combination for combination in over_columns_combinations if combination]
-        if len(non_empty_over_columns_combinations) != len(over_columns_combinations):
+        if not over_columns_combinations or (len(non_empty_over_columns_combinations) != len(over_columns_combinations)):
             all_transformers.extend(aggregating_transformers)
 
         if non_empty_over_columns_combinations:
