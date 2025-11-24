@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from core.base.column_specification import ColumnSpecification
+from utils.utils import format_timedelta
 from utils.utils import get_names_from_column_specs
 from utils.utils import order_preserving_unique
 
@@ -14,3 +17,12 @@ def test_get_names_from_column_specs() -> None:
     assert get_names_from_column_specs([]) == []
     assert get_names_from_column_specs(['a']) == ['a']
     assert get_names_from_column_specs(['a', ColumnSpecification.numeric(name='b')]) == ['a', 'b']
+
+
+def test_format_timedelta() -> None:
+    assert format_timedelta(timedelta(0)) == "0s"
+    assert format_timedelta(timedelta(seconds=45)) == "45s"
+    assert format_timedelta(timedelta(minutes=3, seconds=15)) == "3m15s"
+    assert format_timedelta(timedelta(hours=5, minutes=2, seconds=1)) == "5h2m1s"
+    assert format_timedelta(timedelta(days=7, hours=5)) == "7d5h"
+    assert format_timedelta(timedelta(days=37, hours=5)) == "1mo7d5h"
