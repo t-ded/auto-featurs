@@ -1,4 +1,4 @@
-from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnType
 
 
 def test_any_column_type() -> None:

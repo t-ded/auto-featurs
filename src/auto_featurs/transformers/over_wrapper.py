@@ -3,9 +3,9 @@ from typing import Any
 
 import polars as pl
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.base.column_specification import ColumnType
-from auto_featurs.core.transformers.aggregating_transformers import AggregatingTransformer
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.utils.utils import get_names_from_column_specs
 
 

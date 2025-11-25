@@ -5,14 +5,14 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.base.column_specification import ColumnType
-from auto_featurs.core.pipeline.optimizer import OptimizationLevel
-from auto_featurs.core.pipeline.pipeline import Pipeline
-from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregations
-from auto_featurs.core.transformers.comparison_transformers import Comparisons
-from auto_featurs.core.transformers.numeric_transformers import ArithmeticOperation
-from auto_featurs.core.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.pipeline.optimizer import OptimizationLevel
+from auto_featurs.pipeline.pipeline import Pipeline
+from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
+from auto_featurs.transformers.comparison_transformers import Comparisons
+from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 

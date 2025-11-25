@@ -2,11 +2,11 @@ from collections.abc import Iterable
 
 import polars as pl
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.base.column_specification import ColumnType
-from auto_featurs.core.pipeline.optimizer import OptimizationLevel
-from auto_featurs.core.pipeline.optimizer import Optimizer
-from auto_featurs.core.transformers.base import Transformer
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.pipeline.optimizer import OptimizationLevel
+from auto_featurs.pipeline.optimizer import Optimizer
+from auto_featurs.transformers.base import Transformer
 from auto_featurs.utils.utils import get_names_from_column_specs
 
 

@@ -4,8 +4,8 @@ from functools import cached_property
 
 import polars as pl
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
 
 
 class Transformer(ABC):

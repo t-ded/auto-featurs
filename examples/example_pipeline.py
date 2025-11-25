@@ -149,21 +149,19 @@ def _():
     import polars as pl
 
     from datetime import date
-    from datetime import timedelta
-    from datetime import UTC
     return date, mo, pl
 
 
 @app.cell
 def _():
-    from auto_featurs.core.base.column_specification import ColumnSpecification
-    from auto_featurs.core.base.column_specification import ColumnType
+    from auto_featurs.base.column_specification import ColumnSpecification
+    from auto_featurs.base.column_specification import ColumnType
 
-    from auto_featurs.core.pipeline.optimizer import OptimizationLevel
-    from auto_featurs.core.pipeline.pipeline import Pipeline
+    from auto_featurs.pipeline.optimizer import OptimizationLevel
+    from auto_featurs.pipeline.pipeline import Pipeline
 
-    from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregations
-    from auto_featurs.core.transformers.comparison_transformers import Comparisons
+    from auto_featurs.transformers import ArithmeticAggregations
+    from auto_featurs.transformers import Comparisons
     return (
         ArithmeticAggregations,
         ColumnSpecification,

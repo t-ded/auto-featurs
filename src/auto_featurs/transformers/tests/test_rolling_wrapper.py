@@ -1,14 +1,14 @@
 import pytest
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.transformers.aggregating_transformers import ArithmeticAggregationTransformer
-from auto_featurs.core.transformers.aggregating_transformers import CountTransformer
-from auto_featurs.core.transformers.aggregating_transformers import FirstValueTransformer
-from auto_featurs.core.transformers.aggregating_transformers import MeanTransformer
-from auto_featurs.core.transformers.aggregating_transformers import StdTransformer
-from auto_featurs.core.transformers.aggregating_transformers import SumTransformer
-from auto_featurs.core.transformers.over_wrapper import OverWrapper
-from auto_featurs.core.transformers.rolling_wrapper import RollingWrapper
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregationTransformer
+from auto_featurs.transformers.aggregating_transformers import CountTransformer
+from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
+from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import StdTransformer
+from auto_featurs.transformers.aggregating_transformers import SumTransformer
+from auto_featurs.transformers.over_wrapper import OverWrapper
+from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 

@@ -2,8 +2,8 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from enum import IntEnum
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
-from auto_featurs.core.transformers.base import Transformer
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.transformers.base import Transformer
 
 
 class OptimizationLevel(IntEnum):

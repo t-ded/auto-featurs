@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from datetime import timedelta
 
-from auto_featurs.core.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.utils.constants import SECONDS_IN_DAY
 from auto_featurs.utils.constants import SECONDS_IN_HOUR
 from auto_featurs.utils.constants import SECONDS_IN_MINUTE

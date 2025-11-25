@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-from auto_featurs.core.transformers.numeric_transformers import AddTransformer
-from auto_featurs.core.transformers.numeric_transformers import ArithmeticTransformer
-from auto_featurs.core.transformers.numeric_transformers import DivideTransformer
-from auto_featurs.core.transformers.numeric_transformers import MultiplyTransformer
-from auto_featurs.core.transformers.numeric_transformers import PolynomialTransformer
-from auto_featurs.core.transformers.numeric_transformers import SubtractTransformer
+from auto_featurs.transformers.numeric_transformers import AddTransformer
+from auto_featurs.transformers.numeric_transformers import ArithmeticTransformer
+from auto_featurs.transformers.numeric_transformers import DivideTransformer
+from auto_featurs.transformers.numeric_transformers import MultiplyTransformer
+from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.transformers.numeric_transformers import SubtractTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
