@@ -216,9 +216,12 @@ class Pipeline:
     def _get_rolling_transformers(
             self,
             aggregating_transformers: Sequence[AggregatingTransformer],
-            index_column: ColumnSpecification,
+            index_column: Optional[ColumnSpecification],
             time_windows: Sequence[Optional[str | timedelta]],
     ) -> list[AggregatingTransformer | RollingWrapper]:
+        if index_column is None:
+            return list(aggregating_transformers)
+
         all_transformers: list[AggregatingTransformer | RollingWrapper] = []
 
         non_null_time_windows = [time_window for time_window in time_windows if time_window is not None]

@@ -22,6 +22,7 @@ def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
 def get_names_from_column_specs(columns: Iterable[str | ColumnSpecification]) -> list[str]:
     return [column.name if isinstance(column, ColumnSpecification) else column for column in columns]
 
+
 def format_timedelta(td: timedelta) -> str:
     total_seconds = int(td.total_seconds())
 
