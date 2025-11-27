@@ -3,6 +3,7 @@ from datetime import timedelta
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.utils.utils import format_timedelta
 from auto_featurs.utils.utils import get_names_from_column_specs
+from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
 
 
@@ -17,6 +18,13 @@ def test_get_names_from_column_specs() -> None:
     assert get_names_from_column_specs([]) == []
     assert get_names_from_column_specs(['a']) == ['a']
     assert get_names_from_column_specs(['a', ColumnSpecification.numeric(name='b')]) == ['a', 'b']
+
+
+def test_get_valid_param_options() -> None:
+    assert get_valid_param_options(['A', None, 'B']) == (['A', 'B'], False)
+    assert get_valid_param_options([['A', 'B'], None, ['B', 'C']]) == ([['A', 'B'], ['B', 'C']], False)
+    assert get_valid_param_options([[], ['A', 'B']]) == ([['A', 'B']], False)
+    assert get_valid_param_options([['A', 'B']]) == ([['A', 'B']], True)
 
 
 def test_format_timedelta() -> None:

@@ -24,6 +24,7 @@ from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
+from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
 
 ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
@@ -214,17 +215,20 @@ class Pipeline:
             aggregating_transformers: Sequence[AggregatingTransformer],
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
     ) -> list[AggregatingTransformer | OverWrapper]:
+        if not over_columns_combinations:
+            return list(aggregating_transformers)
+
         all_transformers: list[AggregatingTransformer | OverWrapper] = []
 
-        non_empty_over_columns_combinations = [combination for combination in over_columns_combinations if combination]
-        if not over_columns_combinations or (len(non_empty_over_columns_combinations) != len(over_columns_combinations)):
+        valid_over_columns_combinations, all_are_valid = get_valid_param_options(over_columns_combinations)
+        if not all_are_valid:
             all_transformers.extend(aggregating_transformers)
 
-        if non_empty_over_columns_combinations:
+        if valid_over_columns_combinations:
             aggregated_over_transformers = self._build_transformers(
                 transformer_factory=OverWrapper,
                 input_columns=None,
-                kw_params={'inner_transformer': aggregating_transformers, 'over_columns': non_empty_over_columns_combinations},
+                kw_params={'inner_transformer': aggregating_transformers, 'over_columns': valid_over_columns_combinations},
             )
             all_transformers.extend(aggregated_over_transformers)
 
@@ -236,20 +240,20 @@ class Pipeline:
             index_column: Optional[ColumnSpecification],
             time_windows: Sequence[Optional[str | timedelta]],
     ) -> list[AggregatingTransformer | RollingWrapper]:
-        if index_column is None:
+        if index_column is None or not time_windows:
             return list(aggregating_transformers)
 
         all_transformers: list[AggregatingTransformer | RollingWrapper] = []
 
-        non_null_time_windows = [time_window for time_window in time_windows if time_window is not None]
-        if not time_windows or (len(non_null_time_windows) != len(time_windows)):
+        valid_time_windows, all_are_valid = get_valid_param_options(time_windows)
+        if not all_are_valid:
             all_transformers.extend(aggregating_transformers)
 
-        if non_null_time_windows:
+        if valid_time_windows:
             aggregated_rolling_transformers = self._build_transformers(
                 transformer_factory=RollingWrapper,
                 input_columns=None,
-                kw_params={'inner_transformer': aggregating_transformers, 'time_window': non_null_time_windows},
+                kw_params={'inner_transformer': aggregating_transformers, 'time_window': valid_time_windows},
                 index_column=index_column,
             )
             all_transformers.extend(aggregated_rolling_transformers)

@@ -1,5 +1,7 @@
 from collections.abc import Iterable
+from collections.abc import Sequence
 from datetime import timedelta
+from typing import Optional
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.utils.constants import SECONDS_IN_DAY
@@ -21,6 +23,13 @@ def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
 
 def get_names_from_column_specs(columns: Iterable[str | ColumnSpecification]) -> list[str]:
     return [column.name if isinstance(column, ColumnSpecification) else column for column in columns]
+
+
+def get_valid_param_options[T](param_options: Sequence[Optional[T]]) -> tuple[list[T], bool]:
+    valid_options = [option for option in param_options if option]
+    all_valid = len(valid_options) == len(param_options)
+    print(valid_options, all_valid, param_options)
+    return valid_options, all_valid
 
 
 def format_timedelta(td: timedelta) -> str:
