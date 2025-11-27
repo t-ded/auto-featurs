@@ -131,26 +131,20 @@ class TestPipeline:
                 left_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], right_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL],
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
+            .with_count(over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
+            .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], cumulative=True)
+            .with_count(
+                # over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],  # TODO: Uncomment this with new polars release (allowing window expressions in aggregation)
+                time_windows=['2d', timedelta(days=2, hours=1)],
+                index_column_name='DATE_FEATURE',
+            )
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
             .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
-                aggregations=[ArithmeticAggregations.COUNT, ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
+                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
-            )
-            .with_arithmetic_aggregation(
-                subset='NUMERIC_FEATURE',
-                aggregations=[ArithmeticAggregations.COUNT],
-                over_columns_combinations=[['GROUPING_FEATURE_NUM']],
-                cumulative=True,
-            )
-            .with_arithmetic_aggregation(
-                subset='NUMERIC_FEATURE',
-                aggregations=[ArithmeticAggregations.COUNT],
-                time_windows=['2d', timedelta(days=2, hours=1)],
-                index_column_name='DATE_FEATURE',
-                # over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],  # TODO: Uncomment this with new polars release (allowing window expressions in aggregation)
             )
         )
 
@@ -204,6 +198,12 @@ class TestPipeline:
                 'CATEGORICAL_FEATURE_greater_or_equal_CATEGORICAL_FEATURE_2': [False, False, False, True, True, True],
                 'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE': [True, True, True, False, False, False],
                 'CATEGORICAL_FEATURE_2_greater_or_equal_CATEGORICAL_FEATURE_2': [True, True, True, True, True, True],
+                'count': [6, 6, 6, 6, 6, 6],
+                'count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
+                'count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
+                'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
+                'count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
                 'NUMERIC_FEATURE_lagged_1': [0, 0, 1, 2, 3, 4],
                 'NUMERIC_FEATURE_2_lagged_1': [0, 0, -1, -2, -3, -4],
                 'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM': [0, 0, 0, 1, 2, 3],
@@ -223,10 +223,6 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -1, -2, -3, -2, -1],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM': ['A', 'B', 'C', 'B', 'C', 'B'],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': ['A', 'B', 'C', 'D', 'C', 'B'],
-                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
-                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
-                'NUMERIC_FEATURE_2_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
-                'NUMERIC_FEATURE_2_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
@@ -239,8 +235,5 @@ class TestPipeline:
                 'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
-                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
-                'NUMERIC_FEATURE_count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
-                'NUMERIC_FEATURE_count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
             },
         )

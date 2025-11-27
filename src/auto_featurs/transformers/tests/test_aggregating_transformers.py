@@ -13,6 +13,24 @@ from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
 
+class TestCountTransformer:
+    def setup_method(self) -> None:
+        self._count_transformer = CountTransformer()
+        self._cumulative_count_transformer = CountTransformer(cumulative=True)
+
+    def test_name_and_output_type(self) -> None:
+        assert self._count_transformer.output_column_specification == ColumnSpecification.numeric(name='count')
+        assert self._cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='cum_count')
+
+    def test_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'count': [6, 6, 6, 6, 6, 6]})
+
+    def test_cum_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._cumulative_count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'cum_count': [1, 2, 3, 4, 5, 6]})
+
+
 class TestLaggedTransformer:
     def setup_method(self) -> None:
         self._lagged_1_categorical_transformer = LaggedTransformer(column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'), lag=1)
@@ -82,7 +100,6 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
-            (CountTransformer, {'NUMERIC_FEATURE_count': [6, 6, 6, 6, 6, 6]}),
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_std': [1.870829, 1.870829, 1.870829, 1.870829, 1.870829, 1.870829]}),
@@ -96,7 +113,6 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
-            (CountTransformer, {'NUMERIC_FEATURE_cum_count': [1, 2, 3, 4, 5, 6]}),
             (SumTransformer, {'NUMERIC_FEATURE_cum_sum': [0, 1, 3, 6, 10, 15]}),
             (MeanTransformer, {'NUMERIC_FEATURE_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),

@@ -15,6 +15,7 @@ from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
+from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.base import Transformer
@@ -74,6 +75,22 @@ class Pipeline:
         )
 
         return self._with_added_to_current_layer(transformers)
+
+    def with_count(
+            self,
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+            cumulative: bool = False,
+    ) -> Pipeline:
+        index_column = self._get_column_by_name(index_column_name) if index_column_name else None
+        self._validate_time_window_index_column(time_windows, index_column)
+
+        count_transformers = self._build_transformers(transformer_factory=CountTransformer, cumulative=cumulative)
+
+        count_over = self._get_over_transformers(aggregating_transformers=count_transformers, over_columns_combinations=over_columns_combinations)
+        rolling_count_over = self._get_rolling_transformers(aggregating_transformers=count_over, index_column=index_column, time_windows=time_windows)
+        return self._with_added_to_current_layer(rolling_count_over)
 
     def with_lagged(self, subset: ColumnSelection, lags: Sequence[int], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (), fill_value: Any = None) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)

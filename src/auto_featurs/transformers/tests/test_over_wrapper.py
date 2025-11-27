@@ -18,6 +18,44 @@ class TestOverWrapper:
         self._num_group = ['GROUPING_FEATURE_NUM']
         self._num_cat_group = ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']
 
+    def test_grouped_count_transform(self) -> None:
+        count_transformer = CountTransformer()
+        count_over_grouping_num_transformer = OverWrapper(inner_transformer=count_transformer, over_columns=self._num_group)
+        count_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=count_transformer, over_columns=self._num_cat_group)
+
+        df = BASIC_FRAME.with_columns(
+            count_over_grouping_num_transformer.transform(),
+            count_over_grouping_num_cat_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
+                'count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
+            },
+        )
+
+    def test_grouped_cumulative_count_transform(self) -> None:
+        cum_count_transformer = CountTransformer(cumulative=True)
+        cum_count_over_grouping_num_transformer = OverWrapper(inner_transformer=cum_count_transformer, over_columns=self._num_group)
+        cum_count_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=cum_count_transformer, over_columns=self._num_cat_group)
+
+        df = BASIC_FRAME.with_columns(
+            cum_count_over_grouping_num_transformer.transform(),
+            cum_count_over_grouping_num_cat_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'cum_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 2, 2],
+            },
+        )
+
     def test_grouped_lagged_transform(self) -> None:
         lagged_1_transformer = LaggedTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), lag=1)
         lagged_1_over_grouping_num_transformer = OverWrapper(inner_transformer=lagged_1_transformer, over_columns=self._num_group)
@@ -59,10 +97,6 @@ class TestOverWrapper:
     @pytest.mark.parametrize(
         ('inner_transformer_type', 'expected_new_columns'),
         [
-            (CountTransformer, {
-                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
-                'NUMERIC_FEATURE_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
-            }),
             (SumTransformer, {
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
@@ -96,10 +130,6 @@ class TestOverWrapper:
     @pytest.mark.parametrize(
         ('inner_transformer_type', 'expected_new_columns'),
         [
-            (CountTransformer, {
-                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
-                'NUMERIC_FEATURE_cum_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 2, 2],
-            }),
             (SumTransformer, {
                 'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM': [0, 1, 2, 4, 6, 9],
                 'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 6, 6],
