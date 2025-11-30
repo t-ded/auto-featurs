@@ -5,6 +5,7 @@ from auto_featurs.transformers.aggregating_transformers import ArithmeticAggrega
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
@@ -40,6 +41,18 @@ class TestRollingWrapper:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns={'NUMERIC_FEATURE_first_value_in_the_last_2d1h': [0, 0, 0, 1, 2, 3]},
+        )
+
+    def test_rolling_num_unique_transform(self) -> None:
+        num_unique_transformer = NumUniqueTransformer(column=ColumnSpecification.numeric(name='GROUPING_FEATURE_NUM'))
+        num_unique_rolling_transformer = RollingWrapper(inner_transformer=num_unique_transformer, index_column=self._index_col, time_window=self._time_window)
+
+        df = BASIC_FRAME.with_columns(num_unique_rolling_transformer.transform())
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={'GROUPING_FEATURE_NUM_num_unique_in_the_last_2d1h': [1, 2, 3, 2, 2, 2]},
         )
 
     @pytest.mark.parametrize(

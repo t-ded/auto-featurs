@@ -6,6 +6,7 @@ from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
@@ -92,6 +93,20 @@ class TestOverWrapper:
                 'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 1],
                 'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 2, 1],
             },
+        )
+
+    def test_grouped_num_unique_transform(self) -> None:
+        num_unique_transformer = NumUniqueTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
+        num_unique_over_bool_transformer = OverWrapper(inner_transformer=num_unique_transformer, over_columns=['BOOL_FEATURE'])
+
+        df = BASIC_FRAME.with_columns(
+            num_unique_over_bool_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={'GROUPING_FEATURE_NUM_num_unique_over_BOOL_FEATURE': [2, 1, 2, 1, 2, 1]},
         )
 
     @pytest.mark.parametrize(
