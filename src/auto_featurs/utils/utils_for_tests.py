@@ -14,6 +14,7 @@ BASIC_FRAME = pl.LazyFrame(
         'GROUPING_FEATURE_NUM': ['ZERO', 'ODD', 'EVEN', 'ODD', 'EVEN', 'ODD'],
         'GROUPING_FEATURE_CAT_2': ['CONSONANT', 'VOWEL', 'CONSONANT', 'CONSONANT', 'CONSONANT', 'VOWEL'],
         'DATE_FEATURE': [datetime(year=2_000, month=1, day=i, tzinfo=UTC) for i in range(1, 7)],
+        'BOOL_FEATURE': [True, False, True, False, True, False],
     },
 )
 

@@ -18,6 +18,7 @@ from auto_featurs.transformers.aggregating_transformers import ArithmeticAggrega
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
+from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
@@ -125,6 +126,26 @@ class Pipeline:
         first_value_over = self._get_over_transformers(aggregating_transformers=first_value_transformers, over_columns_combinations=over_columns_combinations)
         rolling_first_value_over = self._get_rolling_transformers(aggregating_transformers=first_value_over, index_column=index_column, time_windows=time_windows)
         return self._with_added_to_current_layer(rolling_first_value_over)
+
+    def with_num_unique(
+            self,
+            subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+    ) -> Pipeline:
+        index_column = self._get_column_by_name(index_column_name) if index_column_name else None
+        self._validate_time_window_index_column(time_windows, index_column)
+        input_columns = self._get_combinations_from_selections(subset)
+
+        num_unique_transformers = self._build_transformers(
+            transformer_factory=NumUniqueTransformer,
+            input_columns=input_columns,
+        )
+
+        num_unique_over = self._get_over_transformers(aggregating_transformers=num_unique_transformers, over_columns_combinations=over_columns_combinations)
+        rolling_num_unique_over = self._get_rolling_transformers(aggregating_transformers=num_unique_over, index_column=index_column, time_windows=time_windows)
+        return self._with_added_to_current_layer(rolling_num_unique_over)
 
     def with_arithmetic_aggregation(
             self,
