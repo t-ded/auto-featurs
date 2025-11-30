@@ -28,7 +28,6 @@ def get_names_from_column_specs(columns: Iterable[str | ColumnSpecification]) ->
 def get_valid_param_options[T](param_options: Sequence[Optional[T]]) -> tuple[list[T], bool]:
     valid_options = [option for option in param_options if option]
     all_valid = len(valid_options) == len(param_options)
-    print(valid_options, all_valid, param_options)
     return valid_options, all_valid
 
 

@@ -7,6 +7,7 @@ from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
@@ -92,6 +93,31 @@ class TestFirstValueTransformer:
             expected_new_columns={
                 'CATEGORICAL_FEATURE_first_value': ['A', 'A', 'A', 'A', 'A', 'A'],
                 'NUMERIC_FEATURE_first_value': [0, 0, 0, 0, 0, 0],
+            },
+        )
+
+
+class TestNumUniqueTransformer:
+    def setup_method(self) -> None:
+        self._num_unique_transformer_ordinal = NumUniqueTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
+        self._num_unique_transformer_numeric = NumUniqueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
+
+    def test_name_and_output_type(self) -> None:
+        assert self._num_unique_transformer_ordinal.output_column_specification == ColumnSpecification.numeric(name='GROUPING_FEATURE_NUM_num_unique')
+        assert self._num_unique_transformer_numeric.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_num_unique')
+
+    def test_lagged_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._num_unique_transformer_ordinal.transform(),
+            self._num_unique_transformer_numeric.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'GROUPING_FEATURE_NUM_num_unique': [3, 3, 3, 3, 3, 3],
+                'NUMERIC_FEATURE_num_unique': [6, 6, 6, 6, 6, 6],
             },
         )
 
