@@ -217,6 +217,7 @@ class Pipeline:
         if index_column is not None and index_column.column_type != ColumnType.DATETIME:
             raise ValueError(f'Currently only {ColumnType.DATETIME} columns are supported for rolling aggregation but {index_column.column_type} was passed for {index_column.name}.')
 
+    # TODO: Make Wrappers typed with their aggregating transformer types
     def _build_aggregated_transformers[T: AggregatingTransformer](
             self,
             *,
@@ -226,7 +227,7 @@ class Pipeline:
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             **kwargs: Any,
-    ) -> list[T]:
+    ) -> list[AggregatingTransformer | OverWrapper | RollingWrapper]:
         index_column = self._get_column_by_name(index_column_name) if index_column_name else None
         self._validate_time_window_index_column(time_windows, index_column)
         input_columns = self._get_combinations_from_selections(subset) if subset is not None else None
