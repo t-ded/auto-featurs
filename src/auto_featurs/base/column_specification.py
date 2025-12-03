@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
+
+type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+type ColumnSet = list[ColumnSpecification]
+type Schema = list[ColumnSpecification]
 
 
 class ColumnType(Enum):

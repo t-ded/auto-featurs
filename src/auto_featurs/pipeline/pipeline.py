@@ -7,10 +7,12 @@ from typing import Any
 from typing import Optional
 
 import polars as pl
-from more_itertools import flatten
 
+from auto_featurs.base.column_specification import ColumnSelection
+from auto_featurs.base.column_specification import ColumnSet
 from auto_featurs.base.column_specification import ColumnSpecification
-from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import Schema
+from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
 from auto_featurs.pipeline.validator import Validator
@@ -29,26 +31,23 @@ from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
 
-type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
-type ColumnSet = list[ColumnSpecification]
 type TransformerLayers = list[list[Transformer]]
-type Schema = list[ColumnSpecification]
 
 
 class Pipeline:
     def __init__(
         self,
-        schema: Optional[Schema] = None,
+        dataset: Dataset,
         transformers: Optional[TransformerLayers] = None,
         optimization_level: OptimizationLevel = OptimizationLevel.NONE,
     ) -> None:
-        self._schema: Schema = schema or []
+        self._dataset = dataset
         self._transformers: TransformerLayers = transformers or [[]]
         self._optimizer = Optimizer(optimization_level)
         self._validator = Validator()
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
-        input_columns = self._get_combinations_from_selections(subset)
+        input_columns = self._dataset.get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=PolynomialTransformer,
@@ -59,7 +58,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Sequence[ArithmeticOperation]) -> Pipeline:
-        input_columns = self._get_combinations_from_selections(left_subset, right_subset)
+        input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
         transformers = self._build_transformers(
@@ -70,7 +69,7 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers)
 
     def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Sequence[Comparisons]) -> Pipeline:
-        input_columns = self._get_combinations_from_selections(left_subset, right_subset)
+        input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
         transformers = self._build_transformers(
@@ -162,51 +161,29 @@ class Pipeline:
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
         return Pipeline(
-            schema=self._schema + new_layer_schema,
+            dataset=self._dataset.with_schema(new_schema=new_layer_schema),
             transformers=self._transformers + [[]],
             optimization_level=self._optimizer.optimization_level,
         )
 
-    def collect(self, df: pl.LazyFrame) -> pl.DataFrame:
+    def collect(self) -> pl.DataFrame:
+        dataset = self._dataset
         for layer in self._transformers:
             exprs = [transformer.transform() for transformer in layer]
-            df = df.with_columns(*exprs)
-        return df.collect()
+            dataset = dataset.with_columns(new_columns=exprs)
+        return dataset.collect()
 
     def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer]) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
-        current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._schema, current_layer_additions)
+        current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._dataset.schema, current_layer_additions)
         return Pipeline(
-            schema=self._schema,
+            dataset=self._dataset,
             transformers=self._transformers[:-1] + [self._current_layer() + current_layer_additions],
             optimization_level=self._optimizer.optimization_level,
         )
 
     def _current_layer(self) -> list[Transformer]:
         return self._transformers[-1]
-
-    def _get_combinations_from_selections(self, *subsets: ColumnSelection) -> list[ColumnSet]:
-        return [self._get_columns_from_selection(subset) for subset in subsets]
-
-    def _get_columns_from_selection(self, subset: ColumnSelection) -> ColumnSet:
-        match subset:
-            case ColumnType():
-                return self._get_columns_of_type(subset)
-            case str():
-                return [self._get_column_by_name(subset)]
-            case Sequence():
-                return order_preserving_unique(flatten([self._get_columns_from_selection(col) for col in subset]))
-            case _:
-                raise ValueError(f'Unexpected subset type: {type(subset)}')
-
-    def _get_columns_of_type(self, column_type: ColumnType) -> ColumnSet:
-        return [col_spec for col_spec in self._schema if col_spec.column_type == column_type]
-
-    def _get_column_by_name(self, column_name: str) -> ColumnSpecification:
-        for col_spec in self._schema:
-            if col_spec.name == column_name:
-                return col_spec
-        raise KeyError(f'Column "{column_name}" not found in schema.')
 
     @staticmethod
     def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
@@ -222,9 +199,9 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             **kwargs: Any,
     ) -> list[AT | OverWrapper[AT] | RollingWrapper[AT | OverWrapper[AT]]]:
-        index_column = self._get_column_by_name(index_column_name) if index_column_name else None
+        index_column = self._dataset.get_column_by_name(index_column_name) if index_column_name else None
         self._validator.validate_time_window_index_column(time_windows, index_column)
-        input_columns = self._get_combinations_from_selections(subset) if subset is not None else None
+        input_columns = self._dataset.get_combinations_from_selections(subset) if subset is not None else None
 
         aggregating_transformers = self._build_transformers(
             transformer_factory=transformer_factory,

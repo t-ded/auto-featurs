@@ -7,6 +7,7 @@ from polars.testing import assert_frame_equal
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.pipeline import Pipeline
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
@@ -18,14 +19,17 @@ from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
 
 class TestPipeline:
+    def setup_method(self) -> None:
+        df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
+        self._simple_dataset = Dataset(data=df, schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
+
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
-            schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')],
+            dataset=self._simple_dataset,
             transformers=[[PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)]],
         )
-        df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
-        res = pipeline.collect(df)
+        res = pipeline.collect()
 
         assert_frame_equal(
             res,
@@ -33,13 +37,12 @@ class TestPipeline:
         )
 
     def test_basic_layering(self) -> None:
-        pipeline = Pipeline(schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
+        pipeline = Pipeline(dataset=self._simple_dataset)
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
         pipeline = pipeline.with_new_layer()
         pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
-        df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
-        res = pipeline.collect(df)
+        res = pipeline.collect()
 
         assert_frame_equal(
             res,
@@ -51,12 +54,11 @@ class TestPipeline:
         )
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
-        pipeline = Pipeline(schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
+        pipeline = Pipeline(dataset=self._simple_dataset)
         pipeline_with_polynomial = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
-        df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
 
-        res = pipeline.collect(df)
-        res_with_polynomial = pipeline_with_polynomial.collect(df)
+        res = pipeline.collect()
+        res_with_polynomial = pipeline_with_polynomial.collect()
 
         assert_frame_equal(res, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]}))
         assert_frame_equal(res_with_polynomial, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}))
@@ -71,10 +73,13 @@ class TestPipeline:
     )
     def test_pipeline_optimization(self, optimization_level: OptimizationLevel) -> None:
         pipeline = Pipeline(
-            schema=[
-                ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
-                ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
-            ],
+            dataset=Dataset(
+                data=BASIC_FRAME,
+                schema=[
+                    ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+                    ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+                ],
+            ),
             optimization_level=optimization_level,
         )
         pipeline = pipeline.with_arithmetic(left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC, operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT])
@@ -98,7 +103,7 @@ class TestPipeline:
         if optimization_level >= OptimizationLevel.DEDUPLICATE_COMMUTATIVE:
             expected_new_columns.pop('NUMERIC_FEATURE_2_add_NUMERIC_FEATURE')
 
-        res = pipeline.collect(BASIC_FRAME)
+        res = pipeline.collect()
 
         assert_new_columns_in_frame(
             original_frame=BASIC_FRAME,
@@ -108,14 +113,17 @@ class TestPipeline:
 
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
-            schema=[
-                ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
-                ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
-                ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
-                ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
-                ColumnSpecification.datetime(name='DATE_FEATURE'),
-                ColumnSpecification.boolean(name='BOOL_FEATURE'),
-            ],
+            dataset=Dataset(
+                data=BASIC_FRAME,
+                schema=[
+                    ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+                    ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+                    ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+                    ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
+                    ColumnSpecification.datetime(name='DATE_FEATURE'),
+                    ColumnSpecification.boolean(name='BOOL_FEATURE'),
+                ],
+            ),
         )
         pipeline = (
             pipeline
@@ -150,7 +158,7 @@ class TestPipeline:
             )
         )
 
-        res = pipeline.collect(BASIC_FRAME)
+        res = pipeline.collect()
 
         assert_new_columns_in_frame(
             original_frame=BASIC_FRAME,
