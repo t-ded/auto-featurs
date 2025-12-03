@@ -1,6 +1,10 @@
+from collections.abc import Sequence
+from datetime import timedelta
 import logging
+from typing import Optional
 
 from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
@@ -11,6 +15,13 @@ logger = logging.getLogger(__name__)
 class Validator:
     def __init__(self, raise_on_validation_error: bool = True) -> None:
         self._raise_on_validation_error = raise_on_validation_error
+
+    @staticmethod
+    def validate_time_window_index_column(time_windows: Sequence[Optional[str | timedelta]], index_column: Optional[ColumnSpecification]) -> None:
+        if time_windows and time_windows[0] is not None and index_column is None:
+            raise ValueError('Time window specified without index column.')
+        if index_column is not None and index_column.column_type != ColumnType.DATETIME:
+            raise ValueError(f'Currently only {ColumnType.DATETIME} columns are supported for rolling aggregation but {index_column.column_type} was passed for {index_column.name}.')
 
     def validate_transformer_against_input_columns(self, transformer: Transformer, input_columns: tuple[ColumnSpecification, ...]) -> bool:
         if isinstance(transformer, RollingWrapper | OverWrapper):
