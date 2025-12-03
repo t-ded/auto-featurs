@@ -41,12 +41,11 @@ class Pipeline:
         schema: Optional[Schema] = None,
         transformers: Optional[TransformerLayers] = None,
         optimization_level: OptimizationLevel = OptimizationLevel.NONE,
-        raise_on_validation_error: bool = True,
     ) -> None:
         self._schema: Schema = schema or []
         self._transformers: TransformerLayers = transformers or [[]]
         self._optimizer = Optimizer(optimization_level)
-        self._validator = Validator(raise_on_validation_error)
+        self._validator = Validator()
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
