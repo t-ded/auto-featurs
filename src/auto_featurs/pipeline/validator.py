@@ -1,4 +1,3 @@
-import logging
 from collections.abc import Sequence
 from datetime import timedelta
 from typing import Optional
@@ -8,8 +7,6 @@ from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
-
-logger = logging.getLogger(__name__)
 
 
 class Validator:

@@ -5,7 +5,6 @@ from datetime import timedelta
 from itertools import product
 from typing import Any
 from typing import Optional
-from typing import TypeAlias
 
 import polars as pl
 from more_itertools import flatten
