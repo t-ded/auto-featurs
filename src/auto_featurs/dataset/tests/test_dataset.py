@@ -67,6 +67,10 @@ class TestDataset:
         assert len(new.schema) == 4
         assert new.schema[-1].name == 'd'
 
+    def test_with_cached_computation_remains_lazy(self) -> None:
+        new = self._ds.with_cached_computation()
+        assert isinstance(self._ds.data, pl.LazyFrame)
+
     def test_collect(self) -> None:
         out = self._ds.collect()
         assert isinstance(out, pl.DataFrame)

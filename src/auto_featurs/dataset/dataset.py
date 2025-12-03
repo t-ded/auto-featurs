@@ -69,5 +69,8 @@ class Dataset:
     def with_schema(self, new_schema: Schema) -> Dataset:
         return Dataset(self._data, self._schema + new_schema)
 
+    def with_cached_computation(self) -> Dataset:
+        return Dataset(self._data.cache(), self._schema)
+
     def collect(self) -> pl.DataFrame:
         return self._data.collect()

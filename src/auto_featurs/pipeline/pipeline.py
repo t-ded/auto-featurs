@@ -166,11 +166,14 @@ class Pipeline:
             optimization_level=self._optimizer.optimization_level,
         )
 
-    def collect_plan(self) -> Dataset:
+    def collect_plan(self, cache_computation: bool = False) -> Dataset:
         dataset = self._dataset
         for layer in self._transformers:
             exprs = [transformer.transform() for transformer in layer]
             dataset = dataset.with_columns(new_columns=exprs)
+
+        if cache_computation:
+            return dataset.with_cached_computation()
         return dataset
 
     def collect(self) -> pl.DataFrame:
