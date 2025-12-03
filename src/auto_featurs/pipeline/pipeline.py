@@ -5,6 +5,7 @@ from datetime import timedelta
 from itertools import product
 from typing import Any
 from typing import Optional
+from typing import TypeAlias
 
 import polars as pl
 from more_itertools import flatten
@@ -29,10 +30,10 @@ from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
 
-ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
-ColumnSet = list[ColumnSpecification]
-TransformerLayers = list[list[Transformer]]
-Schema = list[ColumnSpecification]
+type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+type ColumnSet = list[ColumnSpecification]
+type TransformerLayers = list[list[Transformer]]
+type Schema = list[ColumnSpecification]
 
 
 class Pipeline:
