@@ -312,8 +312,7 @@ class Pipeline:
                 for kw_params_combination in kw_params_positional_combinations:
                     transformer_kwargs = dict(zip(kw_keys, kw_params_combination, strict=True)) | kwargs
                     transformer = factory(*column_combination, **transformer_kwargs)
-                    valid_input = self._validator.validate_transformer_against_input_columns(transformer, column_combination)
-                    if valid_input:
-                        transformers.append(transformer)
+                    self._validator.validate_transformer_against_input_columns(transformer, column_combination)
+                    transformers.append(transformer)
 
         return transformers
