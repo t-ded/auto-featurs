@@ -9,8 +9,8 @@ from auto_featurs.transformers.aggregating_transformers import AggregatingTransf
 from auto_featurs.utils.utils import get_names_from_column_specs
 
 
-class OverWrapper(AggregatingTransformer):
-    def __init__(self, inner_transformer: AggregatingTransformer, over_columns: Iterable[str | ColumnSpecification], *args: Any) -> None:
+class OverWrapper[AT: AggregatingTransformer](AggregatingTransformer):
+    def __init__(self, inner_transformer: AT, over_columns: Iterable[str | ColumnSpecification], *args: Any) -> None:
         self._inner_transformer = inner_transformer
         self._over_columns: list[str] = get_names_from_column_specs(over_columns)
 

@@ -212,17 +212,16 @@ class Pipeline:
     def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
         return [transformer.output_column_specification for transformer in transformers]
 
-    # TODO: Make Wrappers typed with their aggregating transformer types
-    def _build_aggregated_transformers[T: AggregatingTransformer](
+    def _build_aggregated_transformers[AT: AggregatingTransformer](
             self,
             *,
             subset: Optional[ColumnSelection],
-            transformer_factory: type[T] | list[type[T]],
+            transformer_factory: type[AT] | list[type[AT]],
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             **kwargs: Any,
-    ) -> list[AggregatingTransformer | OverWrapper | RollingWrapper]:
+    ) -> list[AT | OverWrapper[AT] | RollingWrapper[AT | OverWrapper[AT]]]:
         index_column = self._get_column_by_name(index_column_name) if index_column_name else None
         self._validator.validate_time_window_index_column(time_windows, index_column)
         input_columns = self._get_combinations_from_selections(subset) if subset is not None else None
@@ -237,15 +236,15 @@ class Pipeline:
         rolling_aggregations_over = self._get_rolling_transformers(aggregating_transformers=aggregations_over, index_column=index_column, time_windows=time_windows)
         return rolling_aggregations_over
 
-    def _get_over_transformers(
+    def _get_over_transformers[AT: AggregatingTransformer](
             self,
-            aggregating_transformers: Sequence[AggregatingTransformer],
+            aggregating_transformers: Sequence[AT],
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
-    ) -> list[AggregatingTransformer | OverWrapper]:
+    ) -> list[AT | OverWrapper[AT]]:
         if not over_columns_combinations:
             return list(aggregating_transformers)
 
-        all_transformers: list[AggregatingTransformer | OverWrapper] = []
+        all_transformers: list[AT | OverWrapper[AT]] = []
 
         valid_over_columns_combinations, all_are_valid = get_valid_param_options(over_columns_combinations)
         if not all_are_valid:
@@ -261,16 +260,16 @@ class Pipeline:
 
         return all_transformers
 
-    def _get_rolling_transformers(
+    def _get_rolling_transformers[AT: AggregatingTransformer](
             self,
-            aggregating_transformers: Sequence[AggregatingTransformer],
+            aggregating_transformers: Sequence[AT],
             index_column: Optional[ColumnSpecification],
             time_windows: Sequence[Optional[str | timedelta]],
-    ) -> list[AggregatingTransformer | RollingWrapper]:
+    ) -> list[AT | RollingWrapper[AT]]:
         if index_column is None or not time_windows:
             return list(aggregating_transformers)
 
-        all_transformers: list[AggregatingTransformer | RollingWrapper] = []
+        all_transformers: list[AT | RollingWrapper[AT]] = []
 
         valid_time_windows, all_are_valid = get_valid_param_options(time_windows)
         if not all_are_valid:

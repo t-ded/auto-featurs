@@ -9,8 +9,8 @@ from auto_featurs.transformers.aggregating_transformers import AggregatingTransf
 from auto_featurs.utils.utils import format_timedelta
 
 
-class RollingWrapper(AggregatingTransformer):
-    def __init__(self, inner_transformer: AggregatingTransformer, index_column: ColumnSpecification, time_window: str | timedelta, *args: Any) -> None:
+class RollingWrapper[AT: AggregatingTransformer](AggregatingTransformer):
+    def __init__(self, inner_transformer: AT, index_column: ColumnSpecification, time_window: str | timedelta, *args: Any) -> None:
         if index_column.column_type != ColumnType.DATETIME:
             raise ValueError(f'Currently only {ColumnType.DATETIME} columns are supported for rolling aggregation but {index_column.column_type} was passed for {index_column.name}.')
 
