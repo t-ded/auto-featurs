@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from typing import Optional
 
 import polars as pl
 from more_itertools import flatten
@@ -18,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset:
-    def __init__(self, data: pl.LazyFrame | pl.DataFrame, schema: Optional[Schema] = None, drop_columns_outside_schema: bool = False) -> None:
+    def __init__(self, data: pl.LazyFrame | pl.DataFrame, schema: Schema, drop_columns_outside_schema: bool = False) -> None:
         self._data = data.lazy()
-        self._schema: Schema = schema or []
+        self._schema: Schema = schema
         if drop_columns_outside_schema:
             self._select_columns_in_schema()
 
