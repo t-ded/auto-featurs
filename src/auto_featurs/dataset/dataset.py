@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from typing import Optional
 
@@ -13,11 +14,24 @@ from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import Schema
 from auto_featurs.utils.utils import order_preserving_unique
 
+logger = logging.getLogger(__name__)
+
 
 class Dataset:
-    def __init__(self, data: pl.LazyFrame | pl.DataFrame, schema: Optional[Schema] = None) -> None:
+    def __init__(self, data: pl.LazyFrame | pl.DataFrame, schema: Optional[Schema] = None, drop_columns_outside_schema: bool = False) -> None:
         self._data = data.lazy()
         self._schema: Schema = schema or []
+        if drop_columns_outside_schema:
+            self._select_columns_in_schema()
+
+    def _select_columns_in_schema(self) -> None:
+        data_cols = set(self._data.collect_schema().names())
+        schema_cols = {col.name for col in self._schema}
+        columns_outside_schema = data_cols - schema_cols
+
+        if columns_outside_schema:
+            logger.warning(f'Dropping columns not present in schema: {', '.join(sorted(columns_outside_schema))}')
+            self._data = self._data.drop(columns_outside_schema, strict=False)
 
     @property
     def data(self) -> pl.LazyFrame:

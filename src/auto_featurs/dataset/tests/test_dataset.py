@@ -19,6 +19,12 @@ class TestDataset:
     def test_data_is_lazy(self) -> None:
         assert isinstance(self._ds.data, pl.LazyFrame)
 
+    def test_drop_columns_outside_schema(self) -> None:
+        schema = [ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)]
+        ds2 = Dataset(self._df, schema=schema, drop_columns_outside_schema=True)
+        out = ds2.collect()
+        assert set(out.columns) == {'a'}
+
     def test_get_columns_of_type(self) -> None:
         cols = self._ds.get_columns_of_type(ColumnType.NUMERIC)
         assert [c.name for c in cols] == ['a', 'c']
