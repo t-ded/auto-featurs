@@ -19,7 +19,7 @@ class CountTransformer(AggregatingTransformer):
         self._cumulative = cumulative
 
     def input_type(self) -> set[ColumnType]:
-        return ColumnType.ANY()
+        return set()
 
     @classmethod
     def is_commutative(cls) -> bool:

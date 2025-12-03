@@ -13,6 +13,7 @@ from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
+from auto_featurs.pipeline.validator import Validator
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
@@ -40,10 +41,12 @@ class Pipeline:
         schema: Optional[Schema] = None,
         transformers: Optional[TransformerLayers] = None,
         optimization_level: OptimizationLevel = OptimizationLevel.NONE,
+        raise_on_validation_error: bool = True,
     ) -> None:
         self._schema: Schema = schema or []
         self._transformers: TransformerLayers = transformers or [[]]
         self._optimizer = Optimizer(optimization_level)
+        self._validator = Validator(raise_on_validation_error)
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
         input_columns = self._get_combinations_from_selections(subset)
@@ -311,11 +314,14 @@ class Pipeline:
         kw_keys = list(kw_params.keys())
         kw_params_positional_combinations = list(product(*kw_params.values()))
 
-        for transformer_factory in factories:
-            optimized_combinations = self._optimizer.optimize_input_columns(transformer_factory, input_columns_positional_combinations)
+        for factory in factories:
+            optimized_combinations = self._optimizer.optimize_input_columns(factory, input_columns_positional_combinations)
             for column_combination in optimized_combinations:
                 for kw_params_combination in kw_params_positional_combinations:
                     transformer_kwargs = dict(zip(kw_keys, kw_params_combination, strict=True)) | kwargs
-                    transformers.append(transformer_factory(*column_combination, **transformer_kwargs))
+                    transformer = factory(*column_combination, **transformer_kwargs)
+                    valid_input = self._validator.validate_transformer_against_input_columns(transformer, column_combination)
+                    if valid_input:
+                        transformers.append(transformer)
 
         return transformers
