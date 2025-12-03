@@ -166,12 +166,16 @@ class Pipeline:
             optimization_level=self._optimizer.optimization_level,
         )
 
-    def collect(self) -> pl.DataFrame:
+    def collect_plan(self) -> Dataset:
         dataset = self._dataset
         for layer in self._transformers:
             exprs = [transformer.transform() for transformer in layer]
             dataset = dataset.with_columns(new_columns=exprs)
-        return dataset.collect()
+        return dataset
+
+    def collect(self) -> pl.DataFrame:
+        updated_dataset = self.collect_plan()
+        return updated_dataset.collect()
 
     def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer]) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)

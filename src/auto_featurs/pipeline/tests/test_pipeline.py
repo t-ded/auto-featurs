@@ -53,6 +53,20 @@ class TestPipeline:
             }),
         )
 
+    def test_collect_plan(self) -> None:
+        pipeline = Pipeline(dataset=self._simple_dataset)
+        pipeline = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
+
+        res = pipeline.collect_plan()
+
+        assert_frame_equal(
+            res.data,
+            pl.LazyFrame({
+                'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5],
+                'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
+            }),
+        )
+
     def test_pipeline_is_not_changed_inplace(self) -> None:
         pipeline = Pipeline(dataset=self._simple_dataset)
         pipeline_with_polynomial = pipeline.with_polynomial(subset=ColumnType.NUMERIC, degrees=[2])
