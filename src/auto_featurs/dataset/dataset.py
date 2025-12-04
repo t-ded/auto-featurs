@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import polars as pl
 from more_itertools import flatten
 
+from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSelection
 from auto_featurs.base.column_specification import ColumnSet
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -62,6 +63,12 @@ class Dataset:
             if col_spec.name == column_name:
                 return col_spec
         raise KeyError(f'Column "{column_name}" not found in schema.')
+
+    def get_label_column(self) -> ColumnSpecification:
+        for col_spec in self._schema:
+            if col_spec.column_role == ColumnRole.LABEL:
+                return col_spec
+        raise ValueError('No label column found in schema.')
 
     def with_columns(self, new_columns: list[pl.Expr]) -> Dataset:
         return Dataset(self._data.with_columns(*new_columns), self._schema)
