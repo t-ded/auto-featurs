@@ -23,10 +23,16 @@ class ColumnType(Enum):
         return set(cls)
 
 
+class ColumnRole(Enum):
+    LABEL = auto()
+    FEATURE = auto()
+
+
 @dataclass(kw_only=True, frozen=True, slots=True)
 class ColumnSpecification:
     name: str
     column_type: ColumnType
+    column_role: ColumnRole = ColumnRole.FEATURE
 
     @classmethod
     def numeric(cls, name: str) -> ColumnSpecification:
