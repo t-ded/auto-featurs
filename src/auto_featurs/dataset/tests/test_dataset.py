@@ -4,6 +4,7 @@ import pytest
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.dataset.dataset import Dataset
+from auto_featurs.utils.utils import get_names_from_column_specs
 
 
 class TestDataset:
@@ -27,7 +28,7 @@ class TestDataset:
 
     def test_get_columns_of_type(self) -> None:
         cols = self._ds.get_columns_of_type(ColumnType.NUMERIC)
-        assert [c.name for c in cols] == ['a', 'c']
+        assert get_names_from_column_specs(cols) == ['a', 'c']
 
     def test_get_column_by_name(self) -> None:
         col = self._ds.get_column_by_name('b')
@@ -38,23 +39,22 @@ class TestDataset:
             self._ds.get_column_by_name('missing')
 
     def test_get_columns_from_selection_single_name(self) -> None:
-        out = self._ds.get_columns_from_selection('a')
-        assert isinstance(out, list)
-        assert out[0].name == 'a'
+        cols = self._ds.get_columns_from_selection('a')
+        assert get_names_from_column_specs(cols) == ['a']
 
     def test_get_columns_from_selection_type(self) -> None:
-        out = self._ds.get_columns_from_selection(ColumnType.ORDINAL)
-        assert [c.name for c in out] == ['b']
+        cols = self._ds.get_columns_from_selection(ColumnType.ORDINAL)
+        assert get_names_from_column_specs(cols) == ['b']
 
     def test_get_columns_from_selection_sequence(self) -> None:
-        out = self._ds.get_columns_from_selection([ColumnType.NUMERIC, ColumnType.ORDINAL])
-        assert [c.name for c in out] == ['a', 'c', 'b']
+        cols = self._ds.get_columns_from_selection([ColumnType.NUMERIC, ColumnType.ORDINAL])
+        assert get_names_from_column_specs(cols) == ['a', 'c', 'b']
 
     def test_get_combinations_from_selections(self) -> None:
         combos = self._ds.get_combinations_from_selections('a', ColumnType.NUMERIC)
         assert len(combos) == 2
-        assert [c.name for c in combos[0]] == ['a']
-        assert [c.name for c in combos[1]] == ['a', 'c']
+        assert get_names_from_column_specs(combos[0]) == ['a']
+        assert get_names_from_column_specs(combos[1]) == ['a', 'c']
 
     def test_with_columns(self) -> None:
         new = self._ds.with_columns([pl.col('a') + 1])
@@ -70,6 +70,7 @@ class TestDataset:
     def test_with_cached_computation_remains_lazy(self) -> None:
         new = self._ds.with_cached_computation()
         assert isinstance(self._ds.data, pl.LazyFrame)
+        assert isinstance(new.data, pl.LazyFrame)
 
     def test_collect(self) -> None:
         out = self._ds.collect()
