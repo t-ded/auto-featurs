@@ -13,6 +13,7 @@ from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.pipeline import Pipeline
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
 from auto_featurs.transformers.comparison_transformers import Comparisons
+from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
@@ -142,6 +143,7 @@ class TestPipeline:
         )
         pipeline = (
             pipeline
+            .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.DAY_OF_WEEK])
             .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
             .with_arithmetic(
                 left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
@@ -180,6 +182,7 @@ class TestPipeline:
             original_frame=BASIC_FRAME,
             new_frame=res,
             expected_new_columns={
+                'DATE_FEATURE_day_of_week': [6, 7, 1, 2, 3, 4],
                 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],

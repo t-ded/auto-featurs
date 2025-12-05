@@ -25,6 +25,7 @@ from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.comparison_transformers import Comparisons
+from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
@@ -46,6 +47,17 @@ class Pipeline:
         self._transformers: TransformerLayers = transformers or [[]]
         self._optimizer = Optimizer(optimization_level)
         self._validator = Validator()
+
+    def with_seasonal(self, subset: ColumnSelection, operations: Sequence[SeasonalOperation]) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+        transformer_types = [op.value for op in order_preserving_unique(operations)]
+
+        transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
+        )
+
+        return self._with_added_to_current_layer(transformers)
 
     def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
