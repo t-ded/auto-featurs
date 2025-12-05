@@ -165,6 +165,7 @@ class TestPipeline:
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
             .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
+            .with_mode(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']])
             .with_num_unique(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
@@ -248,6 +249,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -1, -2, -3, -2, -1],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM': ['A', 'B', 'C', 'B', 'C', 'B'],
                 'CATEGORICAL_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': ['A', 'B', 'C', 'D', 'C', 'B'],
+                'BOOL_FEATURE_mode': [True, True, True, True, True, True],
+                'BOOL_FEATURE_mode_over_GROUPING_FEATURE_NUM': [True, False, True, False, True, False],
                 'BOOL_FEATURE_num_unique': [2, 2, 2, 2, 2, 2],
                 'BOOL_FEATURE_num_unique_over_GROUPING_FEATURE_NUM': [1, 1, 1, 1, 1, 1],
                 'BOOL_FEATURE_num_unique_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 1, 1],

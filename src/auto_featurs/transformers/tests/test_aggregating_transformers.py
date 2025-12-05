@@ -7,6 +7,7 @@ from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
@@ -81,7 +82,7 @@ class TestFirstValueTransformer:
         assert self._first_value_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE_first_value')
         assert self._first_value_transformer_numeric.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_first_value')
 
-    def test_lagged_transform(self) -> None:
+    def test_first_value_transform(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._first_value_transformer_ordinal.transform(),
             self._first_value_transformer_numeric.transform(),
@@ -97,6 +98,31 @@ class TestFirstValueTransformer:
         )
 
 
+class TestModeTransformer:
+    def setup_method(self) -> None:
+        self._mode_transformer_ordinal = ModeTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
+        self._mode_transformer_bool = ModeTransformer(column=ColumnSpecification.boolean(name='BOOL_FEATURE'))
+
+    def test_name_and_output_type(self) -> None:
+        assert self._mode_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM_mode')
+        assert self._mode_transformer_bool.output_column_specification == ColumnSpecification.boolean(name='BOOL_FEATURE_mode')
+
+    def test_mode_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._mode_transformer_ordinal.transform(),
+            self._mode_transformer_bool.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'GROUPING_FEATURE_NUM_mode': ['ODD', 'ODD', 'ODD', 'ODD', 'ODD', 'ODD'],
+                'BOOL_FEATURE_mode': [True, True, True, True, True, True],
+            },
+        )
+
+
 class TestNumUniqueTransformer:
     def setup_method(self) -> None:
         self._num_unique_transformer_ordinal = NumUniqueTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
@@ -106,7 +132,7 @@ class TestNumUniqueTransformer:
         assert self._num_unique_transformer_ordinal.output_column_specification == ColumnSpecification.numeric(name='GROUPING_FEATURE_NUM_num_unique')
         assert self._num_unique_transformer_numeric.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_num_unique')
 
-    def test_lagged_transform(self) -> None:
+    def test_num_unique_transform(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._num_unique_transformer_ordinal.transform(),
             self._num_unique_transformer_numeric.transform(),

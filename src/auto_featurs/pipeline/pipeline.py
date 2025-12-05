@@ -21,6 +21,7 @@ from auto_featurs.transformers.aggregating_transformers import ArithmeticAggrega
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
+from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.comparison_transformers import Comparisons
@@ -121,6 +122,22 @@ class Pipeline:
             index_column_name=index_column_name,
         )
         return self._with_added_to_current_layer(first_value_transformers)
+
+    def with_mode(
+            self,
+            subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+    ) -> Pipeline:
+        mode_transformers = self._build_aggregated_transformers(
+            subset=subset,
+            transformer_factory=ModeTransformer,
+            over_columns_combinations=over_columns_combinations,
+            time_windows=time_windows,
+            index_column_name=index_column_name,
+        )
+        return self._with_added_to_current_layer(mode_transformers)
 
     def with_num_unique(
             self,

@@ -81,6 +81,27 @@ class FirstValueTransformer(AggregatingTransformer):
         return transform.alias(f'{self._column.name}_first_value')
 
 
+class ModeTransformer(AggregatingTransformer):
+    def __init__(self, column: ColumnSpecification) -> None:
+        self._column = column
+
+    def input_type(self) -> set[ColumnType]:
+        return ColumnType.ANY()
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _return_type(self) -> ColumnType:
+        return self._column.column_type
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column.name).mode().first()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column.name}_mode')
+
+
 class NumUniqueTransformer(AggregatingTransformer):
     def __init__(self, column: ColumnSpecification) -> None:
         self._column = column

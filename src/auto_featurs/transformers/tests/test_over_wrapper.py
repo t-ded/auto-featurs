@@ -6,6 +6,7 @@ from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
@@ -92,6 +93,25 @@ class TestOverWrapper:
             expected_new_columns={
                 'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 1],
                 'NUMERIC_FEATURE_first_value_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 2, 1],
+            },
+        )
+
+    def test_grouped_mode_transform(self) -> None:
+        mode_transformer = ModeTransformer(column=ColumnSpecification.boolean(name='BOOL_FEATURE'))
+        mode_over_grouping_num_transformer = OverWrapper(inner_transformer=mode_transformer, over_columns=self._num_group)
+        mode_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=mode_transformer, over_columns=self._num_cat_group)
+
+        df = BASIC_FRAME.with_columns(
+            mode_over_grouping_num_transformer.transform(),
+            mode_over_grouping_num_cat_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'BOOL_FEATURE_mode_over_GROUPING_FEATURE_NUM': [True, False, True, False, True, False],
+                'BOOL_FEATURE_mode_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [True, False, True, False, True, False],
             },
         )
 

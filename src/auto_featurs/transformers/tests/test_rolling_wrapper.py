@@ -5,6 +5,7 @@ from auto_featurs.transformers.aggregating_transformers import ArithmeticAggrega
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
@@ -41,6 +42,18 @@ class TestRollingWrapper:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns={'NUMERIC_FEATURE_first_value_in_the_last_2d1h': [0, 0, 0, 1, 2, 3]},
+        )
+
+    def test_rolling_mode_transform(self) -> None:
+        mode_transformer = ModeTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_CAT_2'))
+        mode_rolling_transformer = RollingWrapper(inner_transformer=mode_transformer, index_column=self._index_col, time_window=self._time_window)
+
+        df = BASIC_FRAME.with_columns(mode_rolling_transformer.transform())
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={'GROUPING_FEATURE_CAT_2_mode_in_the_last_2d1h': ['CONSONANT', 'VOWEL', 'CONSONANT', 'CONSONANT', 'CONSONANT', 'CONSONANT']},
         )
 
     def test_rolling_num_unique_transform(self) -> None:
