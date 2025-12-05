@@ -9,6 +9,7 @@ from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
+from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
@@ -74,6 +75,7 @@ class TestRollingWrapper:
             (SumTransformer, {'NUMERIC_FEATURE_sum_in_the_last_2d1h': [0, 1, 3, 6, 9, 12]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean_in_the_last_2d1h': [0.0, 0.5, 1.0, 2.0, 3.0, 4.0]}),
             (StdTransformer, {'NUMERIC_FEATURE_std_in_the_last_2d1h': [None, 0.707107, 1.0, 1.0, 1.0, 1.0]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_z_score_in_the_last_2d1h': [None, 0.707107, 1.0, 1.0, 1.0, 1.0]}),
         ],
     )
     def test_rolling_arithmetic_aggregation_transform(self, inner_transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:

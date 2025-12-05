@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -11,6 +12,7 @@ from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
+from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -155,6 +157,7 @@ class TestArithmeticAggregationTransformers:
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_std': [1.870829, 1.870829, 1.870829, 1.870829, 1.870829, 1.870829]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_z_score': [-1.3363059905528512, -0.8017835943317106, -0.2672611981105702, 0.2672611981105702, 0.8017835943317106, 1.3363059905528512]}),
         ],
     )
     def test_basic_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
@@ -168,6 +171,7 @@ class TestArithmeticAggregationTransformers:
             (SumTransformer, {'NUMERIC_FEATURE_cum_sum': [0, 1, 3, 6, 10, 15]}),
             (MeanTransformer, {'NUMERIC_FEATURE_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_cum_z_score': [np.nan, 1.0, 0.8944271819998318, 0.8017835943317106, 0.7302966866804473, 0.6741999067446689]}),
         ],
     )
     def test_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:

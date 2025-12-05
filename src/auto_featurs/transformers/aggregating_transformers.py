@@ -193,7 +193,22 @@ class StdTransformer(ArithmeticAggregationTransformer):
         return 'std'
 
 
+class ZscoreTransformer(ArithmeticAggregationTransformer):
+    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False) -> None:
+        super().__init__(column, cumulative)
+        self._mean_transformer = MeanTransformer(column, cumulative)
+        self._std_transformer = StdTransformer(column, cumulative)
+
+    def _transform(self) -> pl.Expr:
+        return (pl.col(self._column) - self._mean_transformer.transform()) / self._std_transformer.transform()
+
+    @property
+    def _aggregation(self) -> str:
+        return 'z_score'
+
+
 class ArithmeticAggregations(Enum):
     SUM = SumTransformer
     MEAN = MeanTransformer
     STD = StdTransformer
+    ZSCORE = ZscoreTransformer

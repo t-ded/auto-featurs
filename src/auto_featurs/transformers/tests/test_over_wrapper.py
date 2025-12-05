@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -10,6 +11,7 @@ from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
+from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
@@ -144,6 +146,10 @@ class TestOverWrapper:
                 'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
                 'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
             }),
+            (ZscoreTransformer, {
+                'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM': [None, -1.0, -0.707107, 0.0, 0.707107, 1.0],
+                'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, -0.707107, -0.707107, None, 0.707107, 0.707107],
+            }),
         ],
     )
     def test_grouped_arithmetic_aggregation_transform(self, inner_transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
@@ -176,6 +182,10 @@ class TestOverWrapper:
             (StdTransformer, {
                 'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM': [0.0, 0.0, 0.0, 1.0, 1.0, 2.236068],
                 'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 0.0, 0.0, 0.0, 1.0, 2.0],
+            }),
+            (ZscoreTransformer, {
+                'NUMERIC_FEATURE_cum_z_score_over_GROUPING_FEATURE_NUM': [np.nan, np.nan, np.nan, 1.0, 1.0, 0.894427],
+                'NUMERIC_FEATURE_cum_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [np.nan, np.nan, np.nan, np.nan, 1.0, 1.0],
             }),
         ],
     )
