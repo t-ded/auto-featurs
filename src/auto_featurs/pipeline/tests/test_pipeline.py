@@ -169,7 +169,7 @@ class TestPipeline:
             .with_num_unique(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
-                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD],
+                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
         )
@@ -266,5 +266,9 @@ class TestPipeline:
                 'NUMERIC_FEATURE_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM': [None, 2.0, 1.414214, 2.0, 1.414214, 2.0],
                 'NUMERIC_FEATURE_2_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 2.828427, 1.414214, None, 1.414214, 2.828427],
+                'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM': [None, -1.0, -0.707107, 0.0, 0.707107, 1.0],
+                'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, -0.707107, -0.707107, None, 0.707107, 0.707107],
+                'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM': [None, 1.0, 0.707107, 0.0, -0.707107, -1.0],
+                'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 0.707107, 0.707107, None, -0.707107, -0.707107],
             },
         )
