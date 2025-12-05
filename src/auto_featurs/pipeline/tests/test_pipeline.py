@@ -143,7 +143,9 @@ class TestPipeline:
         )
         pipeline = (
             pipeline
+            .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.HOUR_OF_DAY])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.DAY_OF_WEEK])
+            .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.MONTH_OF_YEAR])
             .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
             .with_arithmetic(
                 left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
@@ -182,7 +184,9 @@ class TestPipeline:
             original_frame=BASIC_FRAME,
             new_frame=res,
             expected_new_columns={
+                'DATE_FEATURE_hour_of_day': [0, 0, 0, 0, 0, 0],
                 'DATE_FEATURE_day_of_week': [6, 7, 1, 2, 3, 4],
+                'DATE_FEATURE_month_of_year': [1, 1, 1, 1, 1, 1],
                 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
