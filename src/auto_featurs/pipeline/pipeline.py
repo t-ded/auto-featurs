@@ -11,7 +11,7 @@ import polars as pl
 from auto_featurs.base.column_specification import ColumnSelection
 from auto_featurs.base.column_specification import ColumnSet
 from auto_featurs.base.column_specification import ColumnSpecification
-from auto_featurs.base.column_specification import Schema
+from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
@@ -194,7 +194,8 @@ class Pipeline:
 
     @staticmethod
     def _get_schema_from_transformers(transformers: Sequence[Transformer]) -> Schema:
-        return [transformer.output_column_specification for transformer in transformers]
+        output_columns = [transformer.output_column_specification for transformer in transformers]
+        return Schema(output_columns)
 
     def _build_aggregated_transformers[AT: AggregatingTransformer](
             self,

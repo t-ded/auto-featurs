@@ -3,25 +3,29 @@ import pytest
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.utils.utils import get_names_from_column_specs
 
 
 class TestDataset:
     def setup_method(self) -> None:
-        self._schema = [
+        self._schema = Schema([
             ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='b', column_type=ColumnType.ORDINAL),
             ColumnSpecification(name='c', column_type=ColumnType.NUMERIC),
-        ]
+        ])
         self._df = pl.DataFrame({'a': [1], 'b': ['x'], 'c': [2]})
         self._ds = Dataset(self._df, schema=self._schema)
 
     def test_data_is_lazy(self) -> None:
         assert isinstance(self._ds.data, pl.LazyFrame)
 
+    def test_num_columns(self) -> None:
+        assert self._ds.num_columns == 3
+
     def test_drop_columns_outside_schema(self) -> None:
-        schema = [ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)]
+        schema = Schema([ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)])
         ds2 = Dataset(self._df, schema=schema, drop_columns_outside_schema=True)
         out = ds2.collect()
         assert set(out.columns) == {'a'}
@@ -62,10 +66,10 @@ class TestDataset:
         assert new.schema == self._schema
 
     def test_with_schema(self) -> None:
-        extra = [ColumnSpecification(name='d', column_type=ColumnType.ORDINAL)]
+        extra = Schema([ColumnSpecification(name='d', column_type=ColumnType.ORDINAL)])
         new = self._ds.with_schema(extra)
-        assert len(new.schema) == 4
-        assert new.schema[-1].name == 'd'
+        assert new.num_columns == 4
+        assert new.schema.column_names == ['a', 'b', 'c', 'd']
 
     def test_with_cached_computation_remains_lazy(self) -> None:
         new = self._ds.with_cached_computation()

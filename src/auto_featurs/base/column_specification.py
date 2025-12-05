@@ -7,7 +7,6 @@ from enum import auto
 
 type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
 type ColumnSet = list[ColumnSpecification]
-type Schema = list[ColumnSpecification]
 
 
 class ColumnType(Enum):

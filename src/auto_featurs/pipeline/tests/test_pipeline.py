@@ -7,6 +7,7 @@ from polars.testing import assert_frame_equal
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.pipeline import Pipeline
@@ -21,7 +22,7 @@ from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 class TestPipeline:
     def setup_method(self) -> None:
         df = pl.LazyFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]})
-        self._simple_dataset = Dataset(data=df, schema=[ColumnSpecification.numeric(name='NUMERIC_FEATURE')])
+        self._simple_dataset = Dataset(data=df, schema=Schema([ColumnSpecification.numeric(name='NUMERIC_FEATURE')]))
 
     def test_transformers_from_init(self) -> None:
         pipeline = Pipeline(
@@ -89,10 +90,10 @@ class TestPipeline:
         pipeline = Pipeline(
             dataset=Dataset(
                 data=BASIC_FRAME,
-                schema=[
+                schema=Schema([
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
-                ],
+                ]),
             ),
             optimization_level=optimization_level,
         )
@@ -129,14 +130,14 @@ class TestPipeline:
         pipeline = Pipeline(
             dataset=Dataset(
                 data=BASIC_FRAME,
-                schema=[
+                schema=Schema([
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
                     ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
                     ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
                     ColumnSpecification.datetime(name='DATE_FEATURE'),
                     ColumnSpecification.boolean(name='BOOL_FEATURE'),
-                ],
+                ]),
             ),
         )
         pipeline = (

@@ -6,19 +6,20 @@ import pytest
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.feature_selection.feature_selector import Selector
 
 
 class TestSelector:
     def setup_method(self) -> None:
-        schema = [
+        schema = Schema([
             ColumnSpecification(name='x1', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x2', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x3', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x4', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='y', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
-        ]
+        ])
         df = pl.DataFrame({
             'x1': [0, 0, 0, 0],
             'x2': [10, 9, 8, 7],

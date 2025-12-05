@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from enum import IntEnum
 
 from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.schema import Schema
 from auto_featurs.transformers.base import Transformer
 
 
@@ -21,9 +22,9 @@ class Optimizer:
         return self._optimization_level
 
     @staticmethod
-    def deduplicate_transformers_against_layers(present_columns: Iterable[ColumnSpecification], current_layer_additions: Iterable[Transformer]) -> list[Transformer]:
+    def deduplicate_transformers_against_layers(present_schema: Schema, current_layer_additions: Iterable[Transformer]) -> list[Transformer]:
         deduplicated_current_layer_additions: list[Transformer] = []
-        already_present_columns = set(present_columns)
+        already_present_columns = set(present_schema.columns)
 
         for transformer in current_layer_additions:
             col_spec = transformer.output_column_specification

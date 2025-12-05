@@ -4,6 +4,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.schema import Schema
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
 from auto_featurs.transformers.base import Transformer
@@ -68,20 +69,20 @@ class TestOptimizer:
         return [get_names_from_column_specs(combination) for combination in col_combinations]
 
     def test_deduplicates_transformers_within_layer(self) -> None:
-        present_columns: list[ColumnSpecification] = []
+        present_schema = Schema([])
         mock_1 = MockCommutativeTransformer('a', 'b')
         mock_2 = MockCommutativeTransformer('a', 'b')
         current_layer_additions = [mock_1, mock_2]
 
-        assert self._zero_level_optimizer.deduplicate_transformers_against_layers(present_columns, current_layer_additions) == [mock_1]
+        assert self._zero_level_optimizer.deduplicate_transformers_against_layers(present_schema, current_layer_additions) == [mock_1]
 
     def test_deduplicates_transformers_across_layers(self) -> None:
-        present_columns: list[ColumnSpecification] = [ColumnSpecification.numeric(name='a_commutative_mock_b')]
+        present_schema = Schema([ColumnSpecification.numeric(name='a_commutative_mock_b')])
         mock_1 = MockCommutativeTransformer('a', 'b')
         mock_2 = MockNonCommutativeTransformer('a', 'b')
         current_layer_additions = [mock_1, mock_2]
 
-        assert self._zero_level_optimizer.deduplicate_transformers_against_layers(present_columns, current_layer_additions) == [mock_2]
+        assert self._zero_level_optimizer.deduplicate_transformers_against_layers(present_schema, current_layer_additions) == [mock_2]
 
     def test_zero_level_optimize_input_columns(self) -> None:
         commutative_optimized = self._flatten_to_names(self._zero_level_optimizer.optimize_input_columns(MockCommutativeTransformer, self._input_columns))
