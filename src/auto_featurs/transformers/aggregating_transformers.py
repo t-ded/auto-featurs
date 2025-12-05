@@ -1,4 +1,5 @@
 from abc import ABC
+from abc import abstractmethod
 from enum import Enum
 from typing import Optional
 
@@ -138,6 +139,15 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        operation = f'cum_{self._aggregation}' if self._cumulative else self._aggregation
+        return transform.alias(f'{self._column}_{operation}')
+
+    @property
+    @abstractmethod
+    def _aggregation(self) -> str:
+        raise NotImplementedError
+
 
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
@@ -145,9 +155,9 @@ class SumTransformer(ArithmeticAggregationTransformer):
             return pl.col(self._column).cum_sum()
         return pl.col(self._column).sum()
 
-    def _name(self, transform: pl.Expr) -> pl.Expr:
-        operation = 'cum_sum' if self._cumulative else 'sum'
-        return transform.alias(f'{self._column}_{operation}')
+    @property
+    def _aggregation(self) -> str:
+        return 'sum'
 
 
 class MeanTransformer(ArithmeticAggregationTransformer):
@@ -159,9 +169,9 @@ class MeanTransformer(ArithmeticAggregationTransformer):
             return cum_sum.truediv(cum_count)
         return col.mean()
 
-    def _name(self, transform: pl.Expr) -> pl.Expr:
-        operation = 'cum_mean' if self._cumulative else 'mean'
-        return transform.alias(f'{self._column}_{operation}')
+    @property
+    def _aggregation(self) -> str:
+        return 'mean'
 
 
 class StdTransformer(ArithmeticAggregationTransformer):
@@ -178,9 +188,9 @@ class StdTransformer(ArithmeticAggregationTransformer):
             return cum_sum_squared_mean_diff.sqrt()
         return col.std()
 
-    def _name(self, transform: pl.Expr) -> pl.Expr:
-        operation = 'cum_std' if self._cumulative else 'std'
-        return transform.alias(f'{self._column}_{operation}')
+    @property
+    def _aggregation(self) -> str:
+        return 'std'
 
 
 class ArithmeticAggregations(Enum):
