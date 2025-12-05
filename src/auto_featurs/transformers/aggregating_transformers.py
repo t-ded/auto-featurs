@@ -96,7 +96,7 @@ class ModeTransformer(AggregatingTransformer):
         return self._column.column_type
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).mode().first()
+        return pl.col(self._column.name).mode().sort(descending=True).first()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.alias(f'{self._column.name}_mode')
