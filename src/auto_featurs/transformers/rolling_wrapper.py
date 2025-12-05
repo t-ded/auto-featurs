@@ -30,7 +30,7 @@ class RollingWrapper[AT: AggregatingTransformer](AggregatingTransformer):
 
     def _transform(self) -> pl.Expr:
         agg_expr = self._inner_transformer.transform()
-        return agg_expr.rolling(index_column=self._index_column.name, period=self._time_window)
+        return agg_expr.last().rolling(index_column=self._index_column.name, period=self._time_window)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         time_window = format_timedelta(self._time_window) if isinstance(self._time_window, timedelta) else self._time_window
