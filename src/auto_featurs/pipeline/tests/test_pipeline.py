@@ -166,6 +166,7 @@ class TestPipeline:
                 time_windows=['2d', timedelta(days=2, hours=1)],
                 index_column_name='DATE_FEATURE',
             )
+            .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], filtering_condition=pl.col('BOOL_FEATURE'))
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
             .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
@@ -237,6 +238,7 @@ class TestPipeline:
                 'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
                 'count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
                 'count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
+                'count_where_BOOL_FEATURE_over_GROUPING_FEATURE_NUM': [1, 0, 2, 0, 2, 0],
                 'NUMERIC_FEATURE_lagged_1': [0, 0, 1, 2, 3, 4],
                 'NUMERIC_FEATURE_2_lagged_1': [0, 0, -1, -2, -3, -4],
                 'NUMERIC_FEATURE_lagged_1_over_GROUPING_FEATURE_NUM': [0, 0, 0, 1, 2, 3],

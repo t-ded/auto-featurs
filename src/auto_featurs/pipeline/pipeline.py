@@ -98,6 +98,7 @@ class Pipeline:
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: bool = False,
+            filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         aggregating_transformers = self._build_aggregated_transformers(
             subset=None,
@@ -106,6 +107,7 @@ class Pipeline:
             time_windows=time_windows,
             index_column_name=index_column_name,
             cumulative=cumulative,
+            filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(aggregating_transformers)
 
@@ -125,6 +127,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
+            filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         first_value_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -132,6 +135,7 @@ class Pipeline:
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
             index_column_name=index_column_name,
+            filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(first_value_transformers)
 
@@ -141,6 +145,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
+            filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         mode_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -148,6 +153,7 @@ class Pipeline:
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
             index_column_name=index_column_name,
+            filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(mode_transformers)
 
@@ -157,6 +163,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
+            filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         num_unique_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -164,6 +171,7 @@ class Pipeline:
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
             index_column_name=index_column_name,
+            filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(num_unique_transformers)
 
@@ -175,6 +183,7 @@ class Pipeline:
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: bool = False,
+            filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]
         arithmetic_aggregation_transformers = self._build_aggregated_transformers(
@@ -184,6 +193,7 @@ class Pipeline:
             time_windows=time_windows,
             index_column_name=index_column_name,
             cumulative=cumulative,
+            filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(arithmetic_aggregation_transformers)
 
