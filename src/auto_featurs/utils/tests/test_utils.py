@@ -1,10 +1,33 @@
 from datetime import timedelta
 
+import polars as pl
+
 from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.utils.utils import default_true_filtering_condition
+from auto_featurs.utils.utils import filtering_condition_to_string
 from auto_featurs.utils.utils import format_timedelta
 from auto_featurs.utils.utils import get_names_from_column_specs
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
+
+
+def test_default_true_filtering_condition() -> None:
+    assert default_true_filtering_condition(None).meta.eq(pl.lit(True))
+    assert default_true_filtering_condition(pl.lit(False)).meta.eq(pl.lit(False))
+
+
+def test_filtering_condition_to_string() -> None:
+    assert filtering_condition_to_string(pl.lit(True)) == ''
+    assert filtering_condition_to_string(
+        (
+                (pl.col('a') > 10) &
+                (pl.col('b') == 'foo') &
+                (
+                        (pl.col('c') == 100) |
+                        (pl.col('d') == 200)
+                )
+        ).alias('complicated_filter'),
+    ) == '_where_complicated_filter'
 
 
 def test_order_preserving_unique() -> None:

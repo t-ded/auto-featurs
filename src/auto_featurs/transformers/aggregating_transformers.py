@@ -9,6 +9,8 @@ from polars._typing import IntoExpr
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.transformers.base import Transformer
+from auto_featurs.utils.utils import default_true_filtering_condition
+from auto_featurs.utils.utils import filtering_condition_to_string
 
 
 class AggregatingTransformer(Transformer, ABC):
@@ -16,8 +18,9 @@ class AggregatingTransformer(Transformer, ABC):
 
 
 class CountTransformer(AggregatingTransformer):
-    def __init__(self, cumulative: bool = False) -> None:
+    def __init__(self, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._cumulative = cumulative
+        self._filtering_condition = filtering_condition
 
     def input_type(self) -> set[ColumnType]:
         return set()
@@ -30,12 +33,21 @@ class CountTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        if self._cumulative:
-            return pl.int_range(1, pl.len() + 1)
-        return pl.len()
+        if self._filtering_condition is not None:
+            if self._cumulative:
+                return self._filtering_condition.cum_sum()
+            else:
+                return self._filtering_condition.sum()
+        else:
+            if self._cumulative:
+                return pl.int_range(1, pl.len() + 1)
+            else:
+                return pl.len()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias('cum_count' if self._cumulative else 'count')
+        count_name = 'cum_count' if self._cumulative else 'count'
+        condition_name = filtering_condition_to_string(self._filtering_condition) if self._filtering_condition is not None else ''
+        return transform.alias(count_name + condition_name)
 
 
 class LaggedTransformer(AggregatingTransformer):
@@ -62,8 +74,9 @@ class LaggedTransformer(AggregatingTransformer):
 
 
 class FirstValueTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification) -> None:
+    def __init__(self, column: ColumnSpecification, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
         return ColumnType.ANY()
@@ -76,15 +89,16 @@ class FirstValueTransformer(AggregatingTransformer):
         return self._column.column_type
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).first()
+        return pl.col(self._column.name).filter(self._filtering_condition).first()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column.name}_first_value')
+        return transform.alias(f'{self._column.name}_first_value' + filtering_condition_to_string(self._filtering_condition))
 
 
 class ModeTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification) -> None:
+    def __init__(self, column: ColumnSpecification, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
         return ColumnType.ANY()
@@ -97,15 +111,16 @@ class ModeTransformer(AggregatingTransformer):
         return self._column.column_type
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).mode().sort(descending=True).first()
+        return pl.col(self._column.name).filter(self._filtering_condition).mode().sort(descending=True).first()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column.name}_mode')
+        return transform.alias(f'{self._column.name}_mode' + filtering_condition_to_string(self._filtering_condition))
 
 
 class NumUniqueTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification) -> None:
+    def __init__(self, column: ColumnSpecification, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
         return ColumnType.ANY()
@@ -118,16 +133,17 @@ class NumUniqueTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).n_unique()
+        return pl.col(self._column.name).filter(self._filtering_condition).n_unique()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column.name}_num_unique')
+        return transform.alias(f'{self._column.name}_num_unique' + filtering_condition_to_string(self._filtering_condition))
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
-    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False) -> None:
+    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column if isinstance(column, str) else column.name
         self._cumulative = cumulative
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
         return {ColumnType.NUMERIC}
@@ -141,7 +157,7 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         operation = f'cum_{self._aggregation}' if self._cumulative else self._aggregation
-        return transform.alias(f'{self._column}_{operation}')
+        return transform.alias(f'{self._column}_{operation}' + filtering_condition_to_string(self._filtering_condition))
 
     @property
     @abstractmethod
@@ -151,9 +167,10 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
 
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
+        col = pl.col(self._column).filter(self._filtering_condition)
         if self._cumulative:
-            return pl.col(self._column).cum_sum()
-        return pl.col(self._column).sum()
+            return col.cum_sum()
+        return col.sum()
 
     @property
     def _aggregation(self) -> str:
@@ -162,7 +179,7 @@ class SumTransformer(ArithmeticAggregationTransformer):
 
 class MeanTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
-        col = pl.col(self._column)
+        col = pl.col(self._column).filter(self._filtering_condition)
         if self._cumulative:
             cum_sum = col.cum_sum()
             cum_count = col.cum_count()
@@ -176,7 +193,7 @@ class MeanTransformer(ArithmeticAggregationTransformer):
 
 class StdTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
-        col = pl.col(self._column)
+        col = pl.col(self._column).filter(self._filtering_condition)
         if self._cumulative:
             cum_sum = col.cum_sum()
             cum_count = col.cum_count()
@@ -194,10 +211,10 @@ class StdTransformer(ArithmeticAggregationTransformer):
 
 
 class ZscoreTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False) -> None:
-        super().__init__(column, cumulative)
-        self._mean_transformer = MeanTransformer(column, cumulative)
-        self._std_transformer = StdTransformer(column, cumulative)
+    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
+        super().__init__(column, cumulative, filtering_condition)
+        self._mean_transformer = MeanTransformer(column, cumulative, filtering_condition)
+        self._std_transformer = StdTransformer(column, cumulative, filtering_condition)
 
     def _transform(self) -> pl.Expr:
         return (pl.col(self._column) - self._mean_transformer.transform()) / self._std_transformer.transform()

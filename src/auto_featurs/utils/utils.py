@@ -3,12 +3,27 @@ from collections.abc import Sequence
 from datetime import timedelta
 from typing import Optional
 
+import polars as pl
+
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.utils.constants import SECONDS_IN_DAY
 from auto_featurs.utils.constants import SECONDS_IN_HOUR
 from auto_featurs.utils.constants import SECONDS_IN_MINUTE
 from auto_featurs.utils.constants import SECONDS_IN_MONTH
 from auto_featurs.utils.constants import SECONDS_IN_YEAR
+
+
+LIT_TRUE = pl.lit(True)
+
+
+def default_true_filtering_condition(filtering_condition: Optional[pl.Expr]) -> pl.Expr:
+    return filtering_condition if filtering_condition is not None else LIT_TRUE
+
+
+def filtering_condition_to_string(filtering_condition: pl.Expr) -> str:
+    if filtering_condition.meta.eq(LIT_TRUE):
+        return ''
+    return f'_where_{filtering_condition.meta.output_name()}'
 
 
 def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
