@@ -52,6 +52,10 @@ class Selector:
 
         return to_select
 
+    @staticmethod
+    def _point_correlation(feature_col_names: list[str], label_col_name: str) -> pl.Expr:
+        return pl.corr(cs.by_name(feature_col_names), label_col_name).fill_nan(0.0).abs()
+
     def select_by_ttest(self, dataset: Dataset, feature_subset: ColumnSelection, top_k: Optional[int] = None, frac: Optional[float] = None) -> list[str]:
         label_col = dataset.get_label_column()
         label_col_name = label_col.name
@@ -65,10 +69,9 @@ class Selector:
 
         to_select: list[str] = (
             t_stats
-            .unpivot(variable_name='feature_col', value_name='abs_t_stat')
-            .sort(['abs_t_stat', 'feature_col'], descending=[True, False])
+            .sort(['T_STAT', 'FEATURE_NAME'], descending=[True, False])
             .head(num_to_select)
-            .select('feature_col')
+            .select('FEATURE_NAME')
             .collect()
             .to_series()
             .to_list()
@@ -76,7 +79,6 @@ class Selector:
 
         return to_select
 
-    # TODO: Finish this
     @staticmethod
     def _ttest_stat_expr(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.LazyFrame:
         stats = (
@@ -88,20 +90,40 @@ class Selector:
                 cs.by_name(feature_col_names).var().name.suffix('_var'),
                 pl.len().alias('count'),
             )
+            .with_columns(pl.col(label_col_name).cast(pl.Boolean))
         )
 
-        # t_expr = (
-        #         (mu1 - mu0).abs()
-        #         /
-        #         ((v1 / n1) + (v0 / n0)).sqrt()
-        # ).alias(col)
+        counts = stats.select(label_col_name, 'count').collect()
+        true_count: int = counts.filter(pl.col(label_col_name) == True)['count'].item()
+        false_count: int = counts.filter(pl.col(label_col_name) == False)['count'].item()
 
-        return stats
+        t_stats = (
+            stats
+            .drop('count')
+            .unpivot(index=label_col_name, variable_name='FEATURE_STAT', value_name='VALUE')
+            .select(
+                pl.col('FEATURE_STAT').str.split('_').list.get(0).alias('FEATURE_NAME'),
+                label_col_name,
+                pl.col('FEATURE_STAT').str.split('_').list.get(1).alias('STAT'),
+                'VALUE',
+            )
+            .with_columns(
+                (pl.col(label_col_name).cast(pl.Utf8).str.to_uppercase() + pl.lit('_') + pl.col('STAT').str.to_uppercase()).alias('pivot_col')
+            )
+            .pivot(on='pivot_col', on_columns=['TRUE_MEAN', 'FALSE_MEAN', 'TRUE_VAR', 'FALSE_VAR'], index='FEATURE_NAME', values='VALUE')
+            .with_columns(
+                pl.col('TRUE_MEAN').sub(pl.col('FALSE_MEAN')).abs().alias('MEAN_DIFF'),
+                pl.col('TRUE_VAR').truediv(true_count).alias('NORMALIZED_TRUE_VAR'),
+                pl.col('FALSE_VAR').truediv(false_count).alias('NORMALIZED_FALSE_VAR'),
+            )
+            .with_columns(pl.col('NORMALIZED_TRUE_VAR').add(pl.col('NORMALIZED_FALSE_VAR')).sqrt().alias('DENOMINATOR'))
+            .select(
+                'FEATURE_NAME',
+                pl.col('MEAN_DIFF').truediv(pl.col('DENOMINATOR')).fill_nan(0.0).alias('T_STAT'),
+            )
+        )
 
-
-    @staticmethod
-    def _point_correlation(feature_col_names: list[str], label_col_name: str) -> pl.Expr:
-        return pl.corr(cs.by_name(feature_col_names), label_col_name).fill_nan(0.0).abs()
+        return t_stats
 
     @staticmethod
     def _check_valid_types(feature_cols: list[ColumnSpecification], label_col: ColumnSpecification, operation: SelectionMethod) -> None:

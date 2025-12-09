@@ -48,7 +48,7 @@ class TestSelector:
 
     @pytest.mark.parametrize('feature', ['z1', 'z2'])
     def test_select_by_correlation_invalid_feature_type(self, feature: str) -> None:
-        with pytest.raises(ValueError, match='Correlation can only be computed for numeric, boolean, ordinal columns'):
+        with pytest.raises(ValueError, match=f'Correlation can only be computed for numeric, boolean, ordinal columns, but {feature} is of type ColumnType..'):
             self._selector.select_by_correlation(dataset=self._ds, feature_subset=feature, top_k=1)
 
     def test_select_by_correlation_invalid_label_type(self) -> None:
@@ -70,4 +70,42 @@ class TestSelector:
 
     def test_select_by_correlation_frac(self) -> None:
         out = self._selector.select_by_correlation(self._ds, ColumnType.NUMERIC, frac=0.5)
+        assert out == ['x3', 'x2']
+
+    @pytest.mark.parametrize(
+        ('k', 'frac', 'expected_msg'),
+        [
+            (None, None, 'Exactly one of k or frac must be specified'),
+            (0, None, 'k must be at least 1 but 0 was given.'),
+            (None, 2.0, 'frac must be between 0 and 1 but 2.0 was given.'),
+        ],
+    )
+    def test_select_by_ttest_invalid_num_to_select(self, k: Optional[int], frac: Optional[float], expected_msg: str) -> None:
+        with pytest.raises(ValueError, match=expected_msg):
+            self._selector.select_by_ttest(dataset=self._ds, feature_subset='x1', top_k=k, frac=frac)
+
+    @pytest.mark.parametrize('feature', ['z1', 'z2'])
+    def test_select_by_ttest_invalid_feature_type(self, feature: str) -> None:
+        with pytest.raises(ValueError, match=f'T-Test can only be computed for numeric, boolean, ordinal columns, but {feature} is of type ColumnType..'):
+            self._selector.select_by_ttest(dataset=self._ds, feature_subset=feature, top_k=1)
+
+    def test_select_by_ttest_invalid_label_type(self) -> None:
+        ds = Dataset(
+            data=pl.DataFrame({'a': [1, 2], 'label': [1, 2]}),
+            schema=Schema(
+                [
+                    ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
+                    ColumnSpecification(name='label', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
+                ],
+            ),
+        )
+        with pytest.raises(ValueError, match='T-Test can only be computed with label column of type boolean'):
+            self._selector.select_by_ttest(dataset=ds, feature_subset='a', top_k=1)
+
+    def test_select_by_ttest_top_k(self) -> None:
+        out = self._selector.select_by_ttest(self._ds, ColumnType.NUMERIC, top_k=1)
+        assert out == ['x3']
+
+    def test_select_by_ttest_frac(self) -> None:
+        out = self._selector.select_by_ttest(self._ds, ColumnType.NUMERIC, frac=0.5)
         assert out == ['x3', 'x2']
