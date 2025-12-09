@@ -13,14 +13,17 @@ from auto_featurs.utils.utils import get_names_from_column_specs
 
 class SelectionMethod(Enum):
     CORRELATION = 'Correlation'
+    T_TEST = 'T-Test'
 
 
 SUPPORTED_COLUMN_TYPES = {
     SelectionMethod.CORRELATION: [ColumnType.NUMERIC, ColumnType.BOOLEAN, ColumnType.ORDINAL],
+    SelectionMethod.T_TEST: [ColumnType.NUMERIC, ColumnType.BOOLEAN, ColumnType.ORDINAL],
 }
 
 SUPPORTED_LABEL_COLUMN_TYPES = {
     SelectionMethod.CORRELATION: [ColumnType.NUMERIC, ColumnType.BOOLEAN],
+    SelectionMethod.T_TEST: [ColumnType.BOOLEAN],
 }
 
 
@@ -48,6 +51,53 @@ class Selector:
         )
 
         return to_select
+
+    def select_by_ttest(self, dataset: Dataset, feature_subset: ColumnSelection, top_k: Optional[int] = None, frac: Optional[float] = None) -> list[str]:
+        label_col = dataset.get_label_column()
+        label_col_name = label_col.name
+
+        feature_cols = dataset.get_columns_from_selection(feature_subset)
+        self._check_valid_types(feature_cols, label_col, SelectionMethod.T_TEST)
+        feature_col_names = get_names_from_column_specs(feature_cols)
+        num_to_select = self._get_num_to_select(top_k=top_k, frac=frac, num_cols=len(feature_col_names))
+
+        t_stats = self._ttest_stat_expr(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
+
+        to_select: list[str] = (
+            t_stats
+            .unpivot(variable_name='feature_col', value_name='abs_t_stat')
+            .sort(['abs_t_stat', 'feature_col'], descending=[True, False])
+            .head(num_to_select)
+            .select('feature_col')
+            .collect()
+            .to_series()
+            .to_list()
+        )
+
+        return to_select
+
+    # TODO: Finish this
+    @staticmethod
+    def _ttest_stat_expr(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.LazyFrame:
+        stats = (
+            df
+            .lazy()
+            .group_by(label_col_name)
+            .agg(
+                cs.by_name(feature_col_names).mean().name.suffix('_mean'),
+                cs.by_name(feature_col_names).var().name.suffix('_var'),
+                pl.len().alias('count'),
+            )
+        )
+
+        # t_expr = (
+        #         (mu1 - mu0).abs()
+        #         /
+        #         ((v1 / n1) + (v0 / n0)).sqrt()
+        # ).alias(col)
+
+        return stats
+
 
     @staticmethod
     def _point_correlation(feature_col_names: list[str], label_col_name: str) -> pl.Expr:
