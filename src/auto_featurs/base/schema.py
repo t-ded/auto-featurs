@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Optional
 
 from more_itertools import flatten
 
@@ -21,6 +22,20 @@ class Schema:
         if not isinstance(other, Schema):
             raise TypeError(f'Cannot add {type(other)} to Schema')
         return Schema(self._columns + other.columns)
+
+    @classmethod
+    def from_dict(cls, spec: dict[ColumnType, list[str]], *, label_col: Optional[str] = None) -> Schema:
+        columns: list[ColumnSpecification] = []
+
+        for col_type, names in spec.items():
+            for name in names:
+                role = ColumnRole.LABEL if name == label_col else ColumnRole.FEATURE
+                columns.append(ColumnSpecification(name=name, column_type=col_type, column_role=role))
+
+        if label_col is not None and all(col.name != label_col for col in columns):
+            raise ValueError(f'label_col={label_col!r} not found in provided columns')
+
+        return cls(columns)
 
     @property
     def columns(self) -> list[ColumnSpecification]:

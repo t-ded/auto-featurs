@@ -1,3 +1,5 @@
+import pytest
+
 from auto_featurs.base.schema import ColumnRole
 from auto_featurs.base.schema import ColumnSpecification
 from auto_featurs.base.schema import ColumnType
@@ -32,6 +34,26 @@ class TestSchema:
             ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
             ColumnSpecification(name='c', column_type=ColumnType.NUMERIC),
         ]
+
+    def test_from_dict(self) -> None:
+        spec = {
+            ColumnType.NUMERIC: ['age', 'income'],
+            ColumnType.ORDINAL: ['education_level'],
+        }
+
+        schema = Schema.from_dict(spec, label_col='income')
+
+        assert schema.columns == [
+            ColumnSpecification(name='age', column_type=ColumnType.NUMERIC, column_role=ColumnRole.FEATURE),
+            ColumnSpecification(name='income', column_type=ColumnType.NUMERIC, column_role=ColumnRole.LABEL),
+            ColumnSpecification(name='education_level', column_type=ColumnType.ORDINAL, column_role=ColumnRole.FEATURE),
+        ]
+
+    def test_from_dict_missing_label(self) -> None:
+        spec = {ColumnType.NUMERIC: ['age', 'income']}
+
+        with pytest.raises(ValueError, match="label_col='not-present' not found in provided columns"):
+            Schema.from_dict(spec, label_col='not-present')
 
     def test_column_names(self) -> None:
         assert self._schema.column_names == ['a', 'b']
