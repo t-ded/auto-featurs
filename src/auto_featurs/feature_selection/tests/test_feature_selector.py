@@ -20,7 +20,7 @@ class TestSelector:
             ColumnSpecification(name='x4', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='z1', column_type=ColumnType.NOMINAL),
             ColumnSpecification(name='z2', column_type=ColumnType.TEXT),
-            ColumnSpecification(name='y', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
+            ColumnSpecification(name='y', column_type=ColumnType.BOOLEAN, column_role=ColumnRole.LABEL),
         ])
         df = pl.DataFrame({
             'x1': [0, 0, 0, 0],
@@ -50,6 +50,19 @@ class TestSelector:
     def test_select_by_correlation_invalid_feature_type(self, feature: str) -> None:
         with pytest.raises(ValueError, match='Correlation can only be computed for numeric, boolean, ordinal columns'):
             self._selector.select_by_correlation(dataset=self._ds, feature_subset=feature, top_k=1)
+
+    def test_select_by_correlation_invalid_label_type(self) -> None:
+        ds = Dataset(
+            data=pl.DataFrame({'a': [1, 2], 'label': ['hello', 'world']}),
+            schema=Schema(
+                [
+                    ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
+                    ColumnSpecification(name='label', column_type=ColumnType.TEXT, column_role=ColumnRole.LABEL),
+                ],
+            ),
+        )
+        with pytest.raises(ValueError, match='Correlation can only be computed with label column of type numeric, boolean'):
+            self._selector.select_by_correlation(dataset=ds, feature_subset='a', top_k=1)
 
     def test_select_by_correlation_top_k(self) -> None:
         out = self._selector.select_by_correlation(self._ds, ColumnType.NUMERIC, top_k=1)
