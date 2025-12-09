@@ -10,12 +10,12 @@ type ColumnSet = list[ColumnSpecification]
 
 
 class ColumnType(Enum):
-    NUMERIC = auto()
-    BOOLEAN = auto()
-    NOMINAL = auto()
-    ORDINAL = auto()
-    TEXT = auto()
-    DATETIME = auto()
+    NUMERIC = 'numeric'
+    BOOLEAN = 'boolean'
+    NOMINAL = 'nominal'
+    ORDINAL = 'ordinal'
+    TEXT = 'text'
+    DATETIME = 'datetime'
 
     @classmethod
     def ANY(cls) -> set[ColumnType]:  # noqa: N802

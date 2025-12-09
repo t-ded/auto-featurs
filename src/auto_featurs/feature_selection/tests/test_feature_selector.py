@@ -18,6 +18,8 @@ class TestSelector:
             ColumnSpecification(name='x2', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x3', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x4', column_type=ColumnType.NUMERIC),
+            ColumnSpecification(name='z1', column_type=ColumnType.NOMINAL),
+            ColumnSpecification(name='z2', column_type=ColumnType.TEXT),
             ColumnSpecification(name='y', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
         ])
         df = pl.DataFrame({
@@ -25,6 +27,8 @@ class TestSelector:
             'x2': [10, 9, 8, 7],
             'x3': [0, 1, 0, 1],
             'x4': [2, 4, 6, 8],
+            'z1': ['a', 'b', 'c', 'd'],
+            'z2': ['hello', 'world', 'foo', 'bar'],
             'y': [0, 1, 0, 1],
         })
         self._ds = Dataset(df, schema=schema)
@@ -38,9 +42,14 @@ class TestSelector:
             (None, 2.0, 'frac must be between 0 and 1 but 2.0 was given.'),
         ],
     )
-    def test_get_num_to_select_invalid(self, k: Optional[int], frac: Optional[float], expected_msg: str) -> None:
+    def test_select_by_correlation_invalid_num_to_select(self, k: Optional[int], frac: Optional[float], expected_msg: str) -> None:
         with pytest.raises(ValueError, match=expected_msg):
             self._selector.select_by_correlation(dataset=self._ds, feature_subset='x1', top_k=k, frac=frac)
+
+    @pytest.mark.parametrize('feature', ['z1', 'z2'])
+    def test_select_by_correlation_invalid_feature_type(self, feature: str) -> None:
+        with pytest.raises(ValueError, match='Correlation can only be computed for numeric, boolean, ordinal columns'):
+            self._selector.select_by_correlation(dataset=self._ds, feature_subset=feature, top_k=1)
 
     def test_select_by_correlation_top_k(self) -> None:
         out = self._selector.select_by_correlation(self._ds, ColumnType.NUMERIC, top_k=1)
