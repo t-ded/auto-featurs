@@ -162,7 +162,7 @@ class TestPipeline:
             .with_count(over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], cumulative=True)
             .with_count(
-                # over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],  # TODO: Uncomment this with new polars release (allowing window expressions in aggregation)
+                over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],
                 time_windows=['2d', timedelta(days=2, hours=1)],
                 index_column_name='DATE_FEATURE',
             )
@@ -238,6 +238,8 @@ class TestPipeline:
                 'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
                 'count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
                 'count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
+                'count_over_GROUPING_FEATURE_NUM_in_the_last_2d': [1, 1, 1, 1, 1, 1],
+                'count_over_GROUPING_FEATURE_NUM_in_the_last_2d1h': [1, 1, 1, 2, 2, 2],
                 'count_where_BOOL_FEATURE_over_GROUPING_FEATURE_NUM': [1, 0, 2, 0, 2, 0],
                 'NUMERIC_FEATURE_lagged_1': [0, 0, 1, 2, 3, 4],
                 'NUMERIC_FEATURE_2_lagged_1': [0, 0, -1, -2, -3, -4],

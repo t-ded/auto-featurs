@@ -133,10 +133,6 @@ class NumUniqueTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        # TODO: Go back to the simple one-liner with always filtering when the Polars bug with Boolean.filter(pl.lit(True)).n_unique().over() is fixed
-        # Issue: https://github.com/pola-rs/polars/issues/25665
-        if self._filtering_condition.meta.eq(pl.lit(True)):
-            return pl.col(self._column.name).n_unique()
         return pl.col(self._column.name).filter(self._filtering_condition).n_unique()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:

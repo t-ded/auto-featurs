@@ -90,7 +90,6 @@ class TestRollingWrapper:
             expected_new_columns=expected_new_columns,
         )
 
-    @pytest.mark.skip(reason='Waiting for Polars to support nested window + aggregation expressions (next release)')
     def test_rolling_combined_with_over(self) -> None:
         first_value_transformer = FirstValueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
         first_value_over_transformer = OverWrapper(inner_transformer=first_value_transformer, over_columns=['GROUPING_FEATURE_NUM'])
