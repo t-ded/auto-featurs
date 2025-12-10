@@ -9,12 +9,10 @@ dependencies = [
     "marimo>=0.17.7",
     "matplotlib>=3.10.7",
     "more-itertools>=10.8.0",
-    "mypy>=1.18.2",
     "numpy>=2.3.4",
     "plotly>=6.4.0",
-    "polars>=1.35.2",
-    "pytest>=9.0.1",
-    "ruff>=0.14.4",
+    "polars==1.36.0",
+    "polars-ds>=0.10.3",
 ]
 
 [tool.mypy]
@@ -80,4 +78,11 @@ force-single-line = true
 
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["S101"]  # allow asserts in tests
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "pytest>=9.0.2",
+    "ruff>=0.14.8",
+]
 # "examples/" = ["F401"]  # ignore unused imports in jupyter notebook templates
