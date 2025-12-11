@@ -27,7 +27,7 @@ SUPPORTED_LABEL_COLUMN_TYPES = {
 }
 
 
-class Selector:
+class FeatureSelector:
     def select_by_correlation(self, dataset: Dataset, feature_subset: ColumnSelection, top_k: Optional[int] = None, frac: Optional[float] = None) -> list[str]:
         label_col = dataset.get_label_column()
         label_col_name = label_col.name

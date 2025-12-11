@@ -8,7 +8,7 @@ from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
-from auto_featurs.feature_selection.feature_selector import Selector
+from auto_featurs.feature_selection.feature_selector import FeatureSelector
 
 
 class TestSelector:
@@ -32,7 +32,7 @@ class TestSelector:
             'y': [0, 1, 0, 1],
         })
         self._ds = Dataset(df, schema=schema)
-        self._selector = Selector()
+        self._selector = FeatureSelector()
 
     @pytest.mark.parametrize(
         ('k', 'frac', 'expected_msg'),
