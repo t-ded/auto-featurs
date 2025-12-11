@@ -30,6 +30,14 @@ class ColumnType(Enum):
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnType')
 
+    def __or__(self, other: object) -> ColumnTypeSelector:
+        if isinstance(other, ColumnType):
+            return ColumnTypeSelector(types={self, other})
+        elif isinstance(other, ColumnTypeSelector):
+            return other | self
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnType')
+
     def __invert__(self) -> ColumnTypeSelector:
         return ColumnTypeSelector(types=ColumnType.ANY() - {self})
 
@@ -49,6 +57,14 @@ class ColumnRole(Enum):
             return ColumnSelector(type_selector=ColumnTypeSelector({other}), role_selector=ColumnRoleSelector({self}))
         elif isinstance(other, ColumnTypeSelector):
             return ColumnSelector(type_selector=other, role_selector=ColumnRoleSelector({self}))
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnRole')
+
+    def __or__(self, other: object) -> ColumnRoleSelector:
+        if isinstance(other, ColumnRole):
+            return ColumnRoleSelector(roles={self, other})
+        elif isinstance(other, ColumnRoleSelector):
+            return other | self
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnRole')
 
@@ -104,6 +120,14 @@ class ColumnTypeSelector:
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnTypeSelector')
 
+    def __or__(self, other: object) -> ColumnTypeSelector:
+        if isinstance(other, ColumnType):
+            return ColumnTypeSelector(types=self.types | {other})
+        elif isinstance(other, ColumnTypeSelector):
+            return ColumnTypeSelector(types=self.types | other.types)
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnTypeSelector')
+
     def __invert__(self) -> ColumnTypeSelector:
         return ColumnTypeSelector(types=ColumnType.ANY() - self._types)
 
@@ -126,6 +150,14 @@ class ColumnRoleSelector:
             return ColumnSelector(type_selector=ColumnTypeSelector({other}), role_selector=self)
         elif isinstance(other, ColumnTypeSelector):
             return ColumnSelector(type_selector=other, role_selector=self)
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnRoleSelector')
+
+    def __or__(self, other: object) -> ColumnRoleSelector:
+        if isinstance(other, ColumnRole):
+            return ColumnRoleSelector(roles=self.roles | {other})
+        elif isinstance(other, ColumnRoleSelector):
+            return ColumnRoleSelector(roles=self.roles | other.roles)
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnRoleSelector')
 
