@@ -13,6 +13,7 @@ from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
+from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -207,4 +208,17 @@ class TestOverWrapper:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns=expected_new_columns,
+        )
+
+    def test_over_combined_with_rolling(self) -> None:
+        first_value_transformer = FirstValueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
+        first_value_rolling_transformer = RollingWrapper(inner_transformer=first_value_transformer, index_column=ColumnSpecification.datetime(name='DATE_FEATURE'), time_window='2d1h')
+        first_value_rolling_over_transformer = OverWrapper(inner_transformer=first_value_rolling_transformer, over_columns=self._num_group)
+
+        df = BASIC_FRAME.with_columns(first_value_rolling_over_transformer.transform())
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={'NUMERIC_FEATURE_first_value_in_the_last_2d1h_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 3]},
         )

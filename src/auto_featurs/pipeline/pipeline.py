@@ -270,8 +270,8 @@ class Pipeline:
             **kwargs,
         )
 
-        aggregations_over = self._get_over_transformers(aggregating_transformers=aggregating_transformers, over_columns_combinations=over_columns_combinations)
-        rolling_aggregations_over = self._get_rolling_transformers(aggregating_transformers=aggregations_over, index_column=index_column, time_windows=time_windows)
+        rolling_aggregations = self._get_rolling_transformers(aggregating_transformers=aggregating_transformers, index_column=index_column, time_windows=time_windows)
+        rolling_aggregations_over = self._get_over_transformers(aggregating_transformers=rolling_aggregations, over_columns_combinations=over_columns_combinations)
         return rolling_aggregations_over
 
     def _get_over_transformers[AT: AggregatingTransformer](
