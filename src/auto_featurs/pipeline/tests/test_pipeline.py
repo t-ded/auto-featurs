@@ -68,6 +68,7 @@ class TestPipeline:
                 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25],
             }),
         )
+        assert res.schema == Schema([ColumnSpecification.numeric(name='NUMERIC_FEATURE'), ColumnSpecification.numeric(name='NUMERIC_FEATURE_pow_2')])
 
     def test_pipeline_is_not_changed_inplace(self) -> None:
         pipeline = Pipeline(dataset=self._simple_dataset)

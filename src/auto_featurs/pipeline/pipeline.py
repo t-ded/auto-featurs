@@ -206,7 +206,8 @@ class Pipeline:
         )
 
     def collect_plan(self, cache_computation: bool = False) -> Dataset:
-        dataset = self._dataset
+        current_layer_schema = self._get_schema_from_transformers(self._current_layer())
+        dataset = self._dataset.with_schema(new_schema=current_layer_schema)
         for layer in self._transformers:
             exprs = [transformer.transform() for transformer in layer]
             dataset = dataset.with_columns(new_columns=exprs)

@@ -23,6 +23,11 @@ class Schema:
             raise TypeError(f'Cannot add {type(other)} to Schema')
         return Schema(self._columns + other.columns)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Schema):
+            raise TypeError(f'Cannot compare {type(other)} to Schema')
+        return self._columns == other.columns
+
     @classmethod
     def from_dict(cls, spec: dict[ColumnType, list[str]], *, label_col: Optional[str] = None) -> Schema:
         columns: list[ColumnSpecification] = []
