@@ -8,6 +8,7 @@ from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.transformers.datetime_transformers import DayOfWeekTransformer
 from auto_featurs.transformers.datetime_transformers import HourOfDayTransformer
 from auto_featurs.transformers.datetime_transformers import MonthOfYearTransformer
+from auto_featurs.transformers.datetime_transformers import TimeDiffTransformer
 
 
 class TestSeasonalTransformers:
@@ -50,3 +51,40 @@ class TestSeasonalTransformers:
         df = self._get_df(months=months)
         df = df.with_columns(self._month_of_year_transformer.transform())
         assert df['DATE_FEATURE_month_of_year'].to_list() == months
+
+
+class TestTimeDiffTransformer:
+    def setup_method(self) -> None:
+        self._time_diff_transformer_seconds = TimeDiffTransformer(left_column='DATE_FEATURE', right_column='DATE_FEATURE_2', unit='s')
+        self._time_diff_transformer_hours = TimeDiffTransformer(left_column='DATE_FEATURE', right_column='DATE_FEATURE_2', unit='h')
+        self._time_diff_transformer_days = TimeDiffTransformer(left_column='DATE_FEATURE', right_column='DATE_FEATURE_2', unit='d')
+
+    def test_name_and_output_type(self) -> None:
+        assert self._time_diff_transformer_seconds.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_seconds')
+        assert self._time_diff_transformer_hours.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_hours')
+        assert self._time_diff_transformer_days.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_days')
+
+    def test_time_diff_transform(self) -> None:
+        df = pl.DataFrame(
+            {
+                'DATE_FEATURE_2': [
+                    datetime(2018, 1, 1, 1, 0, 1, tzinfo=UTC),
+                    datetime(2018, 1, 2, 2, 0, 2, tzinfo=UTC),
+                    datetime(2018, 1, 3, 3, 0, 3, tzinfo=UTC),
+                ],
+                'DATE_FEATURE': [
+                    datetime(2018, 1, 2, 2, 0, 2, tzinfo=UTC),
+                    datetime(2018, 1, 3, 3, 0, 3, tzinfo=UTC),
+                    datetime(2018, 1, 4, 4, 0, 4, tzinfo=UTC),
+                ],
+            },
+        )
+
+        df = df.with_columns(
+            self._time_diff_transformer_seconds.transform(),
+            self._time_diff_transformer_hours.transform(),
+            self._time_diff_transformer_days.transform(),
+        )
+        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_seconds'].to_list() == [90_001, 90_001, 90_001]
+        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_hours'].to_list() == [25, 25, 25]
+        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_days'].to_list() == [1, 1, 1]
