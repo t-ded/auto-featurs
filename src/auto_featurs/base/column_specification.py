@@ -24,6 +24,8 @@ class ColumnType(Enum):
 
 class ColumnRole(Enum):
     LABEL = auto()
+    IDENTIFIER = auto()
+    TIME_INFO = auto()
     FEATURE = auto()
 
 
@@ -34,25 +36,25 @@ class ColumnSpecification:
     column_role: ColumnRole = ColumnRole.FEATURE
 
     @classmethod
-    def numeric(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.NUMERIC)
+    def numeric(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.NUMERIC, column_role=role)
 
     @classmethod
-    def boolean(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.BOOLEAN)
+    def boolean(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.BOOLEAN, column_role=role)
 
     @classmethod
-    def nominal(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.NOMINAL)
+    def nominal(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.NOMINAL, column_role=role)
 
     @classmethod
-    def ordinal(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.ORDINAL)
+    def ordinal(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.ORDINAL, column_role=role)
 
     @classmethod
-    def text(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.TEXT)
+    def text(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.TEXT, column_role=role)
 
     @classmethod
-    def datetime(cls, name: str) -> ColumnSpecification:
-        return ColumnSpecification(name=name, column_type=ColumnType.DATETIME)
+    def datetime(cls, name: str, role: ColumnRole = ColumnRole.FEATURE) -> ColumnSpecification:
+        return ColumnSpecification(name=name, column_type=ColumnType.DATETIME, column_role=role)
