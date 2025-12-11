@@ -56,3 +56,41 @@ class TestColumnRole:
 
     def test_invert(self) -> None:
         assert ~ColumnRole.LABEL == ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
+
+
+class TestColumnTypeSelector:
+    def test_eq(self) -> None:
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnTypeSelector({ColumnType.NUMERIC})
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) != ColumnTypeSelector({ColumnType.ORDINAL})
+
+    def test_and(self) -> None:
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRole.LABEL == ColumnSelector(
+            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
+            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
+        )
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRoleSelector({ColumnRole.LABEL}) == ColumnSelector(
+            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
+            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
+        )
+
+    def test_invert(self) -> None:
+        assert ~ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
+
+
+class TestColumnRoleSelector:
+    def test_eq(self) -> None:
+        assert ColumnRoleSelector({ColumnRole.LABEL}) == ColumnRoleSelector({ColumnRole.LABEL})
+        assert ColumnRoleSelector({ColumnRole.LABEL}) != ColumnRoleSelector({ColumnRole.IDENTIFIER})
+
+    def test_and(self) -> None:
+        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnType.NUMERIC == ColumnSelector(
+            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
+            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
+        )
+        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnSelector(
+            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
+            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
+        )
+
+    def test_invert(self) -> None:
+        assert ~ColumnRoleSelector({ColumnRole.LABEL}) == ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})

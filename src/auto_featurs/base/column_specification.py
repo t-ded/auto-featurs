@@ -96,6 +96,17 @@ class ColumnTypeSelector:
             raise TypeError(f'Cannot compare {type(other)} to ColumnTypeSelector')
         return self._types == other.types
 
+    def __and__(self, other: object) -> ColumnSelector:
+        if isinstance(other, ColumnRole):
+            return ColumnSelector(type_selector=self, role_selector=ColumnRoleSelector({other}))
+        elif isinstance(other, ColumnRoleSelector):
+            return ColumnSelector(type_selector=self, role_selector=other)
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnTypeSelector')
+
+    def __invert__(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector(types=ColumnType.ANY() - self._types)
+
     @property
     def types(self) -> set[ColumnType]:
         return self._types
@@ -109,6 +120,17 @@ class ColumnRoleSelector:
         if not isinstance(other, ColumnRoleSelector):
             raise TypeError(f'Cannot compare {type(other)} to ColumnRoleSelector')
         return self._roles == other.roles
+
+    def __and__(self, other: object) -> ColumnSelector:
+        if isinstance(other, ColumnType):
+            return ColumnSelector(type_selector=ColumnTypeSelector({other}), role_selector=self)
+        elif isinstance(other, ColumnTypeSelector):
+            return ColumnSelector(type_selector=other, role_selector=self)
+        else:
+            raise TypeError(f'Cannot add {type(other)} to ColumnRoleSelector')
+
+    def __invert__(self) -> ColumnRoleSelector:
+        return ColumnRoleSelector(roles=ColumnRole.ANY() - self._roles)
 
     @property
     def roles(self) -> set[ColumnRole]:
