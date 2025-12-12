@@ -12,6 +12,7 @@ from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.pipeline import Pipeline
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
+from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
@@ -164,7 +165,7 @@ class TestPipeline:
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
             .with_count(over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
-            .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], cumulative=True)
+            .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], cumulative=CumulativeOptions.INCLUSIVE)
             .with_count(
                 over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']],
                 time_windows=['2d', timedelta(days=2, hours=1)],
@@ -242,7 +243,7 @@ class TestPipeline:
                 'count': [6, 6, 6, 6, 6, 6],
                 'count_over_GROUPING_FEATURE_NUM': [1, 3, 2, 3, 2, 3],
                 'count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 2, 2, 1, 2, 2],
-                'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'inclusive_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
                 'count_in_the_last_2d': [1, 2, 2, 2, 2, 2],
                 'count_in_the_last_2d1h': [1, 2, 3, 3, 3, 3],
                 'count_in_the_last_2d_over_GROUPING_FEATURE_NUM': [1, 1, 1, 1, 1, 1],

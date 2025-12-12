@@ -6,6 +6,7 @@ from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
+from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
@@ -21,31 +22,43 @@ from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 class TestCountTransformer:
     def setup_method(self) -> None:
         self._count_transformer = CountTransformer()
-        self._cumulative_count_transformer = CountTransformer(cumulative=True)
+        self._exclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.EXCLUSIVE)
+        self._inclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.INCLUSIVE)
         self._filtered_count_transformer = CountTransformer(filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
-        self._filtered_cumulative_count_transformer = CountTransformer(cumulative=True, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
+        self._filtered_exclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.EXCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
+        self._filtered_inclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.INCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
 
     def test_name_and_output_type(self) -> None:
         assert self._count_transformer.output_column_specification == ColumnSpecification.numeric(name='count')
-        assert self._cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='cum_count')
+        assert self._exclusive_cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='exclusive_cum_count')
+        assert self._inclusive_cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='inclusive_cum_count')
         assert self._filtered_count_transformer.output_column_specification == ColumnSpecification.numeric(name='count_where_NUMERIC_FEATURE_GE_2')
-        assert self._filtered_cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='cum_count_where_NUMERIC_FEATURE_GE_2')
+        assert self._filtered_exclusive_cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='exclusive_cum_count_where_NUMERIC_FEATURE_GE_2')
+        assert self._filtered_inclusive_cumulative_count_transformer.output_column_specification == ColumnSpecification.numeric(name='inclusive_cum_count_where_NUMERIC_FEATURE_GE_2')
 
     def test_count_transform(self) -> None:
         df = BASIC_FRAME.with_columns(self._count_transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'count': [6, 6, 6, 6, 6, 6]})
 
-    def test_cum_count_transform(self) -> None:
-        df = BASIC_FRAME.with_columns(self._cumulative_count_transformer.transform())
-        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'cum_count': [1, 2, 3, 4, 5, 6]})
+    def test_exclusive_cum_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._exclusive_cumulative_count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'exclusive_cum_count': [0, 1, 2, 3, 4, 5]})
+
+    def test_inclusive_cum_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._inclusive_cumulative_count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'inclusive_cum_count': [1, 2, 3, 4, 5, 6]})
 
     def test_filtered_count_transform(self) -> None:
         df = BASIC_FRAME.with_columns(self._filtered_count_transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'count_where_NUMERIC_FEATURE_GE_2': [4, 4, 4, 4, 4, 4]})
 
-    def test_filtered_cum_count_transform(self) -> None:
-        df = BASIC_FRAME.with_columns(self._filtered_cumulative_count_transformer.transform())
-        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'cum_count_where_NUMERIC_FEATURE_GE_2': [0, 0, 1, 2, 3, 4]})
+    def test_filtered_exclusive_cum_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._filtered_exclusive_cumulative_count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'exclusive_cum_count_where_NUMERIC_FEATURE_GE_2': [0, 0, 0, 1, 2, 3]})
+
+    def test_filtered_inclusive_cum_count_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(self._filtered_inclusive_cumulative_count_transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns={'inclusive_cum_count_where_NUMERIC_FEATURE_GE_2': [0, 0, 1, 2, 3, 4]})
 
 
 class TestLaggedTransformer:
@@ -196,14 +209,28 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
-            (SumTransformer, {'NUMERIC_FEATURE_cum_sum': [0, 1, 3, 6, 10, 15]}),
-            (MeanTransformer, {'NUMERIC_FEATURE_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
-            (StdTransformer, {'NUMERIC_FEATURE_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),
-            (ZscoreTransformer, {'NUMERIC_FEATURE_cum_z_score': [np.nan, 1.0, 0.8944271819998318, 0.8017835943317106, 0.7302966866804473, 0.6741999067446689]}),
+            (SumTransformer, {'NUMERIC_FEATURE_exclusive_cum_sum': [0, 0, 1, 3, 6, 10]}),
+            (MeanTransformer, {'NUMERIC_FEATURE_exclusive_cum_mean': [np.nan, 0.0, 0.5, 1, 1.5, 2]}),
+            (StdTransformer, {'NUMERIC_FEATURE_exclusive_cum_std': [0.0, 0.0, 1.0, 1.802776, 2.692582, 3.674235]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_exclusive_cum_z_score': [np.nan, np.inf, 1.5, 1.1094, 0.928477, 0.816497]}),
         ],
     )
-    def test_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
-        transformer = transformer_type(column='NUMERIC_FEATURE', cumulative=True)
+    def test_exclusive_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(column='NUMERIC_FEATURE', cumulative=CumulativeOptions.EXCLUSIVE)
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+    @pytest.mark.parametrize(
+        ('transformer_type', 'expected_new_columns'),
+        [
+            (SumTransformer, {'NUMERIC_FEATURE_inclusive_cum_sum': [0, 1, 3, 6, 10, 15]}),
+            (MeanTransformer, {'NUMERIC_FEATURE_inclusive_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
+            (StdTransformer, {'NUMERIC_FEATURE_inclusive_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_inclusive_cum_z_score': [np.nan, 1.0, 0.8944271819998318, 0.8017835943317106, 0.7302966866804473, 0.6741999067446689]}),
+        ],
+    )
+    def test_inclusive_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(column='NUMERIC_FEATURE', cumulative=CumulativeOptions.INCLUSIVE)
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
 

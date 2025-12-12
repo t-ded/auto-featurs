@@ -4,6 +4,7 @@ import pytest
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
+from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
@@ -43,7 +44,7 @@ class TestOverWrapper:
         )
 
     def test_grouped_cumulative_count_transform(self) -> None:
-        cum_count_transformer = CountTransformer(cumulative=True)
+        cum_count_transformer = CountTransformer(cumulative=CumulativeOptions.INCLUSIVE)
         cum_count_over_grouping_num_transformer = OverWrapper(inner_transformer=cum_count_transformer, over_columns=self._num_group)
         cum_count_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=cum_count_transformer, over_columns=self._num_cat_group)
 
@@ -56,8 +57,8 @@ class TestOverWrapper:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns={
-                'cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
-                'cum_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 2, 2],
+                'inclusive_cum_count_over_GROUPING_FEATURE_NUM': [1, 1, 1, 2, 2, 3],
+                'inclusive_cum_count_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 2, 2],
             },
         )
 
@@ -173,20 +174,20 @@ class TestOverWrapper:
         ('inner_transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {
-                'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM': [0, 1, 2, 4, 6, 9],
-                'NUMERIC_FEATURE_cum_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 6, 6],
+                'NUMERIC_FEATURE_inclusive_cum_sum_over_GROUPING_FEATURE_NUM': [0, 1, 2, 4, 6, 9],
+                'NUMERIC_FEATURE_inclusive_cum_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 6, 6],
             }),
             (MeanTransformer, {
-                'NUMERIC_FEATURE_cum_mean_over_GROUPING_FEATURE_NUM': [0.0, 1.0, 2.0, 2.0, 3.0, 3.0],
-                'NUMERIC_FEATURE_cum_mean_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 1.0, 2.0, 3.0, 3.0, 3.0],
+                'NUMERIC_FEATURE_inclusive_cum_mean_over_GROUPING_FEATURE_NUM': [0.0, 1.0, 2.0, 2.0, 3.0, 3.0],
+                'NUMERIC_FEATURE_inclusive_cum_mean_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 1.0, 2.0, 3.0, 3.0, 3.0],
             }),
             (StdTransformer, {
-                'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM': [0.0, 0.0, 0.0, 1.0, 1.0, 2.236068],
-                'NUMERIC_FEATURE_cum_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 0.0, 0.0, 0.0, 1.0, 2.0],
+                'NUMERIC_FEATURE_inclusive_cum_std_over_GROUPING_FEATURE_NUM': [0.0, 0.0, 0.0, 1.0, 1.0, 2.236068],
+                'NUMERIC_FEATURE_inclusive_cum_std_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0.0, 0.0, 0.0, 0.0, 1.0, 2.0],
             }),
             (ZscoreTransformer, {
-                'NUMERIC_FEATURE_cum_z_score_over_GROUPING_FEATURE_NUM': [np.nan, np.nan, np.nan, 1.0, 1.0, 0.894427],
-                'NUMERIC_FEATURE_cum_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [np.nan, np.nan, np.nan, np.nan, 1.0, 1.0],
+                'NUMERIC_FEATURE_inclusive_cum_z_score_over_GROUPING_FEATURE_NUM': [np.nan, np.nan, np.nan, 1.0, 1.0, 0.894427],
+                'NUMERIC_FEATURE_inclusive_cum_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [np.nan, np.nan, np.nan, np.nan, 1.0, 1.0],
             }),
         ],
     )
@@ -195,7 +196,7 @@ class TestOverWrapper:
             inner_transformer_type: type[ArithmeticAggregationTransformer],
             expected_new_columns: dict[str, list[int] | list[float]],
     ) -> None:
-        cumulative_arithmetic_transformer = inner_transformer_type(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), cumulative=True)
+        cumulative_arithmetic_transformer = inner_transformer_type(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'), cumulative=CumulativeOptions.INCLUSIVE)
         cumulative_arithmetic_over_grouping_num_transformer = OverWrapper(inner_transformer=cumulative_arithmetic_transformer, over_columns=self._num_group)
         cumulative_arithmetic_over_grouping_num_cat_transformer = OverWrapper(inner_transformer=cumulative_arithmetic_transformer, over_columns=self._num_cat_group)
 

@@ -20,6 +20,7 @@ from auto_featurs.pipeline.validator import Validator
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
+from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
@@ -110,7 +111,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
-            cumulative: bool = False,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         aggregating_transformers = self._build_aggregated_transformers(
@@ -195,7 +196,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
-            cumulative: bool = False,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]

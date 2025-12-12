@@ -17,6 +17,7 @@ def test_default_true_filtering_condition() -> None:
 
 
 def test_filtering_condition_to_string() -> None:
+    assert filtering_condition_to_string(None) == ''
     assert filtering_condition_to_string(pl.lit(True)) == ''
     assert filtering_condition_to_string(
         (

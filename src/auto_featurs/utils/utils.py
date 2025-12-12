@@ -12,7 +12,6 @@ from auto_featurs.utils.constants import SECONDS_IN_MINUTE
 from auto_featurs.utils.constants import SECONDS_IN_MONTH
 from auto_featurs.utils.constants import SECONDS_IN_YEAR
 
-
 LIT_TRUE = pl.lit(True)
 
 
@@ -20,8 +19,8 @@ def default_true_filtering_condition(filtering_condition: Optional[pl.Expr]) -> 
     return filtering_condition if filtering_condition is not None else LIT_TRUE
 
 
-def filtering_condition_to_string(filtering_condition: pl.Expr) -> str:
-    if filtering_condition.meta.eq(LIT_TRUE):
+def filtering_condition_to_string(filtering_condition: Optional[pl.Expr]) -> str:
+    if filtering_condition is None or filtering_condition.meta.eq(LIT_TRUE):
         return ''
     return f'_where_{filtering_condition.meta.output_name()}'
 

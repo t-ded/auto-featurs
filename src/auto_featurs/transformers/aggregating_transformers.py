@@ -13,12 +13,21 @@ from auto_featurs.utils.utils import default_true_filtering_condition
 from auto_featurs.utils.utils import filtering_condition_to_string
 
 
+class CumulativeOptions(Enum):
+    NONE = 'none'
+    EXCLUSIVE = 'exclusive'
+    INCLUSIVE = 'inclusive'
+
+    def __str__(self) -> str:
+        return f'{self.value}_cum_' if self != CumulativeOptions.NONE else ''
+
+
 class AggregatingTransformer(Transformer, ABC):
     pass
 
 
 class CountTransformer(AggregatingTransformer):
-    def __init__(self, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._cumulative = cumulative
         self._filtering_condition = filtering_condition
 
@@ -34,20 +43,25 @@ class CountTransformer(AggregatingTransformer):
 
     def _transform(self) -> pl.Expr:
         if self._filtering_condition is not None:
-            if self._cumulative:
-                return self._filtering_condition.cum_sum()
-            else:
-                return self._filtering_condition.sum()
+            match self._cumulative:
+                case CumulativeOptions.NONE:
+                    return self._filtering_condition.sum()
+                case CumulativeOptions.EXCLUSIVE:
+                    return self._filtering_condition.cum_sum().shift(1, fill_value=0)
+                case CumulativeOptions.INCLUSIVE:
+                    return self._filtering_condition.cum_sum()
         else:
-            if self._cumulative:
-                return pl.int_range(1, pl.len() + 1)
-            else:
-                return pl.len()
+            match self._cumulative:
+                case CumulativeOptions.NONE:
+                    return pl.len()
+                case CumulativeOptions.EXCLUSIVE:
+                    return pl.int_range(0, pl.len())
+                case CumulativeOptions.INCLUSIVE:
+                    return pl.int_range(1, pl.len() + 1)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        count_name = 'cum_count' if self._cumulative else 'count'
-        condition_name = filtering_condition_to_string(self._filtering_condition) if self._filtering_condition is not None else ''
-        return transform.alias(count_name + condition_name)
+        condition_name = filtering_condition_to_string(self._filtering_condition)
+        return transform.alias(str(self._cumulative) + 'count' + condition_name)
 
 
 class LaggedTransformer(AggregatingTransformer):
@@ -140,7 +154,7 @@ class NumUniqueTransformer(AggregatingTransformer):
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
-    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column if isinstance(column, str) else column.name
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
@@ -156,8 +170,7 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
         return ColumnType.NUMERIC
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        operation = f'cum_{self._aggregation}' if self._cumulative else self._aggregation
-        return transform.alias(f'{self._column}_{operation}' + filtering_condition_to_string(self._filtering_condition))
+        return transform.alias(f'{self._column}_{self._cumulative}{self._aggregation}' + filtering_condition_to_string(self._filtering_condition))
 
     @property
     @abstractmethod
@@ -168,9 +181,13 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
         col = pl.col(self._column).filter(self._filtering_condition)
-        if self._cumulative:
-            return col.cum_sum()
-        return col.sum()
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return col.sum()
+            case CumulativeOptions.EXCLUSIVE:
+                return col.cum_sum().shift(1, fill_value=0.0)
+            case CumulativeOptions.INCLUSIVE:
+                return col.cum_sum()
 
     @property
     def _aggregation(self) -> str:
@@ -178,13 +195,13 @@ class SumTransformer(ArithmeticAggregationTransformer):
 
 
 class MeanTransformer(ArithmeticAggregationTransformer):
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        super().__init__(column, cumulative, filtering_condition)
+        self._sum_transformer = SumTransformer(column, cumulative, filtering_condition)
+        self._count_transformer = CountTransformer(cumulative, filtering_condition)
+
     def _transform(self) -> pl.Expr:
-        col = pl.col(self._column).filter(self._filtering_condition)
-        if self._cumulative:
-            cum_sum = col.cum_sum()
-            cum_count = col.cum_count()
-            return cum_sum.truediv(cum_count)
-        return col.mean()
+        return self._sum_transformer.transform() / self._count_transformer.transform()
 
     @property
     def _aggregation(self) -> str:
@@ -192,18 +209,23 @@ class MeanTransformer(ArithmeticAggregationTransformer):
 
 
 class StdTransformer(ArithmeticAggregationTransformer):
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        super().__init__(column, cumulative, filtering_condition)
+        self._mean_transformer = MeanTransformer(column, cumulative, filtering_condition)
+
     def _transform(self) -> pl.Expr:
         col = pl.col(self._column).filter(self._filtering_condition)
-        if self._cumulative:
-            cum_sum = col.cum_sum()
-            cum_count = col.cum_count()
-            cum_mean = cum_sum.truediv(cum_count)
-
-            mean_diff = col - cum_mean
-            cum_sum_squared_mean_diff = mean_diff.pow(2).cum_sum()
-
-            return cum_sum_squared_mean_diff.sqrt()
-        return col.std()
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return col.std()
+            case CumulativeOptions.EXCLUSIVE:
+                mean_diff = col - self._mean_transformer.transform()
+                cum_sum_squared_mean_diff = mean_diff.pow(2).fill_nan(0.0).cum_sum().shift(1, fill_value=0.0)
+                return cum_sum_squared_mean_diff.sqrt()
+            case CumulativeOptions.INCLUSIVE:
+                mean_diff = col - self._mean_transformer.transform()
+                cum_sum_squared_mean_diff = mean_diff.pow(2).fill_nan(0.0).cum_sum()
+                return cum_sum_squared_mean_diff.sqrt()
 
     @property
     def _aggregation(self) -> str:
@@ -211,7 +233,7 @@ class StdTransformer(ArithmeticAggregationTransformer):
 
 
 class ZscoreTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: bool = False, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)
         self._mean_transformer = MeanTransformer(column, cumulative, filtering_condition)
         self._std_transformer = StdTransformer(column, cumulative, filtering_condition)
