@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
+from typing import assert_never
 
 import polars as pl
 from polars import selectors as cs
@@ -27,60 +29,56 @@ SUPPORTED_LABEL_COLUMN_TYPES = {
 }
 
 
+@dataclass(kw_only=True, frozen=True, slots=True)
+class SelectionReport:
+    feature_names: pl.Series
+    stat_values: pl.Series
+    method: SelectionMethod
+    p_values: Optional[pl.Series] = None
+
+    def to_frame(self) -> pl.DataFrame:
+        method_value_col_name = self.method.value + ' Value'
+        res = {'Feature Name': self.feature_names, method_value_col_name: self.stat_values}
+        if self.p_values is not None:
+            res['P-Value'] = self.p_values
+        return pl.DataFrame(res)
+
+
 class FeatureSelector:
-    def select_by_correlation(self, dataset: Dataset, feature_subset: ColumnSelection, top_k: Optional[int] = None, frac: Optional[float] = None) -> list[str]:
+    def select_features(
+            self,
+            report: SelectionReport,
+            top_k: Optional[int] = None,
+            frac: Optional[float] = None,
+    ) -> list[str]:
+        num_to_select = self._get_num_to_select(top_k=top_k, frac=frac, num_cols=len(report.feature_names))
+        order = pl.DataFrame({'stat': report.stat_values, 'name': report.feature_names}).with_row_index(name='idx').sort(['stat', 'name'], descending=[True, False])['idx']
+        return report.feature_names[order].head(num_to_select).to_list()
+
+    def get_report(self, dataset: Dataset, feature_subset: ColumnSelection, method: SelectionMethod) -> SelectionReport:
         label_col = dataset.get_label_column()
-        label_col_name = label_col.name
-
         feature_cols = dataset.get_columns_from_selection(feature_subset)
-        self._check_valid_types(feature_cols, label_col, SelectionMethod.CORRELATION)
+        self._check_valid_types(feature_cols, label_col, method)
+
+        label_col_name = label_col.name
         feature_col_names = get_names_from_column_specs(feature_cols)
-        num_to_select = self._get_num_to_select(top_k=top_k, frac=frac, num_cols=len(feature_col_names))
 
-        corr = dataset.data.select(self._point_correlation(feature_col_names=feature_col_names, label_col_name=label_col_name))
+        match method:
+            case SelectionMethod.CORRELATION:
+                stats = self._point_correlation(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
+            case SelectionMethod.T_TEST:
+                stats = self._ttest_stat_expr(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
+            case _:
+                assert_never(method)
 
-        to_select: list[str] = (
-            corr
-            .unpivot(variable_name='feature_col', value_name='abs_corr_with_target')
-            .sort(['abs_corr_with_target', 'feature_col'], descending=[True, False])
-            .head(num_to_select)
-            .select('feature_col')
-            .collect()
-            .to_series()
-            .to_list()
-        )
-
-        return to_select
+        return SelectionReport(feature_names=stats['FEATURE_NAME'], stat_values=stats['STAT_VALUE'], method=method)
 
     @staticmethod
-    def _point_correlation(feature_col_names: list[str], label_col_name: str) -> pl.Expr:
-        return pl.corr(cs.by_name(feature_col_names), label_col_name).fill_nan(0.0).abs()
-
-    def select_by_ttest(self, dataset: Dataset, feature_subset: ColumnSelection, top_k: Optional[int] = None, frac: Optional[float] = None) -> list[str]:
-        label_col = dataset.get_label_column()
-        label_col_name = label_col.name
-
-        feature_cols = dataset.get_columns_from_selection(feature_subset)
-        self._check_valid_types(feature_cols, label_col, SelectionMethod.T_TEST)
-        feature_col_names = get_names_from_column_specs(feature_cols)
-        num_to_select = self._get_num_to_select(top_k=top_k, frac=frac, num_cols=len(feature_col_names))
-
-        t_stats = self._ttest_stat_expr(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
-
-        to_select: list[str] = (
-            t_stats
-            .sort(['T_STAT', 'FEATURE_NAME'], descending=[True, False])
-            .head(num_to_select)
-            .select('FEATURE_NAME')
-            .collect()
-            .to_series()
-            .to_list()
-        )
-
-        return to_select
+    def _point_correlation(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.DataFrame:
+        return df.lazy().select(pl.corr(cs.by_name(feature_col_names), label_col_name).fill_nan(0.0).abs()).unpivot(variable_name='FEATURE_NAME', value_name='STAT_VALUE').collect()
 
     @staticmethod
-    def _ttest_stat_expr(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.LazyFrame:
+    def _ttest_stat_expr(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.DataFrame:
         stats = (
             df
             .lazy()
@@ -94,8 +92,8 @@ class FeatureSelector:
         )
 
         counts = stats.select(label_col_name, 'count').collect()
-        true_count: int = counts.filter(pl.col(label_col_name) == True)['count'].item()
-        false_count: int = counts.filter(pl.col(label_col_name) == False)['count'].item()
+        true_count: int = counts.filter(pl.col(label_col_name).eq(True))['count'].item()
+        false_count: int = counts.filter(pl.col(label_col_name).eq(False))['count'].item()
 
         t_stats = (
             stats
@@ -108,7 +106,7 @@ class FeatureSelector:
                 'VALUE',
             )
             .with_columns(
-                (pl.col(label_col_name).cast(pl.Utf8).str.to_uppercase() + pl.lit('_') + pl.col('STAT').str.to_uppercase()).alias('pivot_col')
+                (pl.col(label_col_name).cast(pl.Utf8).str.to_uppercase() + pl.lit('_') + pl.col('STAT').str.to_uppercase()).alias('pivot_col'),
             )
             .pivot(on='pivot_col', on_columns=['TRUE_MEAN', 'FALSE_MEAN', 'TRUE_VAR', 'FALSE_VAR'], index='FEATURE_NAME', values='VALUE')
             .with_columns(
@@ -119,11 +117,11 @@ class FeatureSelector:
             .with_columns(pl.col('NORMALIZED_TRUE_VAR').add(pl.col('NORMALIZED_FALSE_VAR')).sqrt().alias('DENOMINATOR'))
             .select(
                 'FEATURE_NAME',
-                pl.col('MEAN_DIFF').truediv(pl.col('DENOMINATOR')).fill_nan(0.0).alias('T_STAT'),
+                pl.col('MEAN_DIFF').truediv(pl.col('DENOMINATOR')).fill_nan(0.0).alias('STAT_VALUE'),
             )
         )
 
-        return t_stats
+        return t_stats.collect()
 
     @staticmethod
     def _check_valid_types(feature_cols: list[ColumnSpecification], label_col: ColumnSpecification, operation: SelectionMethod) -> None:
