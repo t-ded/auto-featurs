@@ -159,6 +159,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         mode_transformers = self._build_aggregated_transformers(
@@ -167,6 +168,7 @@ class Pipeline:
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
             index_column_name=index_column_name,
+            cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(mode_transformers)
@@ -177,6 +179,7 @@ class Pipeline:
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
     ) -> Pipeline:
         num_unique_transformers = self._build_aggregated_transformers(
@@ -185,6 +188,7 @@ class Pipeline:
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
             index_column_name=index_column_name,
+            cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(num_unique_transformers)

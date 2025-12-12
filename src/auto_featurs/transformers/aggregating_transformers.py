@@ -110,8 +110,9 @@ class FirstValueTransformer(AggregatingTransformer):
 
 
 class ModeTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column
+        self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
@@ -125,15 +126,28 @@ class ModeTransformer(AggregatingTransformer):
         return self._column.column_type
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).filter(self._filtering_condition).mode().sort(descending=True).first()
+        col = pl.col(self._column.name)
+        if self._cumulative == CumulativeOptions.NONE:
+            return col.filter(self._filtering_condition).mode().sort(descending=True).first()
+        else:
+            cum_value_counts = pl.when(self._filtering_condition).then(pl.int_range(1, pl.len() + 1)).forward_fill().fill_null(0).over(col)
+            cum_mode_count = cum_value_counts.cum_max()
+
+            cum_mode = pl.when(cum_value_counts == cum_mode_count).then(col).forward_fill()
+            if self._cumulative == CumulativeOptions.EXCLUSIVE:
+                cum_mode = cum_mode.shift(1, fill_value=None)
+
+            return cum_mode
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column.name}_mode' + filtering_condition_to_string(self._filtering_condition))
+        condition_name = filtering_condition_to_string(self._filtering_condition)
+        return transform.alias(f'{self._column.name}_{str(self._cumulative)}mode' + condition_name)
 
 
 class NumUniqueTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         self._column = column
+        self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> set[ColumnType]:
@@ -147,10 +161,19 @@ class NumUniqueTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column.name).filter(self._filtering_condition).n_unique()
+        col = pl.col(self._column.name)
+        if self._cumulative == CumulativeOptions.NONE:
+            return col.filter(self._filtering_condition).n_unique()
+        else:
+            cum_n_unique = (col.is_first_distinct() & self._filtering_condition).cum_sum()
+            if self._cumulative == CumulativeOptions.EXCLUSIVE:
+                cum_n_unique = cum_n_unique.is_first_distinct().cum_sum().shift(1, fill_value=0)
+
+        return cum_n_unique
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column.name}_num_unique' + filtering_condition_to_string(self._filtering_condition))
+        condition_name = filtering_condition_to_string(self._filtering_condition)
+        return transform.alias(f'{self._column.name}_{str(self._cumulative)}num_unique' + condition_name)
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):

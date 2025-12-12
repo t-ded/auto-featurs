@@ -138,17 +138,24 @@ class TestModeTransformer:
         self._mode_transformer_ordinal = ModeTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
         self._mode_transformer_bool = ModeTransformer(column=ColumnSpecification.boolean(name='BOOL_FEATURE'))
         self._filtered_mode_transformer_ordinal = ModeTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'), filtering_condition=pl.col('BOOL_FEATURE'))
+        self._filtered_cumulative_mode_transformer_ordinal = ModeTransformer(
+            column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'),
+            cumulative=CumulativeOptions.INCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
 
     def test_name_and_output_type(self) -> None:
         assert self._mode_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM_mode')
         assert self._mode_transformer_bool.output_column_specification == ColumnSpecification.boolean(name='BOOL_FEATURE_mode')
         assert self._filtered_mode_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM_mode_where_BOOL_FEATURE')
+        assert self._filtered_cumulative_mode_transformer_ordinal.output_column_specification == ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM_inclusive_cum_mode_where_BOOL_FEATURE')
 
     def test_mode_transform(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._mode_transformer_ordinal.transform(),
             self._mode_transformer_bool.transform(),
             self._filtered_mode_transformer_ordinal.transform(),
+            self._filtered_cumulative_mode_transformer_ordinal.transform(),
         )
 
         assert_new_columns_in_frame(
@@ -158,6 +165,7 @@ class TestModeTransformer:
                 'GROUPING_FEATURE_NUM_mode': ['ODD', 'ODD', 'ODD', 'ODD', 'ODD', 'ODD'],
                 'BOOL_FEATURE_mode': [True, True, True, True, True, True],
                 'GROUPING_FEATURE_NUM_mode_where_BOOL_FEATURE': ['EVEN', 'EVEN', 'EVEN', 'EVEN', 'EVEN', 'EVEN'],
+                'GROUPING_FEATURE_NUM_inclusive_cum_mode_where_BOOL_FEATURE': ['ZERO', 'ZERO', 'EVEN', 'EVEN', 'EVEN', 'EVEN'],
             },
         )
 
@@ -167,17 +175,26 @@ class TestNumUniqueTransformer:
         self._num_unique_transformer_ordinal = NumUniqueTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'))
         self._num_unique_transformer_numeric = NumUniqueTransformer(column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'))
         self._filtered_num_unique_transformer_ordinal = NumUniqueTransformer(column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'), filtering_condition=pl.col('BOOL_FEATURE'))
+        self._filtered_cumulative_num_unique_transformer_ordinal = NumUniqueTransformer(
+            column=ColumnSpecification.ordinal(name='GROUPING_FEATURE_NUM'),
+            cumulative=CumulativeOptions.INCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
 
     def test_name_and_output_type(self) -> None:
         assert self._num_unique_transformer_ordinal.output_column_specification == ColumnSpecification.numeric(name='GROUPING_FEATURE_NUM_num_unique')
         assert self._num_unique_transformer_numeric.output_column_specification == ColumnSpecification.numeric(name='NUMERIC_FEATURE_num_unique')
         assert self._filtered_num_unique_transformer_ordinal.output_column_specification == ColumnSpecification.numeric(name='GROUPING_FEATURE_NUM_num_unique_where_BOOL_FEATURE')
+        assert self._filtered_cumulative_num_unique_transformer_ordinal.output_column_specification == ColumnSpecification.numeric(
+            name='GROUPING_FEATURE_NUM_inclusive_cum_num_unique_where_BOOL_FEATURE',
+        )
 
     def test_num_unique_transform(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._num_unique_transformer_ordinal.transform(),
             self._num_unique_transformer_numeric.transform(),
             self._filtered_num_unique_transformer_ordinal.transform(),
+            self._filtered_cumulative_num_unique_transformer_ordinal.transform(),
         )
 
         assert_new_columns_in_frame(
@@ -187,6 +204,7 @@ class TestNumUniqueTransformer:
                 'GROUPING_FEATURE_NUM_num_unique': [3, 3, 3, 3, 3, 3],
                 'NUMERIC_FEATURE_num_unique': [6, 6, 6, 6, 6, 6],
                 'GROUPING_FEATURE_NUM_num_unique_where_BOOL_FEATURE': [2, 2, 2, 2, 2, 2],
+                'GROUPING_FEATURE_NUM_inclusive_cum_num_unique_where_BOOL_FEATURE': [1, 1, 2, 2, 2, 2],
             },
         )
 
