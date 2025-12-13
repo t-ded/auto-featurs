@@ -133,6 +133,9 @@ class ColumnTypeSelector:
     def __invert__(self) -> ColumnTypeSelector:
         return ColumnTypeSelector(types=ColumnType.ANY() - self._types)
 
+    def __contains__(self, item: object) -> bool:
+        return item in self._types
+
     @property
     def types(self) -> set[ColumnType]:
         return self._types
@@ -165,6 +168,9 @@ class ColumnRoleSelector:
 
     def __invert__(self) -> ColumnRoleSelector:
         return ColumnRoleSelector(roles=ColumnRole.ANY() - self._roles)
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._roles
 
     @property
     def roles(self) -> set[ColumnRole]:
