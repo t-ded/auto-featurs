@@ -1,18 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable
 from typing import Optional
 
 from more_itertools import flatten
 
 from auto_featurs.base.column_specification import ColumnRole
+from auto_featurs.base.column_specification import ColumnRoleSelector
+from auto_featurs.base.column_specification import ColumnSelector
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.utils.utils import get_names_from_column_specs
-from auto_featurs.utils.utils import order_preserving_unique
 
-
-type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+type ColumnSelection = (
+    str | Iterable[str] |
+    ColumnType | Iterable[ColumnType] |
+    ColumnRole | Iterable[ColumnRole] |
+    ColumnSpecification | Iterable[ColumnSpecification] |
+    ColumnTypeSelector | ColumnRoleSelector | ColumnSelector
+)
 type ColumnSet = list[ColumnSpecification]
 
 
@@ -87,10 +94,26 @@ class Schema:
         match subset:
             case ColumnType():
                 return self.get_columns_of_type(subset)
+            case ColumnRole():
+                return self.get_columns_of_role(subset)
+            case ColumnSpecification():
+                self._check_subset_in_schema([subset])
+                return [subset]
+            case ColumnTypeSelector():
+                return self.get_columns_from_selection(subset.types)
+            case ColumnRoleSelector():
+                return self.get_columns_from_selection(subset.roles)
+            case ColumnSelector():
+                if subset.names is not None:
+                    return self.get_columns_from_selection(subset.names)
+                else:
+                    role_subset = self.get_columns_from_selection(subset.roles)
+                    type_subset = self.get_columns_from_selection(subset.types)
+                    return sorted(set(role_subset) & set(type_subset), key=lambda col: col.name)
             case str():
                 return [self.get_column_by_name(subset)]
-            case Sequence():
-                return order_preserving_unique(flatten([self.get_columns_from_selection(col) for col in subset]))
+            case Iterable():
+                return sorted(flatten([self.get_columns_from_selection(col) for col in subset]), key=lambda col: col.name)
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 

@@ -86,7 +86,19 @@ class TestSchema:
             self._schema.get_columns_of_role(ColumnRole.LABEL, subset=[ColumnSpecification(name='c', column_type=ColumnType.NUMERIC)])
 
     def test_get_columns_from_selection(self) -> None:
-        assert self._schema.get_columns_from_selection(['a', 'b']) == [
-            ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
-            ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
-        ]
+        a = ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)
+        b = ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)
+        c = ColumnSpecification(name='c', column_type=ColumnType.NOMINAL)
+        assert self._schema.get_columns_from_selection('a') == [a]
+        assert self._schema.get_columns_from_selection(['a', 'b']) == [a, b]
+        assert self._schema.get_columns_from_selection({'a', 'b'}) == [a, b]
+        assert self._schema.get_columns_from_selection(ColumnType.NUMERIC) == [a]
+        assert self._schema.get_columns_from_selection([ColumnType.NUMERIC, ColumnType.ORDINAL]) == [a, b]
+        assert self._schema.get_columns_from_selection(ColumnRole.FEATURE) == [a, c]
+        assert self._schema.get_columns_from_selection([ColumnRole.FEATURE, ColumnRole.LABEL]) == [a, b, c]
+        assert self._schema.get_columns_from_selection(ColumnType.NUMERIC | ColumnType.ORDINAL) == [a, b]
+        assert self._schema.get_columns_from_selection(~ColumnType.NOMINAL) == [a, b]
+        assert self._schema.get_columns_from_selection(ColumnRole.FEATURE | ColumnRole.LABEL) == [a, b, c]
+        assert self._schema.get_columns_from_selection(~ColumnRole.LABEL) == [a, c]
+        assert self._schema.get_columns_from_selection((ColumnType.NUMERIC | ColumnType.ORDINAL) & ~ColumnRole.LABEL) == [a]
+        assert self._schema.get_columns_from_selection((ColumnType.NUMERIC | ColumnType.ORDINAL) & ~(ColumnRole.LABEL | ColumnRole.FEATURE)) == []
