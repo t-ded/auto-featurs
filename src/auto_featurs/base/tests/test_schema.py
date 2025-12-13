@@ -1,8 +1,10 @@
+import re
+
 import pytest
 
-from auto_featurs.base.schema import ColumnRole
-from auto_featurs.base.schema import ColumnSpecification
-from auto_featurs.base.schema import ColumnType
+from auto_featurs.base.column_specification import ColumnRole
+from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
 
 
@@ -23,16 +25,18 @@ class TestSchema:
             [
                 ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
                 ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
+                ColumnSpecification(name='c', column_type=ColumnType.NOMINAL),
             ],
         )
 
     def test_add(self) -> None:
-        schema = Schema([ColumnSpecification(name='c', column_type=ColumnType.NUMERIC)])
+        schema = Schema([ColumnSpecification(name='d', column_type=ColumnType.NUMERIC)])
         added = self._schema + schema
         assert added.columns == [
             ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
-            ColumnSpecification(name='c', column_type=ColumnType.NUMERIC),
+            ColumnSpecification(name='c', column_type=ColumnType.NOMINAL),
+            ColumnSpecification(name='d', column_type=ColumnType.NUMERIC),
         ]
 
     def test_from_dict(self) -> None:
@@ -56,10 +60,10 @@ class TestSchema:
             Schema.from_dict(spec, label_col='not-present')
 
     def test_column_names(self) -> None:
-        assert self._schema.column_names == ['a', 'b']
+        assert self._schema.column_names == ['a', 'b', 'c']
 
     def test_num_columns(self) -> None:
-        assert self._schema.num_columns == 2
+        assert self._schema.num_columns == 3
 
     def test_label_column(self) -> None:
         assert self._schema.label_column == ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)
@@ -68,7 +72,18 @@ class TestSchema:
         assert self._schema.get_column_by_name('a') == ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)
 
     def test_get_columns_of_type(self) -> None:
-        assert self._schema.get_columns_of_type(ColumnType.NUMERIC) == [ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)]
+        numeric_subset = [ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)]
+        assert self._schema.get_columns_of_type(ColumnType.NUMERIC) == numeric_subset
+        assert self._schema.get_columns_of_type(ColumnType.NUMERIC, subset=numeric_subset) == numeric_subset
+        with pytest.raises(ValueError, match=re.escape("The following columns in subset not found in schema: ['c']")):
+            self._schema.get_columns_of_type(ColumnType.NUMERIC, subset=[ColumnSpecification(name='c', column_type=ColumnType.NUMERIC)])
+
+    def test_get_columns_of_role(self) -> None:
+        label_subset = [ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)]
+        assert self._schema.get_columns_of_role(ColumnRole.LABEL) == label_subset
+        assert self._schema.get_columns_of_role(ColumnRole.LABEL, subset=label_subset) == label_subset
+        with pytest.raises(ValueError, match=re.escape("The following columns in subset not found in schema: ['c']")):
+            self._schema.get_columns_of_role(ColumnRole.LABEL, subset=[ColumnSpecification(name='c', column_type=ColumnType.NUMERIC)])
 
     def test_get_columns_from_selection(self) -> None:
         assert self._schema.get_columns_from_selection(['a', 'b']) == [

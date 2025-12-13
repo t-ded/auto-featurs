@@ -67,6 +67,20 @@ class Schema:
                 return col_spec
         raise KeyError(f'Column "{column_name}" not found in schema.')
 
+    def get_columns_of_type(self, column_type: ColumnType, subset: Optional[ColumnSet] = None) -> ColumnSet:
+        if subset is None:
+            subset = self._columns
+        else:
+            self._check_subset_in_schema(subset)
+        return [col_spec for col_spec in subset if col_spec.column_type == column_type]
+
+    def get_columns_of_role(self, column_role: ColumnRole, subset: Optional[ColumnSet] = None) -> ColumnSet:
+        if subset is None:
+            subset = self._columns
+        else:
+            self._check_subset_in_schema(subset)
+        return [col_spec for col_spec in subset if col_spec.column_role == column_role]
+
     def get_columns_from_selection(self, subset: ColumnSelection) -> ColumnSet:
         match subset:
             case ColumnType():
@@ -78,5 +92,8 @@ class Schema:
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 
-    def get_columns_of_type(self, column_type: ColumnType) -> ColumnSet:
-        return [col_spec for col_spec in self._columns if col_spec.column_type == column_type]
+    def _check_subset_in_schema(self, subset: ColumnSet) -> None:
+        not_present = [col for col in subset if col not in self._columns]
+        if not_present:
+            not_present_names = sorted(get_names_from_column_specs(subset))
+            raise ValueError(f'The following columns in subset not found in schema: {not_present_names}')
