@@ -9,9 +9,9 @@ from typing import Optional
 
 import polars as pl
 
-from auto_featurs.base.column_specification import ColumnSelection
-from auto_featurs.base.column_specification import ColumnSet
 from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.schema import ColumnSelection
+from auto_featurs.base.schema import ColumnSet
 from auto_featurs.base.schema import Schema
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.pipeline.optimizer import OptimizationLevel

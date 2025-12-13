@@ -6,12 +6,14 @@ from typing import Optional
 from more_itertools import flatten
 
 from auto_featurs.base.column_specification import ColumnRole
-from auto_featurs.base.column_specification import ColumnSelection
-from auto_featurs.base.column_specification import ColumnSet
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.utils.utils import get_names_from_column_specs
 from auto_featurs.utils.utils import order_preserving_unique
+
+
+type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
+type ColumnSet = list[ColumnSpecification]
 
 
 class Schema:

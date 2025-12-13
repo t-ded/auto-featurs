@@ -6,9 +6,9 @@ from typing import assert_never
 import polars as pl
 from polars import selectors as cs
 
-from auto_featurs.base.column_specification import ColumnSelection
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.schema import ColumnSelection
 from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.utils.utils import get_names_from_column_specs
 

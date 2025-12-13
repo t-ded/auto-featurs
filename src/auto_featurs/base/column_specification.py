@@ -6,9 +6,6 @@ from enum import Enum
 from enum import auto
 from typing import Optional
 
-type ColumnSelection = str | Sequence[str] | ColumnType | Sequence[ColumnType]
-type ColumnSet = list[ColumnSpecification]
-
 
 class ColumnType(Enum):
     NUMERIC = 'numeric'
