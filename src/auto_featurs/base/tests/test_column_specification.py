@@ -22,21 +22,21 @@ class TestColumnType:
         }
 
     def test_and(self) -> None:
-        assert ColumnType.NUMERIC & ColumnRole.LABEL == ColumnSelector(
+        expected_selector = ColumnSelector(
             type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
             role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
         )
-        assert ColumnType.NUMERIC & ColumnRoleSelector({ColumnRole.LABEL}) == ColumnSelector(
-            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
-            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
-        )
+        assert ColumnType.NUMERIC & ColumnRole.LABEL == expected_selector
+        assert ColumnType.NUMERIC & ColumnRoleSelector({ColumnRole.LABEL}) == expected_selector
 
     def test_or(self) -> None:
-        assert ColumnType.NUMERIC | ColumnType.TEXT == ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
-        assert ColumnType.NUMERIC | ColumnTypeSelector({ColumnType.TEXT}) == ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
+        expected_selector = ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
+        assert ColumnType.NUMERIC | ColumnType.TEXT == expected_selector
+        assert ColumnType.NUMERIC | ColumnTypeSelector({ColumnType.TEXT}) == expected_selector
 
     def test_invert(self) -> None:
-        assert ~ColumnType.NUMERIC == ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
+        expected_selector = ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
+        assert ~ColumnType.NUMERIC == expected_selector
 
 
 class TestColumnRole:
@@ -49,21 +49,21 @@ class TestColumnRole:
         }
 
     def test_and(self) -> None:
-        assert ColumnRole.LABEL & ColumnType.NUMERIC == ColumnSelector(
+        expected_selector = ColumnSelector(
             type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
             role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
         )
-        assert ColumnRole.LABEL & ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnSelector(
-            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
-            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
-        )
+        assert ColumnRole.LABEL & ColumnType.NUMERIC == expected_selector
+        assert ColumnRole.LABEL & ColumnTypeSelector({ColumnType.NUMERIC}) == expected_selector
 
     def test_or(self) -> None:
-        assert ColumnRole.LABEL | ColumnRole.IDENTIFIER == ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
-        assert ColumnRole.LABEL | ColumnRoleSelector({ColumnRole.IDENTIFIER}) == ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
+        expected_selector = ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
+        assert ColumnRole.LABEL | ColumnRole.IDENTIFIER == expected_selector
+        assert ColumnRole.LABEL | ColumnRoleSelector({ColumnRole.IDENTIFIER}) == expected_selector
 
     def test_invert(self) -> None:
-        assert ~ColumnRole.LABEL == ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
+        expected_selector = ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
+        assert ~ColumnRole.LABEL == expected_selector
 
 
 class TestColumnTypeSelector:
@@ -72,21 +72,21 @@ class TestColumnTypeSelector:
         assert ColumnTypeSelector({ColumnType.NUMERIC}) != ColumnTypeSelector({ColumnType.ORDINAL})
 
     def test_and(self) -> None:
-        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRole.LABEL == ColumnSelector(
+        expected_selector = ColumnSelector(
             type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
             role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
         )
-        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRoleSelector({ColumnRole.LABEL}) == ColumnSelector(
-            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
-            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
-        )
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRole.LABEL == expected_selector
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) & ColumnRoleSelector({ColumnRole.LABEL}) == expected_selector
 
     def test_or(self) -> None:
-        assert ColumnTypeSelector({ColumnType.NUMERIC}) | ColumnType.TEXT == ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
-        assert ColumnTypeSelector({ColumnType.NUMERIC}) | ColumnTypeSelector({ColumnType.TEXT}) == ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
+        expected_selector = ColumnTypeSelector({ColumnType.NUMERIC, ColumnType.TEXT})
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) | ColumnType.TEXT == expected_selector
+        assert ColumnTypeSelector({ColumnType.NUMERIC}) | ColumnTypeSelector({ColumnType.TEXT}) == expected_selector
 
     def test_invert(self) -> None:
-        assert ~ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
+        expected_selector = ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
+        assert ~ColumnTypeSelector({ColumnType.NUMERIC}) == expected_selector
 
 
 class TestColumnRoleSelector:
@@ -95,18 +95,18 @@ class TestColumnRoleSelector:
         assert ColumnRoleSelector({ColumnRole.LABEL}) != ColumnRoleSelector({ColumnRole.IDENTIFIER})
 
     def test_and(self) -> None:
-        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnType.NUMERIC == ColumnSelector(
+        expected_selector = ColumnSelector(
             type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
             role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
         )
-        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnSelector(
-            type_selector=ColumnTypeSelector({ColumnType.NUMERIC}),
-            role_selector=ColumnRoleSelector({ColumnRole.LABEL}),
-        )
+        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnType.NUMERIC == expected_selector
+        assert ColumnRoleSelector({ColumnRole.LABEL}) & ColumnTypeSelector({ColumnType.NUMERIC}) == expected_selector
 
     def test_or(self) -> None:
-        assert ColumnRoleSelector({ColumnRole.LABEL}) | ColumnRole.IDENTIFIER == ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
-        assert ColumnRoleSelector({ColumnRole.LABEL}) | ColumnRoleSelector({ColumnRole.IDENTIFIER}) == ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
+        expected_selector = ColumnRoleSelector({ColumnRole.LABEL, ColumnRole.IDENTIFIER})
+        assert ColumnRoleSelector({ColumnRole.LABEL}) | ColumnRole.IDENTIFIER == expected_selector
+        assert ColumnRoleSelector({ColumnRole.LABEL}) | ColumnRoleSelector({ColumnRole.IDENTIFIER}) == expected_selector
 
     def test_invert(self) -> None:
-        assert ~ColumnRoleSelector({ColumnRole.LABEL}) == ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
+        expected_selector = ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
+        assert ~ColumnRoleSelector({ColumnRole.LABEL}) == expected_selector

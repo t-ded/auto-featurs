@@ -165,12 +165,16 @@ class ColumnRoleSelector:
         return self._roles
 
 
+DEFAULT_COLUMN_TYPE_SELECTOR = ColumnTypeSelector()
+DEFAULT_COLUMN_ROLE_SELECTOR = ColumnRoleSelector()
+
+
 class ColumnSelector:
     def __init__(
         self,
         names: Optional[set[str]] = None,
-        type_selector: ColumnTypeSelector = ColumnTypeSelector(),
-        role_selector: ColumnRoleSelector = ColumnRoleSelector(),
+        type_selector: ColumnTypeSelector = DEFAULT_COLUMN_TYPE_SELECTOR,
+        role_selector: ColumnRoleSelector = DEFAULT_COLUMN_ROLE_SELECTOR,
     ) -> None:
         self._names = names
         self._type_selector = type_selector

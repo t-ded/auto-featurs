@@ -77,7 +77,8 @@ mypy-init-return = true
 force-single-line = true
 
 [tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["S101"]  # allow asserts in tests
+"**/test_*.py" = ["S101"]  # Allow asserts in tests
+"src/auto_featurs/base/tests/test_column_specification.py" = ["SIM300"]  # Allow yoda conditions to test AND/OR/INVERT operators
 
 [dependency-groups]
 dev = [

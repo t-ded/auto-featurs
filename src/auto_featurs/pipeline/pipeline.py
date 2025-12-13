@@ -264,7 +264,7 @@ class Pipeline:
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             **kwargs: Any,
-    ) -> list[AT | OverWrapper[AT] | RollingWrapper[AT | OverWrapper[AT]]]:
+    ) -> list[AT | RollingWrapper[AT] | OverWrapper[AT | RollingWrapper[AT]]]:
         index_column = self._dataset.get_column_by_name(index_column_name) if index_column_name else None
         self._validator.validate_time_window_index_column(time_windows, index_column)
         input_columns = self._dataset.get_combinations_from_selections(subset) if subset is not None else None

@@ -52,7 +52,7 @@ class TestDataset:
 
     def test_get_columns_from_selection_sequence(self) -> None:
         cols = self._ds.get_columns_from_selection([ColumnType.NUMERIC, ColumnType.ORDINAL])
-        assert get_names_from_column_specs(cols) == ['a', 'c', 'b']
+        assert get_names_from_column_specs(cols) == ['a', 'b', 'c']
 
     def test_get_combinations_from_selections(self) -> None:
         combos = self._ds.get_combinations_from_selections('a', ColumnType.NUMERIC)

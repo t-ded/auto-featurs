@@ -25,8 +25,12 @@ class TestCountTransformer:
         self._exclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.EXCLUSIVE)
         self._inclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.INCLUSIVE)
         self._filtered_count_transformer = CountTransformer(filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
-        self._filtered_exclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.EXCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
-        self._filtered_inclusive_cumulative_count_transformer = CountTransformer(cumulative=CumulativeOptions.INCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'))
+        self._filtered_exclusive_cumulative_count_transformer = CountTransformer(
+            cumulative=CumulativeOptions.EXCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'),
+        )
+        self._filtered_inclusive_cumulative_count_transformer = CountTransformer(
+            cumulative=CumulativeOptions.INCLUSIVE, filtering_condition=pl.col('NUMERIC_FEATURE').ge(2).alias('NUMERIC_FEATURE_GE_2'),
+        )
 
     def test_name_and_output_type(self) -> None:
         assert self._count_transformer.output_column_specification == ColumnSpecification.numeric(name='count')
