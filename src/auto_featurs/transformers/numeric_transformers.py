@@ -37,7 +37,7 @@ class ArithmeticTransformer(Transformer, ABC):
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
-        return ColumnType.NUMERIC.as_selector(), ColumnType.NUMERIC.as_selector()
+        return ColumnType.NUMERIC | ColumnType.BOOLEAN, ColumnType.NUMERIC | ColumnType.BOOLEAN
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC

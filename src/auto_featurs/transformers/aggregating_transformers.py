@@ -184,7 +184,7 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnType.NUMERIC.as_selector()
+        return ColumnType.NUMERIC | ColumnType.BOOLEAN
 
     @classmethod
     def is_commutative(cls) -> bool:

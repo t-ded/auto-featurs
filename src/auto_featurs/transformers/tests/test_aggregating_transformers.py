@@ -231,6 +231,21 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (SumTransformer, {'BOOL_FEATURE_sum': [3, 3, 3, 3, 3, 3]}),
+            (MeanTransformer, {'BOOL_FEATURE_mean': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}),
+            (StdTransformer, {'BOOL_FEATURE_std': [0.547723, 0.547723, 0.547723, 0.547723, 0.547723, 0.547723]}),
+            (ZscoreTransformer, {'BOOL_FEATURE_z_score': [0.912871, -0.912871, 0.912871, -0.912871, 0.912871, -0.912871]}),
+        ],
+    )
+    def test_basic_arithmetic_aggregation_boolean(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(column='BOOL_FEATURE')
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+
+    @pytest.mark.parametrize(
+        ('transformer_type', 'expected_new_columns'),
+        [
             (SumTransformer, {'NUMERIC_FEATURE_exclusive_cum_sum': [0, 0, 1, 3, 6, 10]}),
             (MeanTransformer, {'NUMERIC_FEATURE_exclusive_cum_mean': [np.nan, 0.0, 0.5, 1, 1.5, 2]}),
             (StdTransformer, {'NUMERIC_FEATURE_exclusive_cum_std': [0.0, 0.0, 1.0, 1.802776, 2.692582, 3.674235]}),

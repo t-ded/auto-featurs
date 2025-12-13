@@ -67,3 +67,17 @@ class TestArithmeticTransformers:
         transformer = transformer_type(left_column='NUMERIC_FEATURE_2', right_column='NUMERIC_FEATURE')
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+    @pytest.mark.parametrize(
+        ('transformer_type', 'expected_new_columns'),
+        [
+            (AddTransformer, {'NUMERIC_FEATURE_add_BOOL_FEATURE': [1, 1, 3, 3, 5, 5]}),
+            (SubtractTransformer, {'NUMERIC_FEATURE_subtract_BOOL_FEATURE': [-1, 1, 1, 3, 3, 5]}),
+            (MultiplyTransformer, {'NUMERIC_FEATURE_multiply_BOOL_FEATURE': [0, 0, 2, 0, 4, 0]}),
+            (DivideTransformer, {'NUMERIC_FEATURE_divide_BOOL_FEATURE': [0.0, np.inf, 2.0, np.inf, 4.0, np.inf]}),
+        ],
+    )
+    def test_basic_arithmetic_transformation_numeric_and_boolean(self, transformer_type: type[ArithmeticTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:
+        transformer = transformer_type(left_column='NUMERIC_FEATURE', right_column='BOOL_FEATURE')
+        df = BASIC_FRAME.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
