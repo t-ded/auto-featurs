@@ -5,6 +5,7 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
+from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
@@ -138,13 +139,14 @@ class TestPipeline:
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
                     ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
                     ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
-                    ColumnSpecification.datetime(name='DATE_FEATURE'),
+                    ColumnSpecification.datetime(name='DATE_FEATURE', role=ColumnRole.TIME_INFO),
                     ColumnSpecification.boolean(name='BOOL_FEATURE'),
                 ]),
             ),
         )
         pipeline = (
             pipeline
+            .with_seasonal(subset=ColumnType.DATETIME & ~ColumnRole.TIME_INFO, operations=[SeasonalOperation.HOUR_OF_DAY])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.HOUR_OF_DAY])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.DAY_OF_WEEK])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.MONTH_OF_YEAR])

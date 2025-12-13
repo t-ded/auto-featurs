@@ -19,7 +19,7 @@ class TestSelector:
         schema = Schema([
             ColumnSpecification(name='x1', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x2', column_type=ColumnType.NUMERIC),
-            ColumnSpecification(name='x3', column_type=ColumnType.NUMERIC),
+            ColumnSpecification(name='x3', column_type=ColumnType.BOOLEAN),
             ColumnSpecification(name='x4', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='z1', column_type=ColumnType.NOMINAL),
             ColumnSpecification(name='z2', column_type=ColumnType.TEXT),
@@ -28,7 +28,7 @@ class TestSelector:
         df = pl.DataFrame({
             'x1': [0, 0, 0, 0],
             'x2': [10, 9, 8, 7],
-            'x3': [0, 1, 0, 1],
+            'x3': [False, True, False, True],
             'x4': [2, 4, 6, 8],
             'z1': ['a', 'b', 'c', 'd'],
             'z2': ['hello', 'world', 'foo', 'bar'],
@@ -82,12 +82,13 @@ class TestSelector:
             self._selector.get_report(dataset=ds, feature_subset='a', method=SelectionMethod.CORRELATION)
 
     def test_correlation_report(self) -> None:
-        out = self._selector.get_report(self._ds, ColumnType.NUMERIC, method=SelectionMethod.CORRELATION)
+        out = self._selector.get_report(self._ds, (ColumnType.NUMERIC | ColumnType.BOOLEAN) & ~ColumnRole.LABEL, method=SelectionMethod.CORRELATION)
         dict_res = dict(out.to_frame().rows())
         assert dict_res['x1'] == 0.0
         assert dict_res['x2'] == 0.4472135954999579
         assert dict_res['x3'] == 1.0
         assert dict_res['x4'] == 0.4472135954999579
+        assert len(dict_res) == 4
 
     @pytest.mark.parametrize('feature', ['z1', 'z2'])
     def test_select_by_ttest_invalid_feature_type(self, feature: str) -> None:
@@ -108,9 +109,10 @@ class TestSelector:
             self._selector.get_report(dataset=ds, feature_subset='a', method=SelectionMethod.T_TEST)
 
     def test_ttest_report(self) -> None:
-        out = self._selector.get_report(self._ds, ColumnType.NUMERIC, method=SelectionMethod.T_TEST)
+        out = self._selector.get_report(self._ds, (ColumnType.NUMERIC | ColumnType.BOOLEAN) & ~ColumnRole.LABEL, method=SelectionMethod.T_TEST)
         dict_res = dict(out.to_frame().rows())
         assert dict_res['x1'] == 0.0
         assert dict_res['x2'] == 0.7071067811865475
         assert dict_res['x3'] == np.inf
         assert dict_res['x4'] == 0.7071067811865475
+        assert len(dict_res) == 4
