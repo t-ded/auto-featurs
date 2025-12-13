@@ -5,6 +5,7 @@ from typing import Optional
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
+from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
@@ -20,12 +21,11 @@ class Validator:
 
     @staticmethod
     def validate_transformer_against_input_columns(transformer: Transformer, input_columns: tuple[ColumnSpecification, ...]) -> None:
-        if isinstance(transformer, RollingWrapper | OverWrapper):
+        if isinstance(transformer, RollingWrapper | OverWrapper | CountTransformer):
             return
 
         expected_column_types_per_column = transformer.input_type()
         iterable_expected_column_types_per_column = (expected_column_types_per_column, ) if isinstance(expected_column_types_per_column, ColumnTypeSelector) else expected_column_types_per_column
-        iterable_expected_column_types_per_column = tuple(col_types for col_types in iterable_expected_column_types_per_column if len(col_types.types) > 0)
 
         if len(input_columns) != len(iterable_expected_column_types_per_column):
             raise ValueError(

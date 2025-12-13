@@ -33,7 +33,7 @@ class CountTransformer(AggregatingTransformer):
         self._filtering_condition = filtering_condition
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector(set())
+        return ColumnTypeSelector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -72,7 +72,7 @@ class LaggedTransformer(AggregatingTransformer):
         self._fill_value = fill_value
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector()
+        return ColumnTypeSelector.any()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -94,7 +94,7 @@ class FirstValueTransformer(AggregatingTransformer):
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector()
+        return ColumnTypeSelector.any()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -117,7 +117,7 @@ class ModeTransformer(AggregatingTransformer):
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector()
+        return ColumnTypeSelector.any()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -152,7 +152,7 @@ class NumUniqueTransformer(AggregatingTransformer):
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector()
+        return ColumnTypeSelector.any()
 
     @classmethod
     def is_commutative(cls) -> bool:

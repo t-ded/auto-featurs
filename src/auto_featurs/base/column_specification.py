@@ -107,7 +107,11 @@ class ColumnSpecification:
 
 class ColumnTypeSelector:
     def __init__(self, types: Optional[set[ColumnType]] = None) -> None:
-        self._types = types if types is not None else ColumnType.ANY()
+        self._types = types or set()
+
+    @classmethod
+    def any(cls) -> ColumnTypeSelector:
+        return ColumnTypeSelector(types=ColumnType.ANY())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ColumnTypeSelector):
@@ -143,7 +147,11 @@ class ColumnTypeSelector:
 
 class ColumnRoleSelector:
     def __init__(self, roles: Optional[set[ColumnRole]] = None) -> None:
-        self._roles = roles if roles is not None else ColumnRole.ANY()
+        self._roles = roles or set()
+
+    @classmethod
+    def any(cls) -> ColumnRoleSelector:
+        return ColumnRoleSelector(roles=ColumnRole.ANY())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ColumnRoleSelector):

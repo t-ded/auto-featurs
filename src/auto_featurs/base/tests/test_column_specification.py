@@ -73,6 +73,9 @@ class TestColumnRole:
 
 
 class TestColumnTypeSelector:
+    def test_any(self) -> None:
+        assert ColumnTypeSelector.any() == ColumnTypeSelector(ColumnType.ANY())
+
     def test_eq(self) -> None:
         assert ColumnTypeSelector({ColumnType.NUMERIC}) == ColumnTypeSelector({ColumnType.NUMERIC})
         assert ColumnTypeSelector({ColumnType.NUMERIC}) != ColumnTypeSelector({ColumnType.ORDINAL})
@@ -101,6 +104,9 @@ class TestColumnTypeSelector:
 
 
 class TestColumnRoleSelector:
+    def test_any(self) -> None:
+        assert ColumnRoleSelector.any() == ColumnRoleSelector(ColumnRole.ANY())
+
     def test_eq(self) -> None:
         assert ColumnRoleSelector({ColumnRole.LABEL}) == ColumnRoleSelector({ColumnRole.LABEL})
         assert ColumnRoleSelector({ColumnRole.LABEL}) != ColumnRoleSelector({ColumnRole.IDENTIFIER})
