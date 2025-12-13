@@ -16,7 +16,6 @@ dependencies = [
 ]
 
 [tool.mypy]
-ignore_missing_imports = true
 no_implicit_reexport = true
 no_error_summary = true
 local_partial_types = true

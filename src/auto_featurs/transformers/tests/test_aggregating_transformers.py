@@ -242,7 +242,6 @@ class TestArithmeticAggregationTransformers:
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
 
-
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
