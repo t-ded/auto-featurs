@@ -37,6 +37,9 @@ class ColumnType(Enum):
     def __invert__(self) -> ColumnTypeSelector:
         return ColumnTypeSelector(types=ColumnType.ANY() - {self})
 
+    def as_selector(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector({self})
+
 
 class ColumnRole(Enum):
     LABEL = auto()
@@ -66,6 +69,9 @@ class ColumnRole(Enum):
 
     def __invert__(self) -> ColumnRoleSelector:
         return ColumnRoleSelector(roles=ColumnRole.ANY() - {self})
+
+    def as_selector(self) -> ColumnRoleSelector:
+        return ColumnRoleSelector({self})
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)

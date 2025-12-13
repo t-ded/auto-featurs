@@ -38,6 +38,9 @@ class TestColumnType:
         expected_selector = ColumnTypeSelector(types=ColumnType.ANY() - {ColumnType.NUMERIC})
         assert ~ColumnType.NUMERIC == expected_selector
 
+    def test_as_selector(self) -> None:
+        assert ColumnType.NUMERIC.as_selector() == ColumnTypeSelector({ColumnType.NUMERIC})
+
 
 class TestColumnRole:
     def test_any_column_type(self) -> None:
@@ -64,6 +67,9 @@ class TestColumnRole:
     def test_invert(self) -> None:
         expected_selector = ColumnRoleSelector(roles=ColumnRole.ANY() - {ColumnRole.LABEL})
         assert ~ColumnRole.LABEL == expected_selector
+
+    def test_as_selector(self) -> None:
+        assert ColumnRole.LABEL.as_selector() == ColumnRoleSelector({ColumnRole.LABEL})
 
 
 class TestColumnTypeSelector:
