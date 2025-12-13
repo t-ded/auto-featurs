@@ -8,6 +8,7 @@ from polars._typing import IntoExpr
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.utils.utils import default_true_filtering_condition
 from auto_featurs.utils.utils import filtering_condition_to_string
@@ -31,8 +32,8 @@ class CountTransformer(AggregatingTransformer):
         self._cumulative = cumulative
         self._filtering_condition = filtering_condition
 
-    def input_type(self) -> set[ColumnType]:
-        return set()
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector(set())
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -70,8 +71,8 @@ class LaggedTransformer(AggregatingTransformer):
         self._lag = lag
         self._fill_value = fill_value
 
-    def input_type(self) -> set[ColumnType]:
-        return ColumnType.ANY()
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -92,8 +93,8 @@ class FirstValueTransformer(AggregatingTransformer):
         self._column = column
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
-    def input_type(self) -> set[ColumnType]:
-        return ColumnType.ANY()
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -115,8 +116,8 @@ class ModeTransformer(AggregatingTransformer):
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
-    def input_type(self) -> set[ColumnType]:
-        return ColumnType.ANY()
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -150,8 +151,8 @@ class NumUniqueTransformer(AggregatingTransformer):
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
-    def input_type(self) -> set[ColumnType]:
-        return ColumnType.ANY()
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnTypeSelector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -182,8 +183,8 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
-    def input_type(self) -> set[ColumnType]:
-        return {ColumnType.NUMERIC}
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnType.NUMERIC.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:

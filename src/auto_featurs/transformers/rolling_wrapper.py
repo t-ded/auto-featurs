@@ -5,6 +5,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.utils.utils import format_timedelta
 
@@ -18,7 +19,7 @@ class RollingWrapper[AT: AggregatingTransformer](AggregatingTransformer):
         self._index_column = index_column
         self._time_window = time_window
 
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
+    def input_type(self) -> ColumnTypeSelector | tuple[ColumnTypeSelector, ...]:
         return self._inner_transformer.input_type()
 
     @classmethod

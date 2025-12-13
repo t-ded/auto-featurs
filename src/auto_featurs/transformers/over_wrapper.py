@@ -5,6 +5,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
 from auto_featurs.utils.utils import get_names_from_column_specs
 
@@ -14,7 +15,7 @@ class OverWrapper[AT: AggregatingTransformer](AggregatingTransformer):
         self._inner_transformer = inner_transformer
         self._over_columns: list[str] = get_names_from_column_specs(over_columns)
 
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
+    def input_type(self) -> ColumnTypeSelector | tuple[ColumnTypeSelector, ...]:
         return self._inner_transformer.input_type()
 
     @classmethod

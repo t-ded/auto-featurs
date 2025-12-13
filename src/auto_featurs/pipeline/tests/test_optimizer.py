@@ -4,6 +4,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.base.schema import Schema
 from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
@@ -16,8 +17,8 @@ class MockCommutativeTransformer(Transformer):
         self._left_column = left_column
         self._right_column = right_column
 
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
-        return {ColumnType.NUMERIC}, {ColumnType.NUMERIC}
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnType.NUMERIC.as_selector(), ColumnType.NUMERIC.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -38,8 +39,8 @@ class MockNonCommutativeTransformer(Transformer):
         self._left_column = left_column
         self._right_column = right_column
 
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
-        return {ColumnType.NUMERIC}, {ColumnType.NUMERIC}
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnType.NUMERIC.as_selector(), ColumnType.NUMERIC.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:

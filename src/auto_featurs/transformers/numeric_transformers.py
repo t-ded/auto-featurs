@@ -5,6 +5,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 
 
@@ -13,8 +14,8 @@ class PolynomialTransformer(Transformer):
         self._column = column if isinstance(column, str) else column.name
         self._degree = degree
 
-    def input_type(self) -> set[ColumnType]:
-        return {ColumnType.NUMERIC}
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnType.NUMERIC.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -35,8 +36,8 @@ class ArithmeticTransformer(Transformer, ABC):
         self._left_column = left_column if isinstance(left_column, str) else left_column.name
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
-    def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
-        return {ColumnType.NUMERIC}, {ColumnType.NUMERIC}
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnType.NUMERIC.as_selector(), ColumnType.NUMERIC.as_selector()
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC

@@ -7,6 +7,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 
 
@@ -14,8 +15,8 @@ class SeasonalTransformer(Transformer, ABC):
     def __init__(self, column: str | ColumnSpecification) -> None:
         self._column = column if isinstance(column, str) else column.name
 
-    def input_type(self) -> set[ColumnType]:
-        return {ColumnType.DATETIME}
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnType.DATETIME.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:
@@ -61,8 +62,8 @@ class TimeDiffTransformer(Transformer):
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
         self._unit = unit
 
-    def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
-        return {ColumnType.DATETIME}, {ColumnType.DATETIME}
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnType.DATETIME.as_selector(), ColumnType.DATETIME.as_selector()
 
     @classmethod
     def is_commutative(cls) -> bool:

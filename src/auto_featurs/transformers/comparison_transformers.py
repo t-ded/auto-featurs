@@ -5,6 +5,7 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 
 
@@ -13,8 +14,8 @@ class ComparisonTransformer(Transformer, ABC):
         self._left_column = left_column if isinstance(left_column, str) else left_column.name
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
-    def input_type(self) -> tuple[set[ColumnType], set[ColumnType]]:
-        return ColumnType.ANY(), ColumnType.ANY()
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnTypeSelector(), ColumnTypeSelector()
 
     def _return_type(self) -> ColumnType:
         return ColumnType.BOOLEAN

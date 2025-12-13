@@ -4,15 +4,16 @@ import pytest
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.pipeline.validator import Validator
 from auto_featurs.transformers.base import Transformer
 
 
 class MockInputTypeTransformer(Transformer):
     def __init__(self, expected_types: set[ColumnType] | tuple[set[ColumnType], ...]) -> None:
-        self._expected_types = expected_types
+        self._expected_types = ColumnTypeSelector(expected_types) if isinstance(expected_types, set) else tuple(ColumnTypeSelector(types) for types in expected_types)
 
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
+    def input_type(self) -> ColumnTypeSelector | tuple[ColumnTypeSelector, ...]:
         return self._expected_types
 
     @classmethod

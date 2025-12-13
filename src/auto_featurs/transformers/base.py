@@ -6,11 +6,12 @@ import polars as pl
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.base.column_specification import ColumnTypeSelector
 
 
 class Transformer(ABC):
     @abstractmethod
-    def input_type(self) -> set[ColumnType] | tuple[set[ColumnType], ...]:
+    def input_type(self) -> ColumnTypeSelector | tuple[ColumnTypeSelector, ...]:
         raise NotImplementedError
 
     @classmethod
