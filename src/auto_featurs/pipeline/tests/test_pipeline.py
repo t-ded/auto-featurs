@@ -85,6 +85,26 @@ class TestPipeline:
         assert_frame_equal(res, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5]}))
         assert_frame_equal(res_with_polynomial, pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}))
 
+    def test_auxiliary_columns_are_dropped(self) -> None:
+        pipeline = Pipeline(dataset=self._simple_dataset)
+        pipeline = (
+            pipeline
+            .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2], auxiliary=True)
+            .with_new_layer()
+            .with_log(subset=ColumnType.NUMERIC, bases=[10])
+        )
+
+        res = pipeline.collect()
+
+        assert_new_columns_in_frame(
+            original_frame=self._simple_dataset.data,
+            new_frame=res,
+            expected_new_columns={
+                'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
+                'NUMERIC_FEATURE_pow_2_log10': [-INFINITY, 0.0, 0.60205999, 0.95424251, 1.20411998, 1.39794001],
+            }
+        )
+
     @pytest.mark.parametrize(
         'optimization_level',
         [

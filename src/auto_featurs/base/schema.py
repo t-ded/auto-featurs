@@ -70,6 +70,12 @@ class Schema:
                 return col_spec
         raise ValueError('No label column found in schema.')
 
+    def drop(self, columns: Iterable[ColumnSpecification]) -> Schema:
+        new_columns = self._columns.copy()
+        for col in columns:
+            new_columns.remove(col)
+        return Schema(new_columns)
+
     def get_column_by_name(self, column_name: str) -> ColumnSpecification:
         for col_spec in self._columns:
             if col_spec.name == column_name:

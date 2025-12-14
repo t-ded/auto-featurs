@@ -1,6 +1,7 @@
 import polars as pl
 import pytest
 
+from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
@@ -12,7 +13,7 @@ class TestDataset:
     def setup_method(self) -> None:
         self._schema = Schema([
             ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
-            ColumnSpecification(name='b', column_type=ColumnType.ORDINAL),
+            ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL),
             ColumnSpecification(name='c', column_type=ColumnType.NUMERIC),
         ])
         self._df = pl.DataFrame({'a': [1], 'b': ['x'], 'c': [2]})
@@ -59,6 +60,14 @@ class TestDataset:
         assert len(combos) == 2
         assert get_names_from_column_specs(combos[0]) == ['a']
         assert get_names_from_column_specs(combos[1]) == ['a', 'c']
+
+    def test_get_label_column(self) -> None:
+        label_col = self._ds.get_label_column()
+        assert label_col.name == 'b'
+
+    def test_drop(self) -> None:
+        new = self._ds.drop([ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)])
+        assert new.schema.column_names == ['a', 'c']
 
     def test_with_columns(self) -> None:
         new = self._ds.with_columns([pl.col('a') + 1])

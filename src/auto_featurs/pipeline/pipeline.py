@@ -47,13 +47,15 @@ class Pipeline:
         dataset: Dataset,
         transformers: Optional[TransformerLayers] = None,
         optimization_level: OptimizationLevel = OptimizationLevel.NONE,
+        auxiliary_columns: Optional[list[ColumnSpecification]] = None,
     ) -> None:
         self._dataset = dataset
         self._transformers: TransformerLayers = transformers or [[]]
+        self._auxiliary_columns: list[ColumnSpecification] = auxiliary_columns or []
         self._optimizer = Optimizer(optimization_level)
         self._validator = Validator()
 
-    def with_seasonal(self, subset: ColumnSelection, operations: Sequence[SeasonalOperation]) -> Pipeline:
+    def with_seasonal(self, subset: ColumnSelection, operations: Sequence[SeasonalOperation], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
@@ -62,9 +64,9 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_time_diff(self, left_subset: ColumnSelection, right_subset: ColumnSelection, unit: Literal['s', 'h', 'd'] = 'd') -> Pipeline:
+    def with_time_diff(self, left_subset: ColumnSelection, right_subset: ColumnSelection, unit: Literal['s', 'h', 'd'] = 'd', auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
 
         transformers = self._build_transformers(
@@ -73,9 +75,9 @@ class Pipeline:
             unit=unit,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int]) -> Pipeline:
+    def with_polynomial(self, subset: ColumnSelection, degrees: Sequence[int], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
@@ -84,9 +86,9 @@ class Pipeline:
             kw_params={'degree': degrees},
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_log(self, subset: ColumnSelection, bases: Sequence[float]) -> Pipeline:
+    def with_log(self, subset: ColumnSelection, bases: Sequence[float], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
@@ -95,9 +97,9 @@ class Pipeline:
             kw_params={'base': bases},
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_scaling(self, subset: ColumnSelection, scalings: Sequence[Scaling]) -> Pipeline:
+    def with_scaling(self, subset: ColumnSelection, scalings: Sequence[Scaling], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
         transformer_types = [op.value for op in order_preserving_unique(scalings)]
 
@@ -106,9 +108,9 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Sequence[ArithmeticOperation]) -> Pipeline:
+    def with_arithmetic(self, left_subset: ColumnSelection, right_subset: ColumnSelection, operations: Sequence[ArithmeticOperation], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
@@ -117,9 +119,9 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Sequence[Comparisons]) -> Pipeline:
+    def with_comparison(self, left_subset: ColumnSelection, right_subset: ColumnSelection, comparisons: Sequence[Comparisons], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(comparisons)]
 
@@ -128,7 +130,7 @@ class Pipeline:
             input_columns=input_columns,
         )
 
-        return self._with_added_to_current_layer(transformers)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
     def with_count(
             self,
@@ -137,6 +139,7 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
     ) -> Pipeline:
         aggregating_transformers = self._build_aggregated_transformers(
             subset=None,
@@ -147,9 +150,16 @@ class Pipeline:
             cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
-        return self._with_added_to_current_layer(aggregating_transformers)
+        return self._with_added_to_current_layer(aggregating_transformers, auxiliary=auxiliary)
 
-    def with_lagged(self, subset: ColumnSelection, lags: Sequence[int], over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (), fill_value: Any = None) -> Pipeline:
+    def with_lagged(
+            self,
+            subset: ColumnSelection,
+            lags: Sequence[int],
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            fill_value: Any = None,
+            auxiliary: bool = False,
+        ) -> Pipeline:
         lagged_transformers = self._build_aggregated_transformers(
             subset=subset,
             transformer_factory=LaggedTransformer,
@@ -157,7 +167,7 @@ class Pipeline:
             kw_params={'lag': lags},
             fill_value=fill_value,
         )
-        return self._with_added_to_current_layer(lagged_transformers)
+        return self._with_added_to_current_layer(lagged_transformers, auxiliary=auxiliary)
 
     def with_first_value(
             self,
@@ -166,6 +176,7 @@ class Pipeline:
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
     ) -> Pipeline:
         first_value_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -175,7 +186,7 @@ class Pipeline:
             index_column_name=index_column_name,
             filtering_condition=filtering_condition,
         )
-        return self._with_added_to_current_layer(first_value_transformers)
+        return self._with_added_to_current_layer(first_value_transformers, auxiliary=auxiliary)
 
     def with_mode(
             self,
@@ -185,6 +196,7 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
     ) -> Pipeline:
         mode_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -195,7 +207,7 @@ class Pipeline:
             cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
-        return self._with_added_to_current_layer(mode_transformers)
+        return self._with_added_to_current_layer(mode_transformers, auxiliary=auxiliary)
 
     def with_num_unique(
             self,
@@ -205,6 +217,7 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
     ) -> Pipeline:
         num_unique_transformers = self._build_aggregated_transformers(
             subset=subset,
@@ -215,7 +228,7 @@ class Pipeline:
             cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
-        return self._with_added_to_current_layer(num_unique_transformers)
+        return self._with_added_to_current_layer(num_unique_transformers, auxiliary=auxiliary)
 
     def with_arithmetic_aggregation(
             self,
@@ -226,6 +239,7 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
     ) -> Pipeline:
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]
         arithmetic_aggregation_transformers = self._build_aggregated_transformers(
@@ -237,7 +251,7 @@ class Pipeline:
             cumulative=cumulative,
             filtering_condition=filtering_condition,
         )
-        return self._with_added_to_current_layer(arithmetic_aggregation_transformers)
+        return self._with_added_to_current_layer(arithmetic_aggregation_transformers, auxiliary=auxiliary)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
@@ -245,6 +259,7 @@ class Pipeline:
             dataset=self._dataset.with_schema(new_schema=new_layer_schema),
             transformers=self._transformers + [[]],
             optimization_level=self._optimizer.optimization_level,
+            auxiliary_columns=self._auxiliary_columns,
         )
 
     def collect_plan(self, cache_computation: bool = False) -> Dataset:
@@ -254,6 +269,8 @@ class Pipeline:
             exprs = [transformer.transform() for transformer in layer]
             dataset = dataset.with_columns(new_columns=exprs)
 
+        dataset = dataset.drop(self._auxiliary_columns)
+
         if cache_computation:
             return dataset.with_cached_computation()
         return dataset
@@ -262,13 +279,19 @@ class Pipeline:
         updated_dataset = self.collect_plan()
         return updated_dataset.collect()
 
-    def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer]) -> Pipeline:
+    def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer], auxiliary: bool = False) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
         current_layer_additions = self._optimizer.deduplicate_transformers_against_layers(self._dataset.schema, current_layer_additions)
+
+        auxiliary_columns = self._auxiliary_columns
+        if auxiliary:
+            auxiliary_columns.extend(transformer.output_column_specification for transformer in current_layer_additions)
+
         return Pipeline(
             dataset=self._dataset,
             transformers=self._transformers[:-1] + [self._current_layer() + current_layer_additions],
             optimization_level=self._optimizer.optimization_level,
+            auxiliary_columns=auxiliary_columns,
         )
 
     def _current_layer(self) -> list[Transformer]:

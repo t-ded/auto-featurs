@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 import logging
 
 import polars as pl
@@ -27,7 +28,7 @@ class Dataset:
 
         if columns_outside_schema:
             logger.warning(f'Dropping columns not present in schema: {', '.join(sorted(columns_outside_schema))}')
-            self._data = self._data.drop(columns_outside_schema, strict=False)
+            self._data = self._data.drop(columns_outside_schema)
 
     @property
     def data(self) -> pl.LazyFrame:
@@ -55,6 +56,9 @@ class Dataset:
 
     def get_label_column(self) -> ColumnSpecification:
         return self._schema.label_column
+
+    def drop(self, columns: Iterable[ColumnSpecification]) -> Dataset:
+        return Dataset(self._data.drop(column.name for column in columns), self._schema.drop(columns))
 
     def with_columns(self, new_columns: list[pl.Expr]) -> Dataset:
         return Dataset(self._data.with_columns(*new_columns), self._schema)

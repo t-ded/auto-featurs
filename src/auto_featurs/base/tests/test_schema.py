@@ -68,6 +68,15 @@ class TestSchema:
     def test_label_column(self) -> None:
         assert self._schema.label_column == ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)
 
+    def test_drop(self) -> None:
+        a = ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)
+        b = ColumnSpecification(name='b', column_type=ColumnType.ORDINAL, column_role=ColumnRole.LABEL)
+        c = ColumnSpecification(name='c', column_type=ColumnType.NOMINAL)
+
+        without_c = self._schema.drop([b, c])
+        assert self._schema.columns == [a, b, c]
+        assert without_c.columns == [a]
+
     def test_get_column_by_name(self) -> None:
         assert self._schema.get_column_by_name('a') == ColumnSpecification(name='a', column_type=ColumnType.NUMERIC)
 
