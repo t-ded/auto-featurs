@@ -1,6 +1,5 @@
 from typing import Optional
 
-import numpy as np
 import polars as pl
 import pytest
 
@@ -12,6 +11,7 @@ from auto_featurs.dataset.dataset import Dataset
 from auto_featurs.feature_selection.feature_selector import FeatureSelector
 from auto_featurs.feature_selection.feature_selector import SelectionMethod
 from auto_featurs.feature_selection.feature_selector import SelectionReport
+from auto_featurs.utils.constants import INFINITY
 
 
 class TestSelector:
@@ -113,6 +113,6 @@ class TestSelector:
         dict_res = dict(out.to_frame().rows())
         assert dict_res['x1'] == 0.0
         assert dict_res['x2'] == 0.7071067811865475
-        assert dict_res['x3'] == np.inf
+        assert dict_res['x3'] == INFINITY
         assert dict_res['x4'] == 0.7071067811865475
         assert len(dict_res) == 4

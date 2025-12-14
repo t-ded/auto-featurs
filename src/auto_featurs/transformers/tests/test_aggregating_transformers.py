@@ -15,6 +15,7 @@ from auto_featurs.transformers.aggregating_transformers import NumUniqueTransfor
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
+from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -248,7 +249,7 @@ class TestArithmeticAggregationTransformers:
             (SumTransformer, {'NUMERIC_FEATURE_exclusive_cum_sum': [0, 0, 1, 3, 6, 10]}),
             (MeanTransformer, {'NUMERIC_FEATURE_exclusive_cum_mean': [np.nan, 0.0, 0.5, 1, 1.5, 2]}),
             (StdTransformer, {'NUMERIC_FEATURE_exclusive_cum_std': [0.0, 0.0, 1.0, 1.802776, 2.692582, 3.674235]}),
-            (ZscoreTransformer, {'NUMERIC_FEATURE_exclusive_cum_z_score': [np.nan, np.inf, 1.5, 1.1094, 0.928477, 0.816497]}),
+            (ZscoreTransformer, {'NUMERIC_FEATURE_exclusive_cum_z_score': [np.nan, INFINITY, 1.5, 1.1094, 0.928477, 0.816497]}),
         ],
     )
     def test_exclusive_cumulative_arithmetic_aggregation(self, transformer_type: type[ArithmeticAggregationTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:

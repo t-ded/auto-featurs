@@ -8,6 +8,7 @@ from auto_featurs.transformers.numeric_transformers import LogTransformer
 from auto_featurs.transformers.numeric_transformers import MultiplyTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import SubtractTransformer
+from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -55,8 +56,8 @@ class TestLogTransformer:
             original_frame=BASIC_FRAME,
             new_frame=df,
             expected_new_columns={
-                'NUMERIC_FEATURE_ln': [-np.inf, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
-                'NUMERIC_FEATURE_log10': [-np.inf, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
+                'NUMERIC_FEATURE_ln': [-INFINITY, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
+                'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
             },
         )
 
@@ -96,7 +97,7 @@ class TestArithmeticTransformers:
             (AddTransformer, {'NUMERIC_FEATURE_add_BOOL_FEATURE': [1, 1, 3, 3, 5, 5]}),
             (SubtractTransformer, {'NUMERIC_FEATURE_subtract_BOOL_FEATURE': [-1, 1, 1, 3, 3, 5]}),
             (MultiplyTransformer, {'NUMERIC_FEATURE_multiply_BOOL_FEATURE': [0, 0, 2, 0, 4, 0]}),
-            (DivideTransformer, {'NUMERIC_FEATURE_divide_BOOL_FEATURE': [0.0, np.inf, 2.0, np.inf, 4.0, np.inf]}),
+            (DivideTransformer, {'NUMERIC_FEATURE_divide_BOOL_FEATURE': [0.0, INFINITY, 2.0, INFINITY, 4.0, INFINITY]}),
         ],
     )
     def test_basic_arithmetic_transformation_numeric_and_boolean(self, transformer_type: type[ArithmeticTransformer], expected_new_columns: dict[str, list[int] | list[float]]) -> None:

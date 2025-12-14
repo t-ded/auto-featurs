@@ -3,8 +3,8 @@ import math
 
 import numpy as np
 import polars as pl
-import pytest
 from polars.testing import assert_frame_equal
+import pytest
 
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -19,6 +19,7 @@ from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
 
@@ -204,8 +205,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
-                'NUMERIC_FEATURE_ln': [-np.inf, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
-                'NUMERIC_FEATURE_log10': [-np.inf, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
+                'NUMERIC_FEATURE_ln': [-INFINITY, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
+                'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
                 'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],
