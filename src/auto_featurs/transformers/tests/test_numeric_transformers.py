@@ -5,8 +5,10 @@ from auto_featurs.transformers.numeric_transformers import AddTransformer
 from auto_featurs.transformers.numeric_transformers import ArithmeticTransformer
 from auto_featurs.transformers.numeric_transformers import DivideTransformer
 from auto_featurs.transformers.numeric_transformers import LogTransformer
+from auto_featurs.transformers.numeric_transformers import MinMaxScaler
 from auto_featurs.transformers.numeric_transformers import MultiplyTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.transformers.numeric_transformers import StandardScaler
 from auto_featurs.transformers.numeric_transformers import SubtractTransformer
 from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
@@ -46,7 +48,7 @@ class TestLogTransformer:
         self._natural_log_transformer = LogTransformer(column='NUMERIC_FEATURE')
         self._log_10_transformer = LogTransformer(column='NUMERIC_FEATURE', base=10)
 
-    def test_basic_polynomial_transformation(self) -> None:
+    def test_basic_log_transformation(self) -> None:
         df = BASIC_FRAME.with_columns(
             self._natural_log_transformer.transform(),
             self._log_10_transformer.transform(),
@@ -58,6 +60,27 @@ class TestLogTransformer:
             expected_new_columns={
                 'NUMERIC_FEATURE_ln': [-INFINITY, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
                 'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
+            },
+        )
+
+
+class TestScalers:
+    def setup_method(self) -> None:
+        self._standard_scaler = StandardScaler(column='NUMERIC_FEATURE')
+        self._min_max_scaler = MinMaxScaler(column='NUMERIC_FEATURE')
+
+    def test_basic_scaling_transformation(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._standard_scaler.transform(),
+            self._min_max_scaler.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'NUMERIC_FEATURE_standard_scaled': [-1.336306, -0.801784, -0.267261, 0.267261, 0.801784, 1.336306],
+                'NUMERIC_FEATURE_minmax_scaled': [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
             },
         )
 

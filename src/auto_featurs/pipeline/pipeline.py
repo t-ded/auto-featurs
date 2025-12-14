@@ -32,6 +32,7 @@ from auto_featurs.transformers.datetime_transformers import TimeDiffTransformer
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import LogTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
+from auto_featurs.transformers.numeric_transformers import Scaling
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
 from auto_featurs.utils.utils import get_valid_param_options
@@ -92,6 +93,17 @@ class Pipeline:
             transformer_factory=LogTransformer,
             input_columns=input_columns,
             kw_params={'base': bases},
+        )
+
+        return self._with_added_to_current_layer(transformers)
+
+    def with_scaling(self, subset: ColumnSelection, scalings: Sequence[Scaling]) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+        transformer_types = [op.value for op in order_preserving_unique(scalings)]
+
+        transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
         )
 
         return self._with_added_to_current_layer(transformers)

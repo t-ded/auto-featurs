@@ -50,6 +50,29 @@ class LogTransformer(NumericTransformer):
         return transform.name.suffix(suffix)
 
 
+class StandardScaler(NumericTransformer):
+    def _transform(self) -> pl.Expr:
+        col = pl.col(self._column)
+        return (col - col.mean()) / col.std()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_standard_scaled')
+
+
+class MinMaxScaler(NumericTransformer):
+    def _transform(self) -> pl.Expr:
+        col = pl.col(self._column)
+        return (col - col.min()) / (col.max() - col.min())
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_minmax_scaled')
+
+
+class Scaling(Enum):
+    STANDARD = StandardScaler
+    MIN_MAX = MinMaxScaler
+
+
 class ArithmeticTransformer(Transformer, ABC):
     def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
         self._left_column = left_column if isinstance(left_column, str) else left_column.name
