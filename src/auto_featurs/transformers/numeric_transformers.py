@@ -50,6 +50,27 @@ class LogTransformer(NumericTransformer):
         return transform.name.suffix(suffix)
 
 
+class SinTransformer(NumericTransformer):
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).sin()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.name.suffix('_sin')
+
+
+class CosTransformer(NumericTransformer):
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).cos()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.name.suffix('_cos')
+
+
+class Goniometric(Enum):
+    SIN = SinTransformer
+    COS = CosTransformer
+
+
 class StandardScaler(NumericTransformer):
     def _transform(self) -> pl.Expr:
         col = pl.col(self._column)

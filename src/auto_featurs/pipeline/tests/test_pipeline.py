@@ -18,6 +18,7 @@ from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.transformers.numeric_transformers import Goniometric
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
 from auto_featurs.utils.constants import INFINITY
@@ -178,6 +179,7 @@ class TestPipeline:
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='d')
             .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
             .with_log(subset='NUMERIC_FEATURE', bases=[math.e, 10])
+            .with_goniometric(subset='NUMERIC_FEATURE', functions=[Goniometric.SIN, Goniometric.COS])
             .with_scaling(subset='NUMERIC_FEATURE', scalings=[Scaling.STANDARD, Scaling.MIN_MAX])
             .with_arithmetic(
                 left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
@@ -229,6 +231,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
                 'NUMERIC_FEATURE_ln': [-INFINITY, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
                 'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
+                'NUMERIC_FEATURE_sin': [0.0, 0.84147098, 0.90929743, 0.14112001, -0.7568025, -0.95892427],
+                'NUMERIC_FEATURE_cos': [1.0, 0.54030231, -0.41614684, -0.9899925 , -0.65364362, 0.28366219],
                 'NUMERIC_FEATURE_standard_scaled': [-1.336306, -0.801784, -0.267261, 0.267261, 0.801784, 1.336306],
                 'NUMERIC_FEATURE_minmax_scaled': [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],

@@ -30,6 +30,7 @@ from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.datetime_transformers import TimeDiffTransformer
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.transformers.numeric_transformers import Goniometric
 from auto_featurs.transformers.numeric_transformers import LogTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
@@ -95,6 +96,17 @@ class Pipeline:
             transformer_factory=LogTransformer,
             input_columns=input_columns,
             kw_params={'base': bases},
+        )
+
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
+
+    def with_goniometric(self, subset: ColumnSelection, functions: Sequence[Goniometric], auxiliary: bool = False) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+        transformer_types = [op.value for op in order_preserving_unique(functions)]
+
+        transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
         )
 
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
