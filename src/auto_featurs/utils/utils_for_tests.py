@@ -15,6 +15,8 @@ BASIC_FRAME = pl.LazyFrame(
         'GROUPING_FEATURE_CAT_2': ['CONSONANT', 'VOWEL', 'CONSONANT', 'CONSONANT', 'CONSONANT', 'VOWEL'],
         'DATE_FEATURE': [datetime(year=2_000, month=1, day=i, tzinfo=UTC) for i in range(1, 7)],
         'BOOL_FEATURE': [True, False, True, False, True, False],
+        'TEXT_FEATURE': ['foo bar', 'foo bar', 'foo bar', 'foo bar', 'foo bar', 'foo bar'],
+        'TEXT_FEATURE_2': ['foo bar', 'bar foo', 'Foo Bar', 'foo insert bar', 'foo', 'foos bar'],
     },
 )
 

@@ -21,6 +21,7 @@ from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import Goniometric
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
+from auto_featurs.transformers.text_transformers import TextSimilarity
 from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
@@ -165,6 +166,8 @@ class TestPipeline:
                     ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
                     ColumnSpecification.datetime(name='DATE_FEATURE', role=ColumnRole.TIME_INFO),
                     ColumnSpecification.boolean(name='BOOL_FEATURE'),
+                    ColumnSpecification.text(name='TEXT_FEATURE'),
+                    ColumnSpecification.text(name='TEXT_FEATURE_2'),
                 ]),
             ),
         )
@@ -212,6 +215,7 @@ class TestPipeline:
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
+            .with_text_similarity(left_subset='TEXT_FEATURE', right_subset='TEXT_FEATURE_2', text_similarities=[TextSimilarity.DAMERAU_LEVENSHTEIN])
         )
 
         res = pipeline.collect()
@@ -331,5 +335,6 @@ class TestPipeline:
                 'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, -0.707107, -0.707107, None, 0.707107, 0.707107],
                 'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM': [None, 1.0, 0.707107, 0.0, -0.707107, -1.0],
                 'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 0.707107, 0.707107, None, -0.707107, -0.707107],
+                'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875],
             },
         )

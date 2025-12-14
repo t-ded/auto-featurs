@@ -37,6 +37,7 @@ from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
+from auto_featurs.transformers.text_transformers import TextSimilarity
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
 
@@ -267,6 +268,17 @@ class Pipeline:
             filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(arithmetic_aggregation_transformers, auxiliary=auxiliary)
+
+    def with_text_similarity(self, left_subset: ColumnSelection, right_subset: ColumnSelection, text_similarities: Sequence[TextSimilarity], auxiliary: bool = False) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
+        transformer_types = [comp.value for comp in order_preserving_unique(text_similarities)]
+
+        transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
+        )
+
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
     def with_new_layer(self) -> Pipeline:
         new_layer_schema = self._get_schema_from_transformers(self._current_layer())
