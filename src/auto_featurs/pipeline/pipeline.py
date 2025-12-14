@@ -5,6 +5,7 @@ from datetime import timedelta
 from itertools import product
 from typing import Any
 from typing import Literal
+from typing import Mapping
 from typing import Optional
 
 import polars as pl
@@ -56,13 +57,15 @@ class Pipeline:
         self._optimizer = Optimizer(optimization_level)
         self._validator = Validator()
 
-    def with_seasonal(self, subset: ColumnSelection, operations: Sequence[SeasonalOperation], auxiliary: bool = False) -> Pipeline:
+    def with_seasonal(self, subset: ColumnSelection, operations: Sequence[SeasonalOperation], angular: bool = False, periodic: bool = False, auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
         transformer_types = [op.value for op in order_preserving_unique(operations)]
 
         transformers = self._build_transformers(
             transformer_factory=transformer_types,
             input_columns=input_columns,
+            angular=True if periodic else angular,
+            kw_params={'gon_transformation': ('sin', 'cos')} if periodic else None,
         )
 
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
@@ -393,7 +396,7 @@ class Pipeline:
         *,
         transformer_factory: type[T] | list[type[T]],
         input_columns: Optional[Sequence[ColumnSet]] = None,
-        kw_params: Optional[dict[str, Sequence[Any]]] = None,
+        kw_params: Optional[Mapping[str, Sequence[Any]]] = None,
         **kwargs: Any,
     ) -> list[T]:
 

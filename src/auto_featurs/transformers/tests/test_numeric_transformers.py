@@ -82,8 +82,8 @@ class TestGoniometricTransformers:
             new_frame=df,
             expected_new_columns={
                 'NUMERIC_FEATURE_sin': [0.0, 0.84147098, 0.90929743, 0.14112001, -0.7568025, -0.95892427],
-                'NUMERIC_FEATURE_cos': [1.0, 0.54030231, -0.41614684, -0.9899925 , -0.65364362, 0.28366219],
-            }
+                'NUMERIC_FEATURE_cos': [1.0, 0.54030231, -0.41614684, -0.9899925, -0.65364362, 0.28366219],
+            },
         )
 
 

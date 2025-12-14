@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 import logging
+from collections.abc import Iterable
 
 import polars as pl
 

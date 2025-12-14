@@ -1,10 +1,10 @@
-from datetime import timedelta
 import math
+from datetime import timedelta
 
 import numpy as np
 import polars as pl
-from polars.testing import assert_frame_equal
 import pytest
+from polars.testing import assert_frame_equal
 
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -103,7 +103,7 @@ class TestPipeline:
             expected_new_columns={
                 'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
                 'NUMERIC_FEATURE_pow_2_log10': [-INFINITY, 0.0, 0.60205999, 0.95424251, 1.20411998, 1.39794001],
-            }
+            },
         )
 
     @pytest.mark.parametrize(
@@ -174,6 +174,7 @@ class TestPipeline:
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.HOUR_OF_DAY])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.DAY_OF_WEEK])
             .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.MONTH_OF_YEAR])
+            .with_seasonal(subset='DATE_FEATURE', operations=[SeasonalOperation.HOUR_OF_DAY, SeasonalOperation.DAY_OF_WEEK, SeasonalOperation.MONTH_OF_YEAR], periodic=True)
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='s')
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='h')
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='d')
@@ -222,6 +223,12 @@ class TestPipeline:
                 'DATE_FEATURE_hour_of_day': [0, 0, 0, 0, 0, 0],
                 'DATE_FEATURE_day_of_week': [6, 7, 1, 2, 3, 4],
                 'DATE_FEATURE_month_of_year': [1, 1, 1, 1, 1, 1],
+                'DATE_FEATURE_hour_of_day_angular_sin': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                'DATE_FEATURE_hour_of_day_angular_cos': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                'DATE_FEATURE_day_of_week_angular_sin': [-0.974928, -0.781831, 0.0, 0.781831, 0.974928, 0.433884],
+                'DATE_FEATURE_day_of_week_angular_cos': [-0.222521, 0.62349, 1.0, 0.62349, -0.222521, -0.900969],
+                'DATE_FEATURE_month_of_year_angular_sin': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                'DATE_FEATURE_month_of_year_angular_cos': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
                 'DATE_FEATURE_subtract_DATE_FEATURE_total_seconds': [0, 0, 0, 0, 0, 0],
                 'DATE_FEATURE_subtract_DATE_FEATURE_total_hours': [0, 0, 0, 0, 0, 0],
                 'DATE_FEATURE_subtract_DATE_FEATURE_total_days': [0, 0, 0, 0, 0, 0],
@@ -232,7 +239,7 @@ class TestPipeline:
                 'NUMERIC_FEATURE_ln': [-INFINITY, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
                 'NUMERIC_FEATURE_log10': [-INFINITY, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
                 'NUMERIC_FEATURE_sin': [0.0, 0.84147098, 0.90929743, 0.14112001, -0.7568025, -0.95892427],
-                'NUMERIC_FEATURE_cos': [1.0, 0.54030231, -0.41614684, -0.9899925 , -0.65364362, 0.28366219],
+                'NUMERIC_FEATURE_cos': [1.0, 0.54030231, -0.41614684, -0.9899925, -0.65364362, 0.28366219],
                 'NUMERIC_FEATURE_standard_scaled': [-1.336306, -0.801784, -0.267261, 0.267261, 0.801784, 1.336306],
                 'NUMERIC_FEATURE_minmax_scaled': [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],

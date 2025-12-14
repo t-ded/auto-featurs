@@ -23,6 +23,7 @@ disallow_untyped_defs = true
 strict = true
 no_warn_return_any = true
 disallow_any_generics = false
+mypy_path = ["src"]
 
 [tool.ruff]
 exclude = [

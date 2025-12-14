@@ -1,6 +1,8 @@
+import math
 from abc import ABC
 from enum import Enum
 from typing import Literal
+from typing import Optional
 from typing import assert_never
 
 import polars as pl
@@ -12,8 +14,13 @@ from auto_featurs.transformers.base import Transformer
 
 
 class SeasonalTransformer(Transformer, ABC):
-    def __init__(self, column: str | ColumnSpecification) -> None:
+    def __init__(self, column: str | ColumnSpecification, angular: bool = False, gon_transformation: Optional[Literal['sin', 'cos']] = None) -> None:
+        if not angular and gon_transformation is not None:
+            raise ValueError('gon_transformation can be used only with angular=True')
+
         self._column = column if isinstance(column, str) else column.name
+        self._angular = angular
+        self._gon_transformation = gon_transformation
 
     def input_type(self) -> ColumnTypeSelector:
         return ColumnType.DATETIME.as_selector()
@@ -23,31 +30,54 @@ class SeasonalTransformer(Transformer, ABC):
         return True
 
     def _return_type(self) -> ColumnType:
-        return ColumnType.ORDINAL
+        return ColumnType.ORDINAL if self._gon_transformation is None else ColumnType.NUMERIC
+
+    def _gon_transform(self, expr: pl.Expr) -> pl.Expr:
+        match self._gon_transformation:
+            case None:
+                return expr
+            case 'sin':
+                return expr.sin()
+            case 'cos':
+                return expr.cos()
+
+    def _suffix(self) -> str:
+        angular_suffix = '_angular' if self._angular else ''
+        gon_transf_suffix = f'_{self._gon_transformation}' if self._gon_transformation is not None else ''
+        return angular_suffix + gon_transf_suffix
 
 
 class HourOfDayTransformer(SeasonalTransformer):
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column).dt.hour()
+        res = pl.col(self._column).dt.hour()
+        if self._angular:
+            res = res.mul(2 * math.pi).truediv(24)
+        return self._gon_transform(res)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_hour_of_day')
+        return transform.alias(f'{self._column}_hour_of_day' + self._suffix())
 
 
 class DayOfWeekTransformer(SeasonalTransformer):
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column).dt.weekday()
+        res = pl.col(self._column).dt.weekday()
+        if self._angular:
+            res = res.sub(1).mul(2 * math.pi).truediv(7)
+        return self._gon_transform(res)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_day_of_week')
+        return transform.alias(f'{self._column}_day_of_week' + self._suffix())
 
 
 class MonthOfYearTransformer(SeasonalTransformer):
     def _transform(self) -> pl.Expr:
-        return pl.col(self._column).dt.month()
+        res = pl.col(self._column).dt.month()
+        if self._angular:
+            res = res.sub(1).mul(2 * math.pi).truediv(12)
+        return self._gon_transform(res)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        return transform.alias(f'{self._column}_month_of_year')
+        return transform.alias(f'{self._column}_month_of_year' + self._suffix())
 
 
 class SeasonalOperation(Enum):
