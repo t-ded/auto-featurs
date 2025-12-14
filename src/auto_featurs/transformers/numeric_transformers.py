@@ -1,5 +1,6 @@
 from abc import ABC
 from enum import Enum
+import math
 
 import polars as pl
 
@@ -9,10 +10,9 @@ from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 
 
-class PolynomialTransformer(Transformer):
-    def __init__(self, column: str | ColumnSpecification, *, degree: int) -> None:
+class NumericTransformer(Transformer, ABC):
+    def __init__(self, column: str | ColumnSpecification) -> None:
         self._column = column if isinstance(column, str) else column.name
-        self._degree = degree
 
     def input_type(self) -> ColumnTypeSelector:
         return ColumnType.NUMERIC.as_selector()
@@ -24,11 +24,30 @@ class PolynomialTransformer(Transformer):
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
 
+
+class PolynomialTransformer(NumericTransformer):
+    def __init__(self, column: str | ColumnSpecification, *, degree: int) -> None:
+        super().__init__(column)
+        self._degree = degree
+
     def _transform(self) -> pl.Expr:
         return pl.col(self._column).pow(self._degree)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.name.suffix(f'_pow_{self._degree}')
+
+
+class LogTransformer(NumericTransformer):
+    def __init__(self, column: str | ColumnSpecification, *, base: float = math.e) -> None:
+        super().__init__(column)
+        self._base = base
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).log(self._base)
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        suffix = '_ln' if self._base == math.e else f'_log{self._base}'
+        return transform.name.suffix(suffix)
 
 
 class ArithmeticTransformer(Transformer, ABC):

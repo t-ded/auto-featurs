@@ -30,6 +30,7 @@ from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
 from auto_featurs.transformers.datetime_transformers import TimeDiffTransformer
 from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
+from auto_featurs.transformers.numeric_transformers import LogTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
@@ -80,6 +81,17 @@ class Pipeline:
             transformer_factory=PolynomialTransformer,
             input_columns=input_columns,
             kw_params={'degree': degrees},
+        )
+
+        return self._with_added_to_current_layer(transformers)
+
+    def with_log(self, subset: ColumnSelection, bases: Sequence[float]) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+
+        transformers = self._build_transformers(
+            transformer_factory=LogTransformer,
+            input_columns=input_columns,
+            kw_params={'base': bases},
         )
 
         return self._with_added_to_current_layer(transformers)

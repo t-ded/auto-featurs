@@ -1,4 +1,5 @@
 from datetime import timedelta
+import math
 
 import numpy as np
 import polars as pl
@@ -154,6 +155,7 @@ class TestPipeline:
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='h')
             .with_time_diff(left_subset='DATE_FEATURE', right_subset='DATE_FEATURE', unit='d')
             .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2, 3])
+            .with_log(subset='NUMERIC_FEATURE', bases=[math.e, 10])
             .with_arithmetic(
                 left_subset=ColumnType.NUMERIC, right_subset=ColumnType.NUMERIC,
                 operations=[ArithmeticOperation.ADD, ArithmeticOperation.SUBTRACT, ArithmeticOperation.MULTIPLY, ArithmeticOperation.DIVIDE],
@@ -202,6 +204,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
+                'NUMERIC_FEATURE_ln': [-np.inf, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
+                'NUMERIC_FEATURE_log10': [-np.inf, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE': [0, 2, 4, 6, 8, 10],
                 'NUMERIC_FEATURE_add_NUMERIC_FEATURE_2': [0, 0, 0, 0, 0, 0],
                 'NUMERIC_FEATURE_2_add_NUMERIC_FEATURE': [0, 0, 0, 0, 0, 0],

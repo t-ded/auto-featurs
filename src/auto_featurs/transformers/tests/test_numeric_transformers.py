@@ -4,6 +4,7 @@ import pytest
 from auto_featurs.transformers.numeric_transformers import AddTransformer
 from auto_featurs.transformers.numeric_transformers import ArithmeticTransformer
 from auto_featurs.transformers.numeric_transformers import DivideTransformer
+from auto_featurs.transformers.numeric_transformers import LogTransformer
 from auto_featurs.transformers.numeric_transformers import MultiplyTransformer
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import SubtractTransformer
@@ -35,6 +36,27 @@ class TestPolynomialTransformer:
                 'NUMERIC_FEATURE_pow_3': [0, 1, 8, 27, 64, 125],
                 'NUMERIC_FEATURE_2_pow_2': [0, 1, 4, 9, 16, 25],
                 'NUMERIC_FEATURE_2_pow_3': [0, -1, -8, -27, -64, -125],
+            },
+        )
+
+
+class TestLogTransformer:
+    def setup_method(self) -> None:
+        self._natural_log_transformer = LogTransformer(column='NUMERIC_FEATURE')
+        self._log_10_transformer = LogTransformer(column='NUMERIC_FEATURE', base=10)
+
+    def test_basic_polynomial_transformation(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._natural_log_transformer.transform(),
+            self._log_10_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'NUMERIC_FEATURE_ln': [-np.inf, 0.0, 0.69314718, 1.09861229, 1.38629436, 1.60943791],
+                'NUMERIC_FEATURE_log10': [-np.inf, 0.0, 0.30103, 0.47712125, 0.60205999, 0.69897],
             },
         )
 
