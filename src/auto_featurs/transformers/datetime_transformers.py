@@ -113,15 +113,15 @@ class TimeDiffTransformer(Transformer):
                 return diff.dt.total_days()
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
-        suffix: str = ''
+        unit_str: str = ''
         match self._unit:
             case 's':
-                suffix = '_total_seconds'
+                unit_str = 'seconds'
             case 'h':
-                suffix = '_total_hours'
+                unit_str = 'hours'
             case 'd':
-                suffix = '_total_days'
+                unit_str = 'days'
             case _:
                 assert_never(self._unit)
 
-        return transform.alias(f'{self._left_column}_subtract_{self._right_column}{suffix}')
+        return transform.alias(f'{self._left_column}_total_{unit_str}_diff_{self._right_column}')

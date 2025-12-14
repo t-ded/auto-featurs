@@ -108,9 +108,9 @@ class TestTimeDiffTransformer:
         self._time_diff_transformer_days = TimeDiffTransformer(left_column='DATE_FEATURE', right_column='DATE_FEATURE_2', unit='d')
 
     def test_name_and_output_type(self) -> None:
-        assert self._time_diff_transformer_seconds.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_seconds')
-        assert self._time_diff_transformer_hours.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_hours')
-        assert self._time_diff_transformer_days.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_subtract_DATE_FEATURE_2_total_days')
+        assert self._time_diff_transformer_seconds.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_total_seconds_diff_DATE_FEATURE_2')
+        assert self._time_diff_transformer_hours.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_total_hours_diff_DATE_FEATURE_2')
+        assert self._time_diff_transformer_days.output_column_specification == ColumnSpecification.numeric(name='DATE_FEATURE_total_days_diff_DATE_FEATURE_2')
 
     def test_time_diff_transform(self) -> None:
         df = pl.DataFrame(
@@ -133,6 +133,6 @@ class TestTimeDiffTransformer:
             self._time_diff_transformer_hours.transform(),
             self._time_diff_transformer_days.transform(),
         )
-        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_seconds'].to_list() == [90_001, 90_001, 90_001]
-        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_hours'].to_list() == [25, 25, 25]
-        assert df['DATE_FEATURE_subtract_DATE_FEATURE_2_total_days'].to_list() == [1, 1, 1]
+        assert df['DATE_FEATURE_total_seconds_diff_DATE_FEATURE_2'].to_list() == [90_001, 90_001, 90_001]
+        assert df['DATE_FEATURE_total_hours_diff_DATE_FEATURE_2'].to_list() == [25, 25, 25]
+        assert df['DATE_FEATURE_total_days_diff_DATE_FEATURE_2'].to_list() == [1, 1, 1]
