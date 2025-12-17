@@ -218,6 +218,39 @@ class SumTransformer(ArithmeticAggregationTransformer):
         return 'sum'
 
 
+class QuantileTransformer(ArithmeticAggregationTransformer):
+    def __init__(self, column: str | ColumnSpecification, quantile: float, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        super().__init__(column, cumulative, filtering_condition)
+        self._quantile = quantile
+
+    def _transform(self) -> pl.Expr:
+        col = pl.col(self._column).filter(self._filtering_condition).cast(pl.Float64)
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return col.quantile(self._quantile, interpolation='linear')
+            case CumulativeOptions.EXCLUSIVE:
+                return col.cumulative_eval(pl.element().quantile(self._quantile, interpolation='linear')).shift(1)
+            case CumulativeOptions.INCLUSIVE:
+                return col.cumulative_eval(pl.element().quantile(self._quantile, interpolation='linear'))
+
+    @property
+    def _aggregation(self) -> str:
+        return f'quantile_{int(self._quantile * 100)}'
+
+
+class MedianTransformer(ArithmeticAggregationTransformer):
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        super().__init__(column, cumulative, filtering_condition)
+        self._quantile_transformer = QuantileTransformer(column, 0.5, cumulative, filtering_condition)
+
+    def _transform(self) -> pl.Expr:
+        return self._quantile_transformer.transform()
+
+    @property
+    def _aggregation(self) -> str:
+        return 'median'
+
+
 class MeanTransformer(ArithmeticAggregationTransformer):
     def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)

@@ -10,6 +10,7 @@ from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
+from auto_featurs.transformers.aggregating_transformers import MedianTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
@@ -219,6 +220,7 @@ class TestArithmeticAggregationTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
+            (MedianTransformer, {'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_std': [1.870829, 1.870829, 1.870829, 1.870829, 1.870829, 1.870829]}),
             (ZscoreTransformer, {'NUMERIC_FEATURE_z_score': [-1.3363059905528512, -0.8017835943317106, -0.2672611981105702, 0.2672611981105702, 0.8017835943317106, 1.3363059905528512]}),
@@ -233,6 +235,7 @@ class TestArithmeticAggregationTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {'BOOL_FEATURE_sum': [3, 3, 3, 3, 3, 3]}),
+            (MedianTransformer, {'BOOL_FEATURE_median': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}),
             (MeanTransformer, {'BOOL_FEATURE_mean': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}),
             (StdTransformer, {'BOOL_FEATURE_std': [0.547723, 0.547723, 0.547723, 0.547723, 0.547723, 0.547723]}),
             (ZscoreTransformer, {'BOOL_FEATURE_z_score': [0.912871, -0.912871, 0.912871, -0.912871, 0.912871, -0.912871]}),
@@ -247,6 +250,7 @@ class TestArithmeticAggregationTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {'NUMERIC_FEATURE_exclusive_cum_sum': [0, 0, 1, 3, 6, 10]}),
+            (MedianTransformer, {'NUMERIC_FEATURE_exclusive_cum_median': [None, 0.0, 0.5, 1.0, 1.5, 2.0]}),
             (MeanTransformer, {'NUMERIC_FEATURE_exclusive_cum_mean': [np.nan, 0.0, 0.5, 1, 1.5, 2]}),
             (StdTransformer, {'NUMERIC_FEATURE_exclusive_cum_std': [0.0, 0.0, 1.0, 1.802776, 2.692582, 3.674235]}),
             (ZscoreTransformer, {'NUMERIC_FEATURE_exclusive_cum_z_score': [np.nan, INFINITY, 1.5, 1.1094, 0.928477, 0.816497]}),
@@ -261,6 +265,7 @@ class TestArithmeticAggregationTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {'NUMERIC_FEATURE_inclusive_cum_sum': [0, 1, 3, 6, 10, 15]}),
+            (MedianTransformer, {'NUMERIC_FEATURE_inclusive_cum_median': [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]}),
             (MeanTransformer, {'NUMERIC_FEATURE_inclusive_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
             (StdTransformer, {'NUMERIC_FEATURE_inclusive_cum_std': [0.0, 0.5, 1.118034, 1.870829, 2.738613, 3.708099]}),
             (ZscoreTransformer, {'NUMERIC_FEATURE_inclusive_cum_z_score': [np.nan, 1.0, 0.8944271819998318, 0.8017835943317106, 0.7302966866804473, 0.6741999067446689]}),
@@ -275,6 +280,7 @@ class TestArithmeticAggregationTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (SumTransformer, {'NUMERIC_FEATURE_sum_where_BOOL_FEATURE': [6, 6, 6, 6, 6, 6]}),
+            (MedianTransformer, {'NUMERIC_FEATURE_median_where_BOOL_FEATURE': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean_where_BOOL_FEATURE': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]}),
             (StdTransformer, {'NUMERIC_FEATURE_std_where_BOOL_FEATURE': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]}),
             (
