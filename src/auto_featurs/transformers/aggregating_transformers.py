@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
+from typing import Any
 from typing import Optional
 
 import polars as pl
@@ -178,7 +179,7 @@ class NumUniqueTransformer(AggregatingTransformer):
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None, **kwargs: Any) -> None:
         self._column = column if isinstance(column, str) else column.name
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
@@ -235,20 +236,14 @@ class QuantileTransformer(ArithmeticAggregationTransformer):
 
     @property
     def _aggregation(self) -> str:
+        if self._quantile == 0.5:
+            return 'median'
         return f'quantile_{int(self._quantile * 100)}'
 
 
-class MedianTransformer(ArithmeticAggregationTransformer):
+class MedianTransformer(QuantileTransformer):
     def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
-        super().__init__(column, cumulative, filtering_condition)
-        self._quantile_transformer = QuantileTransformer(column, 0.5, cumulative, filtering_condition)
-
-    def _transform(self) -> pl.Expr:
-        return self._quantile_transformer.transform()
-
-    @property
-    def _aggregation(self) -> str:
-        return 'median'
+        super().__init__(column, 0.5, cumulative, filtering_condition)
 
 
 class MeanTransformer(ArithmeticAggregationTransformer):
@@ -305,6 +300,8 @@ class ZscoreTransformer(ArithmeticAggregationTransformer):
 
 class ArithmeticAggregations(Enum):
     SUM = SumTransformer
+    QUANTILE = QuantileTransformer
+    MEDIAN = MedianTransformer
     MEAN = MeanTransformer
     STD = StdTransformer
     ZSCORE = ZscoreTransformer

@@ -215,6 +215,7 @@ class TestPipeline:
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
+            .with_arithmetic_aggregation(subset='NUMERIC_FEATURE', aggregations=[ArithmeticAggregations.QUANTILE], quantiles=[0.25, 0.5, 0.75])
             .with_text_similarity(left_subset='TEXT_FEATURE', right_subset='TEXT_FEATURE_2', text_similarities=[TextSimilarity.DAMERAU_LEVENSHTEIN])
         )
 
@@ -335,6 +336,9 @@ class TestPipeline:
                 'NUMERIC_FEATURE_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, -0.707107, -0.707107, None, 0.707107, 0.707107],
                 'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM': [None, 1.0, 0.707107, 0.0, -0.707107, -1.0],
                 'NUMERIC_FEATURE_2_z_score_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [None, 0.707107, 0.707107, None, -0.707107, -0.707107],
+                'NUMERIC_FEATURE_quantile_25': [1.25, 1.25, 1.25, 1.25, 1.25, 1.25],
+                'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
+                'NUMERIC_FEATURE_quantile_75': [3.75, 3.75, 3.75, 3.75, 3.75, 3.75],
                 'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875],
             },
         )

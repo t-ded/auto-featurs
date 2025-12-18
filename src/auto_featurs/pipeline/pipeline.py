@@ -256,8 +256,11 @@ class Pipeline:
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
             auxiliary: bool = False,
+            **kwargs: Any,
     ) -> Pipeline:
         transformer_types = [op.value for op in order_preserving_unique(aggregations)]
+        quantiles = kwargs.pop('quantiles', None)
+        kw_params = {'quantile': quantiles} if quantiles else None
         arithmetic_aggregation_transformers = self._build_aggregated_transformers(
             subset=subset,
             transformer_factory=transformer_types,
@@ -266,6 +269,7 @@ class Pipeline:
             index_column_name=index_column_name,
             cumulative=cumulative,
             filtering_condition=filtering_condition,
+            kw_params=kw_params,
         )
         return self._with_added_to_current_layer(arithmetic_aggregation_transformers, auxiliary=auxiliary)
 
