@@ -6,11 +6,9 @@ from typing import Optional
 from more_itertools import flatten
 
 from auto_featurs.base.column_specification import ColumnRole
-from auto_featurs.base.column_specification import ColumnRoleSelector
 from auto_featurs.base.column_specification import ColumnSelector
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
-from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.utils.utils import get_names_from_column_specs
 
 type ColumnSelection = (
@@ -18,7 +16,7 @@ type ColumnSelection = (
     ColumnType | Iterable[ColumnType] |
     ColumnRole | Iterable[ColumnRole] |
     ColumnSpecification | Iterable[ColumnSpecification] |
-    ColumnTypeSelector | ColumnRoleSelector | ColumnSelector
+    ColumnSelector
 )
 type ColumnSet = list[ColumnSpecification]
 
@@ -96,6 +94,13 @@ class Schema:
             self._check_subset_in_schema(subset)
         return [col_spec for col_spec in subset if col_spec.column_role == column_role]
 
+    def get_columns_matching_selector(self, column_selector: ColumnSelector, subset: Optional[ColumnSet] = None) -> ColumnSet:
+        if subset is None:
+            subset = self._columns
+        else:
+            self._check_subset_in_schema(subset)
+        return [col_spec for col_spec in subset if column_selector.matches(col_spec)]
+
     def get_columns_from_selection(self, subset: ColumnSelection) -> ColumnSet:
         match subset:
             case ColumnType():
@@ -105,17 +110,8 @@ class Schema:
             case ColumnSpecification():
                 self._check_subset_in_schema([subset])
                 return [subset]
-            case ColumnTypeSelector():
-                return self.get_columns_from_selection(subset.types)
-            case ColumnRoleSelector():
-                return self.get_columns_from_selection(subset.roles)
             case ColumnSelector():
-                if subset.names is not None:
-                    return self.get_columns_from_selection(subset.names)
-                else:
-                    role_subset = self.get_columns_from_selection(subset.roles)
-                    type_subset = self.get_columns_from_selection(subset.types)
-                    return sorted(set(role_subset) & set(type_subset), key=lambda col: col.name)
+                return self.get_columns_matching_selector(subset)
             case str():
                 return [self.get_column_by_name(subset)]
             case Iterable():

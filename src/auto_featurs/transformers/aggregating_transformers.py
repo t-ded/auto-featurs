@@ -34,7 +34,7 @@ class CountTransformer(AggregatingTransformer):
         self._filtering_condition = filtering_condition
 
     def input_type(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector()
+        return ColumnTypeSelector(frozenset())
 
     @classmethod
     def is_commutative(cls) -> bool:

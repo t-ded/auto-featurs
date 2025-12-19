@@ -6,6 +6,7 @@ from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
+import auto_featurs.column_selectors as cs
 
 
 def test_any_column_type() -> None:
@@ -111,3 +112,6 @@ class TestSchema:
         assert self._schema.get_columns_from_selection(~ColumnRole.LABEL) == [a, c]
         assert self._schema.get_columns_from_selection((ColumnType.NUMERIC | ColumnType.ORDINAL) & ~ColumnRole.LABEL) == [a]
         assert self._schema.get_columns_from_selection((ColumnType.NUMERIC | ColumnType.ORDINAL) & ~(ColumnRole.LABEL | ColumnRole.FEATURE)) == []
+        assert self._schema.get_columns_from_selection(cs.name_starts_with('a') | cs.name_starts_with('b') | cs.name_starts_with('d')) == [a, b]
+        assert self._schema.get_columns_from_selection(cs.name_starts_with('') & ColumnType.NUMERIC) == [a]
+        assert self._schema.get_columns_from_selection(cs.name_starts_with('') | ColumnType.NUMERIC) == [a, b, c]

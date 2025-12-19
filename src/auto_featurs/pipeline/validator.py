@@ -33,9 +33,9 @@ class Validator:
                 f'but received {len(input_columns)}.',
             )
 
-        for column, expected_types in zip(input_columns, iterable_expected_column_types_per_column, strict=True):
-            if column.column_type not in expected_types:
+        for column, type_selector in zip(input_columns, iterable_expected_column_types_per_column, strict=True):
+            if not type_selector.matches(column):
                 raise ValueError(
                     f"Column '{column.name}' has type '{column.column_type}', "
-                    f"but transformer {transformer} expected one of '{expected_types}'.",
+                    f"but transformer {transformer} expected one of '{type_selector.types}'.",
                 )

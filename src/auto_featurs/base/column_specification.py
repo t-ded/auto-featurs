@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
-from typing import Optional
+from typing import overload
 
 
 class ColumnType(Enum):
@@ -20,25 +22,39 @@ class ColumnType(Enum):
 
     def __and__(self, other: object) -> ColumnSelector:
         if isinstance(other, ColumnRole):
-            return ColumnSelector(type_selector=ColumnTypeSelector({self}), role_selector=ColumnRoleSelector({other}))
-        elif isinstance(other, ColumnRoleSelector):
-            return ColumnSelector(type_selector=ColumnTypeSelector({self}), role_selector=other)
+            return self.as_selector() & other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return self.as_selector() & other
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnType')
 
-    def __or__(self, other: object) -> ColumnTypeSelector:
+    @overload
+    def __or__(self, other: ColumnType) -> ColumnTypeSelector:
+        ...
+
+    @overload
+    def __or__(self, other: ColumnRole) -> ColumnSelector:
+        ...
+
+    @overload
+    def __or__(self, other: ColumnSelector) -> ColumnSelector:
+        ...
+
+    def __or__(self, other: object) -> ColumnSelector:
         if isinstance(other, ColumnType):
-            return ColumnTypeSelector(types={self, other})
-        elif isinstance(other, ColumnTypeSelector):
-            return other | self
+            return ColumnTypeSelector(frozenset([self, other]))
+        elif isinstance(other, ColumnRole):
+            return self.as_selector() | other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return self.as_selector() | other
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnType')
 
-    def __invert__(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector(types=ColumnType.ANY() - {self})
+    def __invert__(self) -> ColumnSelector:
+        return ~self.as_selector()
 
     def as_selector(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector({self})
+        return ColumnTypeSelector(frozenset([self]))
 
 
 class ColumnRole(Enum):
@@ -53,25 +69,39 @@ class ColumnRole(Enum):
 
     def __and__(self, other: object) -> ColumnSelector:
         if isinstance(other, ColumnType):
-            return ColumnSelector(type_selector=ColumnTypeSelector({other}), role_selector=ColumnRoleSelector({self}))
-        elif isinstance(other, ColumnTypeSelector):
-            return ColumnSelector(type_selector=other, role_selector=ColumnRoleSelector({self}))
+            return self.as_selector() & other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return self.as_selector() & other
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnRole')
 
-    def __or__(self, other: object) -> ColumnRoleSelector:
+    @overload
+    def __or__(self, other: ColumnRole) -> ColumnRoleSelector:
+        ...
+
+    @overload
+    def __or__(self, other: ColumnType) -> ColumnSelector:
+        ...
+
+    @overload
+    def __or__(self, other: ColumnSelector) -> ColumnSelector:
+        ...
+
+    def __or__(self, other: object) -> ColumnSelector:
         if isinstance(other, ColumnRole):
-            return ColumnRoleSelector(roles={self, other})
-        elif isinstance(other, ColumnRoleSelector):
-            return other | self
+            return ColumnRoleSelector(frozenset([self, other]))
+        elif isinstance(other, ColumnType):
+            return self.as_selector() | other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return self.as_selector() | other
         else:
             raise TypeError(f'Cannot add {type(other)} to ColumnRole')
 
-    def __invert__(self) -> ColumnRoleSelector:
-        return ColumnRoleSelector(roles=ColumnRole.ANY() - {self})
+    def __invert__(self) -> ColumnSelector:
+        return ~self.as_selector()
 
     def as_selector(self) -> ColumnRoleSelector:
-        return ColumnRoleSelector({self})
+        return ColumnRoleSelector(frozenset([self]))
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -105,114 +135,102 @@ class ColumnSpecification:
         return ColumnSpecification(name=name, column_type=ColumnType.DATETIME, column_role=role)
 
 
-class ColumnTypeSelector:
-    def __init__(self, types: Optional[set[ColumnType]] = None) -> None:
-        self._types = types or set()
+class ColumnSelector(ABC):
+    def __and__(self, other: object) -> ColumnSelector:
+        if isinstance(other, ColumnType | ColumnRole):
+            return self & other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return _And(self, other)
+        else:
+            raise ValueError(f'Cannot add {type(other)} to ColumnSelector')
+
+    def __or__(self, other: object) -> ColumnSelector:
+        if isinstance(other, ColumnType | ColumnRole):
+            return self | other.as_selector()
+        elif isinstance(other, ColumnSelector):
+            return _Or(self, other)
+        else:
+            raise ValueError(f'Cannot add {type(other)} to ColumnSelector')
+
+
+    def __invert__(self) -> ColumnSelector:
+        return _Not(self)
+
+    @abstractmethod
+    def matches(self, column: ColumnSpecification) -> bool:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class _And(ColumnSelector):
+    left: ColumnSelector
+    right: ColumnSelector
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return self.left.matches(column) and self.right.matches(column)
+
+
+@dataclass(frozen=True)
+class _Or(ColumnSelector):
+    left: ColumnSelector
+    right: ColumnSelector
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return self.left.matches(column) or self.right.matches(column)
+
+
+@dataclass(frozen=True)
+class _Not(ColumnSelector):
+    selector: ColumnSelector
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return not self.selector.matches(column)
+
+
+@dataclass(frozen=True)
+class NameContains(ColumnSelector):
+    value: str
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return self.value in column.name
+
+
+@dataclass(frozen=True)
+class NameStartsWith(ColumnSelector):
+    value: str
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return column.name.startswith(self.value)
+
+
+@dataclass(frozen=True)
+class NameEndsWith(ColumnSelector):
+    value: str
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return column.name.endswith(self.value)
+
+
+@dataclass(frozen=True)
+class ColumnTypeSelector(ColumnSelector):
+    types: frozenset[ColumnType]
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return column.column_type in self.types
 
     @classmethod
     def any(cls) -> ColumnTypeSelector:
-        return ColumnTypeSelector(types=ColumnType.ANY())
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ColumnTypeSelector):
-            raise TypeError(f'Cannot compare {type(other)} to ColumnTypeSelector')
-        return self._types == other.types
-
-    def __and__(self, other: object) -> ColumnSelector:
-        if isinstance(other, ColumnRole):
-            return ColumnSelector(type_selector=self, role_selector=ColumnRoleSelector({other}))
-        elif isinstance(other, ColumnRoleSelector):
-            return ColumnSelector(type_selector=self, role_selector=other)
-        else:
-            raise TypeError(f'Cannot add {type(other)} to ColumnTypeSelector')
-
-    def __or__(self, other: object) -> ColumnTypeSelector:
-        if isinstance(other, ColumnType):
-            return ColumnTypeSelector(types=self.types | {other})
-        elif isinstance(other, ColumnTypeSelector):
-            return ColumnTypeSelector(types=self.types | other.types)
-        else:
-            raise TypeError(f'Cannot add {type(other)} to ColumnTypeSelector')
-
-    def __invert__(self) -> ColumnTypeSelector:
-        return ColumnTypeSelector(types=ColumnType.ANY() - self._types)
-
-    def __contains__(self, item: object) -> bool:
-        return item in self._types
-
-    @property
-    def types(self) -> set[ColumnType]:
-        return self._types
+        return cls(frozenset(ColumnType.ANY()))
 
 
-class ColumnRoleSelector:
-    def __init__(self, roles: Optional[set[ColumnRole]] = None) -> None:
-        self._roles = roles or set()
+@dataclass(frozen=True)
+class ColumnRoleSelector(ColumnSelector):
+    roles: frozenset[ColumnRole]
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return column.column_role in self.roles
 
     @classmethod
     def any(cls) -> ColumnRoleSelector:
-        return ColumnRoleSelector(roles=ColumnRole.ANY())
+        return cls(frozenset(ColumnRole.ANY()))
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ColumnRoleSelector):
-            raise TypeError(f'Cannot compare {type(other)} to ColumnRoleSelector')
-        return self._roles == other.roles
-
-    def __and__(self, other: object) -> ColumnSelector:
-        if isinstance(other, ColumnType):
-            return ColumnSelector(type_selector=ColumnTypeSelector({other}), role_selector=self)
-        elif isinstance(other, ColumnTypeSelector):
-            return ColumnSelector(type_selector=other, role_selector=self)
-        else:
-            raise TypeError(f'Cannot add {type(other)} to ColumnRoleSelector')
-
-    def __or__(self, other: object) -> ColumnRoleSelector:
-        if isinstance(other, ColumnRole):
-            return ColumnRoleSelector(roles=self.roles | {other})
-        elif isinstance(other, ColumnRoleSelector):
-            return ColumnRoleSelector(roles=self.roles | other.roles)
-        else:
-            raise TypeError(f'Cannot add {type(other)} to ColumnRoleSelector')
-
-    def __invert__(self) -> ColumnRoleSelector:
-        return ColumnRoleSelector(roles=ColumnRole.ANY() - self._roles)
-
-    def __contains__(self, item: object) -> bool:
-        return item in self._roles
-
-    @property
-    def roles(self) -> set[ColumnRole]:
-        return self._roles
-
-
-DEFAULT_COLUMN_TYPE_SELECTOR = ColumnTypeSelector()
-DEFAULT_COLUMN_ROLE_SELECTOR = ColumnRoleSelector()
-
-
-class ColumnSelector:
-    def __init__(
-        self,
-        names: Optional[set[str]] = None,
-        type_selector: ColumnTypeSelector = DEFAULT_COLUMN_TYPE_SELECTOR,
-        role_selector: ColumnRoleSelector = DEFAULT_COLUMN_ROLE_SELECTOR,
-    ) -> None:
-        self._names = names
-        self._type_selector = type_selector
-        self._role_selector = role_selector
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ColumnSelector):
-            raise TypeError(f'Cannot compare {type(other)} to ColumnSelector')
-        return self._names == other.names
-
-    @property
-    def names(self) -> Optional[set[str]]:
-        return self._names
-
-    @property
-    def types(self) -> set[ColumnType]:
-        return self._type_selector.types
-
-    @property
-    def roles(self) -> set[ColumnRole]:
-        return self._role_selector.roles

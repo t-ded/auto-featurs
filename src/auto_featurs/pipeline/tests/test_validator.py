@@ -10,8 +10,8 @@ from auto_featurs.transformers.base import Transformer
 
 
 class MockInputTypeTransformer(Transformer):
-    def __init__(self, expected_types: set[ColumnType] | tuple[set[ColumnType], ...]) -> None:
-        self._expected_types = ColumnTypeSelector(expected_types) if isinstance(expected_types, set) else tuple(ColumnTypeSelector(types) for types in expected_types)
+    def __init__(self, expected_types: frozenset[ColumnType] | tuple[frozenset[ColumnType], ...]) -> None:
+        self._expected_types = ColumnTypeSelector(expected_types) if isinstance(expected_types, frozenset) else tuple(ColumnTypeSelector(types) for types in expected_types)
 
     def input_type(self) -> ColumnTypeSelector | tuple[ColumnTypeSelector, ...]:
         return self._expected_types
@@ -47,20 +47,20 @@ class TestValidator:
         self._validator.validate_time_window_index_column(time_windows, index_column)
 
     def test_validate_transformer_wrong_number_of_columns(self) -> None:
-        transformer = MockInputTypeTransformer(({ColumnType.NUMERIC}, {ColumnType.ORDINAL}))
+        transformer = MockInputTypeTransformer((frozenset([ColumnType.NUMERIC]), frozenset([ColumnType.ORDINAL])))
         input_columns = (ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),)
 
         with pytest.raises(ValueError, match='expected 2 input columns'):
             self._validator.validate_transformer_against_input_columns(transformer, input_columns)
 
     def test_validate_transformer_wrong_column_type(self) -> None:
-        transformer = MockInputTypeTransformer({ColumnType.NUMERIC})
+        transformer = MockInputTypeTransformer(frozenset([ColumnType.NUMERIC]))
         input_columns = (ColumnSpecification(name='a', column_type=ColumnType.ORDINAL),)
 
         with pytest.raises(ValueError, match='expected one of'):
             self._validator.validate_transformer_against_input_columns(transformer, input_columns)
 
     def test_validate_transformer_valid_input(self) -> None:
-        transformer = MockInputTypeTransformer({ColumnType.NUMERIC})
+        transformer = MockInputTypeTransformer(frozenset([ColumnType.NUMERIC]))
         input_columns = (ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),)
         self._validator.validate_transformer_against_input_columns(transformer, input_columns)
