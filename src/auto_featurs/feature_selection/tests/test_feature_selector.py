@@ -30,7 +30,7 @@ class TestSelector:
             'x2': [10, 9, 8, 7],
             'x3': [False, True, False, True],
             'x4': [2, 4, 6, 8],
-            'z1': ['a', 'b', 'c', 'd'],
+            'z1': ['a', 'b', 'b', 'c'],
             'z2': ['hello', 'world', 'foo', 'bar'],
             'y': [0, 1, 0, 1],
         })
@@ -116,3 +116,28 @@ class TestSelector:
         assert dict_res['x3'] == INFINITY
         assert dict_res['x4'] == 0.7071067811865475
         assert len(dict_res) == 4
+
+    @pytest.mark.parametrize('feature', ['x1', 'z2'])
+    def test_select_by_chi_squared_invalid_feature_type(self, feature: str) -> None:
+        with pytest.raises(ValueError, match=f'Chi-Squared can only be computed for boolean, ordinal, nominal columns, but {feature} is of type ColumnType..'):
+            self._selector.get_report(dataset=self._ds, feature_subset=feature, method=SelectionMethod.CHI_SQUARED)
+
+    def test_select_by_chi_squared_invalid_label_type(self) -> None:
+        ds = Dataset(
+            data=pl.DataFrame({'a': [1, 2], 'label': [1, 2]}),
+            schema=Schema(
+                [
+                    ColumnSpecification(name='a', column_type=ColumnType.NUMERIC),
+                    ColumnSpecification(name='label', column_type=ColumnType.NUMERIC, column_role=ColumnRole.LABEL),
+                ],
+            ),
+        )
+        with pytest.raises(ValueError, match='Chi-Squared can only be computed with label column of type boolean, ordinal, nominal'):
+            self._selector.get_report(dataset=ds, feature_subset='a', method=SelectionMethod.CHI_SQUARED)
+
+    def test_chi_squared_report(self) -> None:
+        out = self._selector.get_report(self._ds, (ColumnType.BOOLEAN | ColumnType.ORDINAL | ColumnType.NOMINAL) & ~ColumnRole.LABEL, method=SelectionMethod.CHI_SQUARED)
+        dict_res = dict(out.to_frame().rows())
+        assert dict_res['x3'] == 4.0
+        assert dict_res['z1'] == 2.0
+        assert len(dict_res) == 2

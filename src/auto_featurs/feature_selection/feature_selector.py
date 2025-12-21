@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -5,6 +6,7 @@ from typing import assert_never
 
 import polars as pl
 from polars import selectors as cs
+import polars_ds as pds
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
@@ -16,16 +18,19 @@ from auto_featurs.utils.utils import get_names_from_column_specs
 class SelectionMethod(Enum):
     CORRELATION = 'Correlation'
     T_TEST = 'T-Test'
+    CHI_SQUARED = 'Chi-Squared'
 
 
 SUPPORTED_COLUMN_TYPES = {
     SelectionMethod.CORRELATION: [ColumnType.NUMERIC, ColumnType.BOOLEAN, ColumnType.ORDINAL],
     SelectionMethod.T_TEST: [ColumnType.NUMERIC, ColumnType.BOOLEAN, ColumnType.ORDINAL],
+    SelectionMethod.CHI_SQUARED: [ColumnType.BOOLEAN, ColumnType.ORDINAL, ColumnType.NOMINAL],
 }
 
 SUPPORTED_LABEL_COLUMN_TYPES = {
     SelectionMethod.CORRELATION: [ColumnType.NUMERIC, ColumnType.BOOLEAN],
     SelectionMethod.T_TEST: [ColumnType.BOOLEAN],
+    SelectionMethod.CHI_SQUARED: [ColumnType.BOOLEAN, ColumnType.ORDINAL, ColumnType.NOMINAL],
 }
 
 
@@ -63,13 +68,17 @@ class FeatureSelector:
         label_col_name = label_col.name
         feature_col_names = get_names_from_column_specs(feature_cols)
 
+        stats_extraction_func: Callable[[pl.DataFrame | pl.LazyFrame, list[str], str], pl.DataFrame]
         match method:
             case SelectionMethod.CORRELATION:
-                stats = self._point_correlation(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
+                stats_extraction_func = self._point_correlation
             case SelectionMethod.T_TEST:
-                stats = self._ttest_stat_expr(dataset.data, feature_col_names=feature_col_names, label_col_name=label_col_name)
+                stats_extraction_func = self._ttest_stat_expr
+            case SelectionMethod.CHI_SQUARED:
+                stats_extraction_func = self._chi_squared_stat_expr
             case _:
                 assert_never(method)
+        stats = stats_extraction_func(dataset.data, feature_col_names, label_col_name)
 
         return SelectionReport(feature_names=stats['FEATURE_NAME'], stat_values=stats['STAT_VALUE'], method=method)
 
@@ -122,6 +131,19 @@ class FeatureSelector:
         )
 
         return t_stats.collect()
+
+    @staticmethod
+    def _chi_squared_stat_expr(df: pl.LazyFrame | pl.DataFrame, feature_col_names: list[str], label_col_name: str) -> pl.DataFrame:
+        return (
+            df
+            .lazy()
+            .select(pds.chi2(cs.by_name(feature_col_names), label_col_name))
+            .unnest(pl.all(), separator='_')  # type: ignore [arg-type]
+            .select(cs.ends_with('statistic'))
+            .rename(lambda col: col.rstrip('_statistic'))
+            .unpivot(variable_name='FEATURE_NAME', value_name='STAT_VALUE')
+            .collect()
+        )
 
     @staticmethod
     def _check_valid_types(feature_cols: list[ColumnSpecification], label_col: ColumnSpecification, operation: SelectionMethod) -> None:
