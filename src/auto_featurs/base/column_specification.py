@@ -5,6 +5,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
+import re
 from typing import overload
 
 
@@ -212,6 +213,15 @@ class NameEndsWith(ColumnSelector):
 
 
 @dataclass(frozen=True)
+class NameRegex(ColumnSelector):
+    pattern: str
+    flags: int = 0
+
+    def matches(self, column: ColumnSpecification) -> bool:
+        return bool(re.compile(self.pattern, self.flags).search(column.name))
+
+
+@dataclass(frozen=True)
 class ColumnTypeSelector(ColumnSelector):
     types: frozenset[ColumnType]
 
@@ -233,4 +243,3 @@ class ColumnRoleSelector(ColumnSelector):
     @classmethod
     def any(cls) -> ColumnRoleSelector:
         return cls(frozenset(ColumnRole.ANY()))
-

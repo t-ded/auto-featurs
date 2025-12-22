@@ -40,6 +40,7 @@ class TestColumnType:
             ColumnType.NUMERIC & cs.name_contains('abc'),
             ColumnType.NUMERIC & cs.name_starts_with('a'),
             ColumnType.NUMERIC & cs.name_ends_with('c'),
+            ColumnType.NUMERIC & cs.name_matches('[a-z]'),
         ]
 
         negative_selectors = [
@@ -48,6 +49,7 @@ class TestColumnType:
             ColumnType.NUMERIC & cs.name_contains('d'),
             ColumnType.NUMERIC & cs.name_starts_with('b'),
             ColumnType.NUMERIC & cs.name_ends_with('b'),
+            ColumnType.NUMERIC & cs.name_matches('\d'),
         ]
 
         assert_positives_match(positive_selectors, numeric_label_column)
@@ -64,6 +66,7 @@ class TestColumnType:
             ColumnType.NUMERIC | cs.name_contains('d'),
             ColumnType.NUMERIC | cs.name_starts_with('b'),
             ColumnType.NUMERIC | cs.name_ends_with('b'),
+            ColumnType.NUMERIC | cs.name_matches('\d')
         ]
 
         negative_selectors = [
@@ -71,6 +74,7 @@ class TestColumnType:
             ColumnType.TEXT | cs.name_contains('d'),
             ColumnType.TEXT | cs.name_starts_with('b'),
             ColumnType.TEXT | cs.name_ends_with('b'),
+            ColumnType.TEXT | cs.name_matches('\d'),
         ]
 
         assert_positives_match(positive_selectors, numeric_label_column)
@@ -108,6 +112,7 @@ class TestColumnRole:
             ColumnRole.LABEL & cs.name_contains('abc'),
             ColumnRole.LABEL & cs.name_starts_with('a'),
             ColumnRole.LABEL & cs.name_ends_with('c'),
+            ColumnRole.LABEL & cs.name_matches('[a-z]')
         ]
 
         negative_selectors = [
@@ -115,6 +120,7 @@ class TestColumnRole:
             ColumnRole.LABEL & cs.name_contains('d'),
             ColumnRole.LABEL & cs.name_starts_with('b'),
             ColumnRole.LABEL & cs.name_ends_with('b'),
+            ColumnRole.LABEL & cs.name_matches('\d')
         ]
 
         assert_positives_match(positive_selectors, numeric_label_column)
@@ -130,13 +136,15 @@ class TestColumnRole:
             ColumnRole.LABEL | cs.name_contains('d'),
             ColumnRole.LABEL | cs.name_starts_with('b'),
             ColumnRole.LABEL | cs.name_ends_with('b'),
+            ColumnRole.LABEL | cs.name_matches('\d')
         ]
 
         negative_selectors = [
             ColumnRole.FEATURE | ColumnType.TEXT,
-            ColumnType.TEXT | cs.name_contains('d'),
-            ColumnType.TEXT | cs.name_starts_with('b'),
-            ColumnType.TEXT | cs.name_ends_with('b'),
+            ColumnRole.FEATURE | cs.name_contains('d'),
+            ColumnRole.FEATURE | cs.name_starts_with('b'),
+            ColumnRole.FEATURE | cs.name_ends_with('b'),
+            ColumnRole.FEATURE | cs.name_matches('\d')
         ]
 
         assert_positives_match(positive_selectors, numeric_label_column)
