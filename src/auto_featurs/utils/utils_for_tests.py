@@ -17,6 +17,7 @@ BASIC_FRAME = pl.LazyFrame(
         'BOOL_FEATURE': [True, False, True, False, True, False],
         'TEXT_FEATURE': ['foo bar', 'foo bar', 'foo bar', 'foo bar', 'foo bar', 'foo bar'],
         'TEXT_FEATURE_2': ['foo bar', 'bar foo', 'Foo Bar', 'foo insert bar', 'foo', 'foos bar'],
+        'TEXT_FEATURE_3': ['john.doe@example.com', 'USER123!!!', 'aaaBBB111', 'straße café 42', 'foo-bar@co.gov.uk', ''],
     },
 )
 

@@ -1,6 +1,10 @@
+import polars as pl
 import pytest
 
 from auto_featurs.transformers.text_transformers import DamerauLevenshteinSimilarityTransformer
+from auto_featurs.transformers.text_transformers import EmailDomainExtractionTransformer
+from auto_featurs.transformers.text_transformers import TextCountMatchesTransformer
+from auto_featurs.transformers.text_transformers import TextLengthTransformer
 from auto_featurs.transformers.text_transformers import TextSimilarityTransformer
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
 from auto_featurs.utils.utils_for_tests import assert_new_columns_in_frame
@@ -28,3 +32,46 @@ class TestTextSimilarityTransformers:
         transformer = transformer_type(left_column='TEXT_FEATURE_2', right_column='TEXT_FEATURE')
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+
+class TestTextExtractionTransformers:
+    def setup_method(self) -> None:
+        self._frame = pl.DataFrame(
+            {
+                'TEXT_FEATURE': ['john.doe@example.com', 'USER123!!!', 'aaaBBB111', 'straße café 42'],
+                'EMAIL': ['louis@gmail.com', 'user@seznam.cz', 'john.doe@email.com', 'london@gov.co.uk'],
+            },
+        )
+
+    def test_text_length_transformer(self) -> None:
+        transformer = TextLengthTransformer(column='TEXT_FEATURE')
+        df = self._frame.with_columns(transformer.transform())
+        assert_new_columns_in_frame(
+            original_frame=self._frame,
+            new_frame=df,
+            expected_new_columns={'TEXT_FEATURE_length_chars': [20, 10, 9, 14]},
+        )
+
+    def test_email_domain_extraction_transformers(self) -> None:
+        transformer = EmailDomainExtractionTransformer(column='EMAIL')
+        df = self._frame.with_columns(transformer.transform())
+        assert_new_columns_in_frame(
+            original_frame=self._frame,
+            new_frame=df,
+            expected_new_columns={'EMAIL_email_domain': ['gmail.com', 'seznam.cz', 'email.com', 'gov.co.uk']},
+        )
+
+    @pytest.mark.parametrize(
+        ('pattern', 'expected_new_columns'),
+        [
+            (r'\d', {'TEXT_FEATURE_count_\\d': [0, 3, 3, 2]}),
+            (r'[A-Z]', {'TEXT_FEATURE_count_[A-Z]': [0, 4, 3, 0]}),
+            (r'[^A-Za-z0-9]', {'TEXT_FEATURE_count_[^A-Za-z0-9]': [3, 3, 0, 4]}),
+            (r'\s', {'TEXT_FEATURE_count_\\s': [0, 0, 0, 2]}),
+            (r'[^\x00-\x7F]', {'TEXT_FEATURE_count_[^\\x00-\\x7F]': [0, 0, 0, 2]}),
+        ]
+    )
+    def test_count_matches_transformer(self, pattern: str, expected_new_columns: dict[str, list[int]]) -> None:
+        transformer = TextCountMatchesTransformer(column='TEXT_FEATURE', regex=pattern)
+        df = self._frame.with_columns(transformer.transform())
+        assert_new_columns_in_frame(original_frame=self._frame, new_frame=df, expected_new_columns=expected_new_columns)

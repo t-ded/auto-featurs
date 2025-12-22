@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
+from typing import Optional
 
 import polars as pl
 import polars_ds as pds
@@ -46,3 +47,58 @@ class DamerauLevenshteinSimilarityTransformer(TextSimilarityTransformer):
 
 class TextSimilarity(Enum):
     DAMERAU_LEVENSHTEIN = DamerauLevenshteinSimilarityTransformer
+
+
+class TextExtractionTransformer(Transformer, ABC):
+    def __init__(self, column: str | ColumnSpecification):
+        self._column = column if isinstance(column, str) else column.name
+
+    def input_type(self) -> ColumnTypeSelector:
+        return ColumnType.TEXT.as_selector()
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+
+class TextLengthTransformer(TextExtractionTransformer):
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).str.len_chars()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_length_chars')
+
+
+class EmailDomainExtractionTransformer(TextExtractionTransformer):
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NOMINAL
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).str.extract(r'@(.+)$', 1)
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_email_domain')
+
+
+class TextExtraction(Enum):
+    LENGTH = TextLengthTransformer
+    EMAIL_DOMAIN = EmailDomainExtractionTransformer
+
+
+class TextCountMatchesTransformer(TextExtractionTransformer):
+    def __init__(self, column: str | ColumnSpecification, regex: str, human_readable: Optional[str] = None) -> None:
+        super().__init__(column)
+        self._regex = regex
+        self._human_readable = human_readable or self._regex
+
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
+    def _transform(self) -> pl.Expr:
+        return pl.col(self._column).str.count_matches(self._regex)
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_count_{self._human_readable}')

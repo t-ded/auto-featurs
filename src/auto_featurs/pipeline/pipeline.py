@@ -37,6 +37,8 @@ from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
 from auto_featurs.transformers.over_wrapper import OverWrapper
 from auto_featurs.transformers.rolling_wrapper import RollingWrapper
+from auto_featurs.transformers.text_transformers import TextCountMatchesTransformer
+from auto_featurs.transformers.text_transformers import TextExtraction
 from auto_featurs.transformers.text_transformers import TextSimilarity
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
@@ -280,6 +282,28 @@ class Pipeline:
         transformers = self._build_transformers(
             transformer_factory=transformer_types,
             input_columns=input_columns,
+        )
+
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
+
+    def with_text_extraction(self, subset: ColumnSelection, text_extractions: Sequence[TextExtraction], auxiliary: bool = False) -> Pipeline:
+            input_columns = self._dataset.get_combinations_from_selections(subset)
+            transformer_types = [op.value for op in order_preserving_unique(text_extractions)]
+
+            transformers = self._build_transformers(
+                transformer_factory=transformer_types,
+                input_columns=input_columns,
+            )
+
+            return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
+
+    def with_text_count_matches(self, subset: ColumnSelection, regexes: list[str], auxiliary: bool = False) -> Pipeline:
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+
+        transformers = self._build_transformers(
+            transformer_factory=TextCountMatchesTransformer,
+            input_columns=input_columns,
+            kw_params={'regex': regexes},
         )
 
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)

@@ -21,6 +21,7 @@ from auto_featurs.transformers.numeric_transformers import ArithmeticOperation
 from auto_featurs.transformers.numeric_transformers import Goniometric
 from auto_featurs.transformers.numeric_transformers import PolynomialTransformer
 from auto_featurs.transformers.numeric_transformers import Scaling
+from auto_featurs.transformers.text_transformers import TextExtraction
 from auto_featurs.transformers.text_transformers import TextSimilarity
 from auto_featurs.utils.constants import INFINITY
 from auto_featurs.utils.utils_for_tests import BASIC_FRAME
@@ -168,6 +169,7 @@ class TestPipeline:
                     ColumnSpecification.boolean(name='BOOL_FEATURE'),
                     ColumnSpecification.text(name='TEXT_FEATURE'),
                     ColumnSpecification.text(name='TEXT_FEATURE_2'),
+                    ColumnSpecification.text(name='TEXT_FEATURE_3'),
                 ]),
             ),
         )
@@ -217,6 +219,8 @@ class TestPipeline:
             )
             .with_arithmetic_aggregation(subset='NUMERIC_FEATURE', aggregations=[ArithmeticAggregations.QUANTILE], quantiles=[0.25, 0.5, 0.75])
             .with_text_similarity(left_subset='TEXT_FEATURE', right_subset='TEXT_FEATURE_2', text_similarities=[TextSimilarity.DAMERAU_LEVENSHTEIN])
+            .with_text_extraction(subset='TEXT_FEATURE_3', text_extractions=[TextExtraction.LENGTH, TextExtraction.EMAIL_DOMAIN])
+            .with_text_count_matches(subset='TEXT_FEATURE_3', regexes=[r'\d', r'[A-Z]'])
         )
 
         res = pipeline.collect()
@@ -340,5 +344,9 @@ class TestPipeline:
                 'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
                 'NUMERIC_FEATURE_quantile_75': [3.75, 3.75, 3.75, 3.75, 3.75, 3.75],
                 'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875],
+                'TEXT_FEATURE_3_length_chars': [20, 10, 9, 14, 17, 0],
+                'TEXT_FEATURE_3_email_domain': ['example.com', None, None, None, 'co.gov.uk', None],
+                'TEXT_FEATURE_3_count_\\d': [0, 3, 3, 2, 0, 0],
+                'TEXT_FEATURE_3_count_[A-Z]': [0, 4, 3, 0, 0, 0],
             },
         )
