@@ -72,7 +72,7 @@ class TestTextExtractionTransformers:
             (r'[^A-Za-z0-9]', {'TEXT_FEATURE_count_non_alphanumeric': [3, 3, 0, 4]}),
             (r'\s', {'TEXT_FEATURE_count_whitespace': [0, 0, 0, 2]}),
             (r'[^\x00-\x7F]', {'TEXT_FEATURE_count_non_ascii': [0, 0, 0, 2]}),
-        ]
+        ],
     )
     def test_count_matches_transformer(self, pattern: PatternInput, expected_new_columns: dict[str, list[int]]) -> None:
         transformer = TextCountMatchesTransformer(column='TEXT_FEATURE', pattern=pattern)

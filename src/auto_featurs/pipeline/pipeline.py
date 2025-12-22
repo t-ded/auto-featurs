@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections.abc import Sequence
 from datetime import timedelta
 from itertools import product
 from typing import Any
 from typing import Literal
-from typing import Mapping
 from typing import Optional
 
 import polars as pl
@@ -287,15 +287,15 @@ class Pipeline:
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
     def with_text_extraction(self, subset: ColumnSelection, text_extractions: Sequence[TextExtraction], auxiliary: bool = False) -> Pipeline:
-            input_columns = self._dataset.get_combinations_from_selections(subset)
-            transformer_types = [op.value for op in order_preserving_unique(text_extractions)]
+        input_columns = self._dataset.get_combinations_from_selections(subset)
+        transformer_types = [op.value for op in order_preserving_unique(text_extractions)]
 
-            transformers = self._build_transformers(
-                transformer_factory=transformer_types,
-                input_columns=input_columns,
-            )
+        transformers = self._build_transformers(
+            transformer_factory=transformer_types,
+            input_columns=input_columns,
+        )
 
-            return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
+        return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
     def with_text_count_matches(self, subset: ColumnSelection, patterns: list[str], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)

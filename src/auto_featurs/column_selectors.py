@@ -1,5 +1,5 @@
-from auto_featurs.base.column_specification import NameEndsWith
 from auto_featurs.base.column_specification import NameContains
+from auto_featurs.base.column_specification import NameEndsWith
 from auto_featurs.base.column_specification import NameRegex
 from auto_featurs.base.column_specification import NameStartsWith
 

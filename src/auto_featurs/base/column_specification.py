@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import re
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
-import re
 from typing import overload
 
 
@@ -152,7 +152,6 @@ class ColumnSelector(ABC):
             return _Or(self, other)
         else:
             raise ValueError(f'Cannot add {type(other)} to ColumnSelector')
-
 
     def __invert__(self) -> ColumnSelector:
         return _Not(self)

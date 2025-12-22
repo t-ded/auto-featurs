@@ -5,8 +5,8 @@ from typing import Optional
 from typing import assert_never
 
 import polars as pl
+import polars_ds as pds  # type: ignore[import-untyped]
 from polars import selectors as cs
-import polars_ds as pds
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
@@ -140,7 +140,7 @@ class FeatureSelector:
             .select(pds.chi2(cs.by_name(feature_col_names), label_col_name))
             .unnest(pl.all(), separator='_')  # type: ignore [arg-type]
             .select(cs.ends_with('statistic'))
-            .rename(lambda col: col.rstrip('_statistic'))
+            .rename(lambda col: col.removesuffix('_statistic'))
             .unpivot(variable_name='FEATURE_NAME', value_name='STAT_VALUE')
             .collect()
         )

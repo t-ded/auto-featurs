@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import polars as pl
-import polars_ds as pds
+import polars_ds as pds  # type: ignore[import-untyped]
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
@@ -118,7 +118,7 @@ class TextCountMatchesTransformer(TextExtractionTransformer):
         if isinstance(pattern, CommonPatterns):
             return _ResolvedPattern(
                 regex=pattern.value,
-                name=pattern.name.lower()
+                name=pattern.name.lower(),
             )
 
         if isinstance(pattern, tuple):

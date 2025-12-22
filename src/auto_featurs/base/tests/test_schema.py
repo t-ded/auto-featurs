@@ -2,11 +2,11 @@ import re
 
 import pytest
 
+import auto_featurs.column_selectors as cs
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.schema import Schema
-import auto_featurs.column_selectors as cs
 
 
 def test_any_column_type() -> None:
