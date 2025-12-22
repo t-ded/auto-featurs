@@ -1,7 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import polars as pl
 import polars_ds as pds
@@ -88,11 +88,21 @@ class TextExtraction(Enum):
     EMAIL_DOMAIN = EmailDomainExtractionTransformer
 
 
+type PatternInput = str | CommonPatterns | tuple[str, str]
+
+
+@dataclass(frozen=True)
+class _ResolvedPattern:
+    regex: str
+    name: str
+
+
 class TextCountMatchesTransformer(TextExtractionTransformer):
-    def __init__(self, column: str | ColumnSpecification, regex: str, human_readable: Optional[str] = None) -> None:
+    def __init__(self, column: str | ColumnSpecification, pattern: PatternInput) -> None:
         super().__init__(column)
-        self._regex = regex
-        self._human_readable = human_readable or self._regex
+        resolved = self._resolve_pattern(pattern)
+        self._regex = resolved.regex
+        self._human_readable = resolved.name
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
@@ -102,3 +112,48 @@ class TextCountMatchesTransformer(TextExtractionTransformer):
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         return transform.alias(f'{self._column}_count_{self._human_readable}')
+
+    @staticmethod
+    def _resolve_pattern(pattern: PatternInput) -> _ResolvedPattern:
+        if isinstance(pattern, CommonPatterns):
+            return _ResolvedPattern(
+                regex=pattern.value,
+                name=pattern.name.lower()
+            )
+
+        if isinstance(pattern, tuple):
+            regex, name = pattern
+            return _ResolvedPattern(regex=regex, name=name)
+
+        if isinstance(pattern, str):
+            for common_pattern in CommonPatterns:
+                if common_pattern.value == pattern:
+                    return _ResolvedPattern(regex=common_pattern.value, name=common_pattern.name.lower())
+
+            return _ResolvedPattern(regex=pattern, name=pattern)
+
+        raise TypeError(f'Unsupported pattern type: {type(pattern)}')
+
+
+class CommonPatterns(Enum):
+    DIGITS = r'\d'
+    LETTER = r'[A-Za-z]'
+    UPPERCASE = r'[A-Z]'
+    LOWERCASE = r'[a-z]'
+    NON_ALPHANUMERIC = r'[^A-Za-z0-9]'
+    WHITESPACE = r'\s'
+
+    CONSECUTIVE_DIGITS = r'\d{3,}'
+    CONSECUTIVE_LETTERS = r'[A-Za-z]{5,}'
+
+    SPECIAL_SYMBOLS = r'[!@#$%^&*_=+|~<>]'
+    PUNCTUATION = r'[.,;:!?]'
+
+    DOT = r'\.'
+    SLASH = r'/'
+    AT_SIGN = r'@'
+    HYPHEN = r'-'
+    UNDERSCORE = r'_'
+
+    NON_ASCII = r'[^\x00-\x7F]'
+    ZERO_WIDTH = r'[\u200B-\u200D\uFEFF]'

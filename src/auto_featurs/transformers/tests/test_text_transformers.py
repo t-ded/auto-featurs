@@ -1,8 +1,10 @@
 import polars as pl
 import pytest
 
+from auto_featurs.transformers.text_transformers import CommonPatterns
 from auto_featurs.transformers.text_transformers import DamerauLevenshteinSimilarityTransformer
 from auto_featurs.transformers.text_transformers import EmailDomainExtractionTransformer
+from auto_featurs.transformers.text_transformers import PatternInput
 from auto_featurs.transformers.text_transformers import TextCountMatchesTransformer
 from auto_featurs.transformers.text_transformers import TextLengthTransformer
 from auto_featurs.transformers.text_transformers import TextSimilarityTransformer
@@ -64,14 +66,15 @@ class TestTextExtractionTransformers:
     @pytest.mark.parametrize(
         ('pattern', 'expected_new_columns'),
         [
-            (r'\d', {'TEXT_FEATURE_count_\\d': [0, 3, 3, 2]}),
-            (r'[A-Z]', {'TEXT_FEATURE_count_[A-Z]': [0, 4, 3, 0]}),
-            (r'[^A-Za-z0-9]', {'TEXT_FEATURE_count_[^A-Za-z0-9]': [3, 3, 0, 4]}),
-            (r'\s', {'TEXT_FEATURE_count_\\s': [0, 0, 0, 2]}),
-            (r'[^\x00-\x7F]', {'TEXT_FEATURE_count_[^\\x00-\\x7F]': [0, 0, 0, 2]}),
+            (r'\d', {'TEXT_FEATURE_count_digits': [0, 3, 3, 2]}),
+            (CommonPatterns.CONSECUTIVE_DIGITS, {'TEXT_FEATURE_count_consecutive_digits': [0, 1, 1, 0]}),
+            (r'[A-Z]', {'TEXT_FEATURE_count_uppercase': [0, 4, 3, 0]}),
+            (r'[^A-Za-z0-9]', {'TEXT_FEATURE_count_non_alphanumeric': [3, 3, 0, 4]}),
+            (r'\s', {'TEXT_FEATURE_count_whitespace': [0, 0, 0, 2]}),
+            (r'[^\x00-\x7F]', {'TEXT_FEATURE_count_non_ascii': [0, 0, 0, 2]}),
         ]
     )
-    def test_count_matches_transformer(self, pattern: str, expected_new_columns: dict[str, list[int]]) -> None:
-        transformer = TextCountMatchesTransformer(column='TEXT_FEATURE', regex=pattern)
+    def test_count_matches_transformer(self, pattern: PatternInput, expected_new_columns: dict[str, list[int]]) -> None:
+        transformer = TextCountMatchesTransformer(column='TEXT_FEATURE', pattern=pattern)
         df = self._frame.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=self._frame, new_frame=df, expected_new_columns=expected_new_columns)

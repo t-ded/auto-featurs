@@ -297,13 +297,13 @@ class Pipeline:
 
             return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
 
-    def with_text_count_matches(self, subset: ColumnSelection, regexes: list[str], auxiliary: bool = False) -> Pipeline:
+    def with_text_count_matches(self, subset: ColumnSelection, patterns: list[str], auxiliary: bool = False) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(subset)
 
         transformers = self._build_transformers(
             transformer_factory=TextCountMatchesTransformer,
             input_columns=input_columns,
-            kw_params={'regex': regexes},
+            kw_params={'pattern': patterns},
         )
 
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)
