@@ -3,6 +3,9 @@ import pytest
 
 from auto_featurs.transformers.text_transformers import CommonPatterns
 from auto_featurs.transformers.text_transformers import DamerauLevenshteinSimilarityTransformer
+from auto_featurs.transformers.text_transformers import JaccardSimilarityTransformer
+from auto_featurs.transformers.text_transformers import JaroSimilarityTransformer
+from auto_featurs.transformers.text_transformers import JaroWinklerSimilarityTransformer
 from auto_featurs.transformers.text_transformers import EmailDomainExtractionTransformer
 from auto_featurs.transformers.text_transformers import PatternInput
 from auto_featurs.transformers.text_transformers import TextCountMatchesTransformer
@@ -17,6 +20,9 @@ class TestTextSimilarityTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (DamerauLevenshteinSimilarityTransformer, {'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875]}),
+            (JaccardSimilarityTransformer, {'TEXT_FEATURE_jaccard_text_similarity_TEXT_FEATURE_2': [1.0, 0.5, 0.333333, 0.461538, 0.333333, 0.625]}),
+            (JaroSimilarityTransformer, {'TEXT_FEATURE_jaro_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.809524, 0.958333]}),
+            (JaroWinklerSimilarityTransformer, {'TEXT_FEATURE_jaro_winkler_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.866667, 0.970833]}),
         ],
     )
     def test_basic_text_similarity_transformation(self, transformer_type: type[TextSimilarityTransformer], expected_new_columns: dict[str, list[float] | list[int]]) -> None:
@@ -28,6 +34,9 @@ class TestTextSimilarityTransformers:
         ('transformer_type', 'expected_new_columns'),
         [
             (DamerauLevenshteinSimilarityTransformer, {'TEXT_FEATURE_2_damerau_levenshtein_text_similarity_TEXT_FEATURE': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875]}),
+            (JaccardSimilarityTransformer, {'TEXT_FEATURE_2_jaccard_text_similarity_TEXT_FEATURE': [1.0, 0.5, 0.333333, 0.461538, 0.333333, 0.625]}),
+            (JaroSimilarityTransformer, {'TEXT_FEATURE_2_jaro_text_similarity_TEXT_FEATURE': [1.0, 0.428571, 0.809524, 0.690476, 0.809524, 0.958333]}),
+            (JaroWinklerSimilarityTransformer, {'TEXT_FEATURE_2_jaro_winkler_text_similarity_TEXT_FEATURE': [1.0, 0.428571, 0.809524, 0.690476, 0.866667, 0.970833]}),
         ],
     )
     def test_basic_text_similarity_transformation_opposite_order(self, transformer_type: type[TextSimilarityTransformer], expected_new_columns: dict[str, list[float] | list[int]]) -> None:

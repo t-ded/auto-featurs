@@ -3,6 +3,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 
+from matplotlib.font_manager import weight_dict
 import polars as pl
 import polars_ds as pds  # type: ignore[import-untyped]
 
@@ -43,6 +44,53 @@ class DamerauLevenshteinSimilarityTransformer(TextSimilarityTransformer):
     @property
     def _dist_str(self) -> str:
         return 'damerau_levenshtein'
+
+
+class JaccardSimilarityTransformer(TextSimilarityTransformer):
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, substr_size: int = 2) -> None:
+        super().__init__(left_column, right_column)
+        self._substr_size = substr_size
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _transform(self) -> pl.Expr:
+        return pds.str_jaccard(self._left_column, self._right_column)
+
+    @property
+    def _dist_str(self) -> str:
+        return 'jaccard'
+
+
+class JaroSimilarityTransformer(TextSimilarityTransformer):
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _transform(self) -> pl.Expr:
+        return pds.str_jaro(self._left_column, self._right_column)
+
+    @property
+    def _dist_str(self) -> str:
+        return 'jaro'
+
+
+class JaroWinklerSimilarityTransformer(TextSimilarityTransformer):
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, weight: float = 0.1) -> None:
+        super().__init__(left_column, right_column)
+        self._weight = weight
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _transform(self) -> pl.Expr:
+        return pds.str_jw(self._left_column, self._right_column)
+
+    @property
+    def _dist_str(self) -> str:
+        return 'jaro_winkler'
 
 
 class TextSimilarity(Enum):
