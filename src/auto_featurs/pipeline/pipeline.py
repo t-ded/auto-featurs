@@ -275,13 +275,14 @@ class Pipeline:
         )
         return self._with_added_to_current_layer(arithmetic_aggregation_transformers, auxiliary=auxiliary)
 
-    def with_text_similarity(self, left_subset: ColumnSelection, right_subset: ColumnSelection, text_similarities: Sequence[TextSimilarity], auxiliary: bool = False) -> Pipeline:
+    def with_text_similarity(self, left_subset: ColumnSelection, right_subset: ColumnSelection, text_similarities: Sequence[TextSimilarity], auxiliary: bool = False, **kwargs: Any) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
         transformer_types = [comp.value for comp in order_preserving_unique(text_similarities)]
 
         transformers = self._build_transformers(
             transformer_factory=transformer_types,
             input_columns=input_columns,
+            **kwargs,
         )
 
         return self._with_added_to_current_layer(transformers, auxiliary=auxiliary)

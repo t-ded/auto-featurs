@@ -2,8 +2,8 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
-from matplotlib.font_manager import weight_dict
 import polars as pl
 import polars_ds as pds  # type: ignore[import-untyped]
 
@@ -14,7 +14,7 @@ from auto_featurs.transformers.base import Transformer
 
 
 class TextSimilarityTransformer(Transformer, ABC):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, **kwargs: Any) -> None:
         self._left_column = left_column if isinstance(left_column, str) else left_column.name
         self._right_column = right_column if isinstance(right_column, str) else right_column.name
 
@@ -47,7 +47,7 @@ class DamerauLevenshteinSimilarityTransformer(TextSimilarityTransformer):
 
 
 class JaccardSimilarityTransformer(TextSimilarityTransformer):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, substr_size: int = 2) -> None:
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, substr_size: int = 2, **kwargs: Any) -> None:
         super().__init__(left_column, right_column)
         self._substr_size = substr_size
 
@@ -56,7 +56,7 @@ class JaccardSimilarityTransformer(TextSimilarityTransformer):
         return True
 
     def _transform(self) -> pl.Expr:
-        return pds.str_jaccard(self._left_column, self._right_column)
+        return pds.str_jaccard(self._left_column, self._right_column, substr_size=self._substr_size)
 
     @property
     def _dist_str(self) -> str:
@@ -77,7 +77,7 @@ class JaroSimilarityTransformer(TextSimilarityTransformer):
 
 
 class JaroWinklerSimilarityTransformer(TextSimilarityTransformer):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, weight: float = 0.1) -> None:
+    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, weight: float = 0.1, **kwargs: Any) -> None:
         super().__init__(left_column, right_column)
         self._weight = weight
 
@@ -86,7 +86,7 @@ class JaroWinklerSimilarityTransformer(TextSimilarityTransformer):
         return True
 
     def _transform(self) -> pl.Expr:
-        return pds.str_jw(self._left_column, self._right_column)
+        return pds.str_jw(self._left_column, self._right_column, weight=self._weight)
 
     @property
     def _dist_str(self) -> str:
