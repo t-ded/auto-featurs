@@ -95,6 +95,9 @@ class JaroWinklerSimilarityTransformer(TextSimilarityTransformer):
 
 class TextSimilarity(Enum):
     DAMERAU_LEVENSHTEIN = DamerauLevenshteinSimilarityTransformer
+    JACCARD = JaccardSimilarityTransformer
+    JARO = JaroSimilarityTransformer
+    JARO_WINKLER = JaroWinklerSimilarityTransformer
 
 
 class TextExtractionTransformer(Transformer, ABC):

@@ -218,7 +218,11 @@ class TestPipeline:
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
             .with_arithmetic_aggregation(subset='NUMERIC_FEATURE', aggregations=[ArithmeticAggregations.QUANTILE], quantiles=[0.25, 0.5, 0.75])
-            .with_text_similarity(left_subset='TEXT_FEATURE', right_subset='TEXT_FEATURE_2', text_similarities=[TextSimilarity.DAMERAU_LEVENSHTEIN])
+            .with_text_similarity(
+                left_subset='TEXT_FEATURE',
+                right_subset='TEXT_FEATURE_2',
+                text_similarities=[TextSimilarity.DAMERAU_LEVENSHTEIN, TextSimilarity.JACCARD, TextSimilarity.JARO, TextSimilarity.JARO_WINKLER],
+            )
             .with_text_extraction(subset='TEXT_FEATURE_3', text_extractions=[TextExtraction.LENGTH, TextExtraction.EMAIL_DOMAIN])
             .with_text_count_matches(subset='TEXT_FEATURE_3', patterns=[r'\d', r'[A-Z]'])
         )
@@ -344,6 +348,9 @@ class TestPipeline:
                 'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
                 'NUMERIC_FEATURE_quantile_75': [3.75, 3.75, 3.75, 3.75, 3.75, 3.75],
                 'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875],
+                'TEXT_FEATURE_jaccard_text_similarity_TEXT_FEATURE_2': [1.0, 0.5, 0.333333, 0.461538, 0.333333, 0.625],
+                'TEXT_FEATURE_jaro_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.809524, 0.958333],
+                'TEXT_FEATURE_jaro_winkler_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.866667, 0.970833],
                 'TEXT_FEATURE_3_length_chars': [20, 10, 9, 14, 17, 0],
                 'TEXT_FEATURE_3_email_domain': ['example.com', None, None, None, 'co.gov.uk', None],
                 'TEXT_FEATURE_3_count_digits': [0, 3, 3, 2, 0, 0],
