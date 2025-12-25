@@ -14,7 +14,7 @@ from auto_featurs.feature_selection.feature_selector import SelectionReport
 from auto_featurs.utils.constants import INFINITY
 
 
-class TestSelector:
+class TestFeatureSelector:
     def setup_method(self) -> None:
         schema = Schema([
             ColumnSpecification(name='x1', column_type=ColumnType.NUMERIC),

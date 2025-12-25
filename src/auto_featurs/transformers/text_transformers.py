@@ -146,7 +146,7 @@ class CharacterEntropyTransformer(TextExtractionTransformer):
                 pl.element()
                 .value_counts()
                 .struct.field('count')
-                .entropy(base=2)
+                .entropy(base=2),
             )
             .list.first()
         )
