@@ -1,6 +1,7 @@
 import polars as pl
 import pytest
 
+from auto_featurs.transformers.text_transformers import CharacterEntropyTransformer
 from auto_featurs.transformers.text_transformers import CommonPatterns
 from auto_featurs.transformers.text_transformers import DamerauLevenshteinSimilarityTransformer
 from auto_featurs.transformers.text_transformers import JaccardSimilarityTransformer
@@ -70,6 +71,15 @@ class TestTextExtractionTransformers:
             original_frame=self._frame,
             new_frame=df,
             expected_new_columns={'EMAIL_email_domain': ['gmail.com', 'seznam.cz', 'email.com', 'gov.co.uk']},
+        )
+
+    def test_character_entropy_transformer(self) -> None:
+        transformer = CharacterEntropyTransformer(column='TEXT_FEATURE')
+        df = self._frame.with_columns(transformer.transform())
+        assert_new_columns_in_frame(
+            original_frame=self._frame,
+            new_frame=df,
+            expected_new_columns={'TEXT_FEATURE_character_entropy': [3.64644, 2.84644, 1.58496, 3.52164]},
         )
 
     @pytest.mark.parametrize(

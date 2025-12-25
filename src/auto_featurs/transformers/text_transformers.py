@@ -134,9 +134,31 @@ class EmailDomainExtractionTransformer(TextExtractionTransformer):
         return transform.alias(f'{self._column}_email_domain')
 
 
+class CharacterEntropyTransformer(TextExtractionTransformer):
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
+    def _transform(self) -> pl.Expr:
+        return (
+            pl.col(self._column)
+            .str.split('')
+            .list.eval(
+                pl.element()
+                .value_counts()
+                .struct.field('count')
+                .entropy(base=2)
+            )
+            .list.first()
+        )
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        return transform.alias(f'{self._column}_character_entropy')
+
+
 class TextExtraction(Enum):
     LENGTH = TextLengthTransformer
     EMAIL_DOMAIN = EmailDomainExtractionTransformer
+    CHARACTER_ENTROPY = CharacterEntropyTransformer
 
 
 type PatternInput = str | CommonPatterns | tuple[str, str]

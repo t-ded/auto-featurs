@@ -225,7 +225,7 @@ class TestPipeline:
                 substr_size=3,
                 weight=0.2,
             )
-            .with_text_extraction(subset='TEXT_FEATURE_3', text_extractions=[TextExtraction.LENGTH, TextExtraction.EMAIL_DOMAIN])
+            .with_text_extraction(subset='TEXT_FEATURE_3', text_extractions=[TextExtraction.LENGTH, TextExtraction.EMAIL_DOMAIN, TextExtraction.CHARACTER_ENTROPY])
             .with_text_count_matches(subset='TEXT_FEATURE_3', patterns=[r'\d', r'[A-Z]'])
         )
 
@@ -355,6 +355,7 @@ class TestPipeline:
                 'TEXT_FEATURE_jaro_winkler_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.92381, 0.983333],
                 'TEXT_FEATURE_3_length_chars': [20, 10, 9, 14, 17, 0],
                 'TEXT_FEATURE_3_email_domain': ['example.com', None, None, None, 'co.gov.uk', None],
+                'TEXT_FEATURE_3_character_entropy': [3.64644, 2.84644, 1.58496, 3.52164, 3.49923, 0.0],
                 'TEXT_FEATURE_3_count_digits': [0, 3, 3, 2, 0, 0],
                 'TEXT_FEATURE_3_count_uppercase': [0, 4, 3, 0, 0, 0],
             },
