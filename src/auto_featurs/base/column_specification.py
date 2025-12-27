@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 import re
 from abc import ABC
 from abc import abstractmethod
@@ -231,6 +232,11 @@ class ColumnTypeSelector(ColumnSelector):
     def any(cls) -> ColumnTypeSelector:
         return cls(frozenset(ColumnType.ANY()))
 
+    @classmethod
+    def exclude(cls, *except_types: ColumnType) -> ColumnTypeSelector:
+        include = frozenset(ColumnType.ANY()) - frozenset(except_types)
+        return cls(include)
+
 
 @dataclass(frozen=True)
 class ColumnRoleSelector(ColumnSelector):
@@ -242,3 +248,8 @@ class ColumnRoleSelector(ColumnSelector):
     @classmethod
     def any(cls) -> ColumnRoleSelector:
         return cls(frozenset(ColumnRole.ANY()))
+
+    @classmethod
+    def exclude(cls, *except_roles: ColumnRole) -> ColumnRoleSelector:
+        include = frozenset(ColumnRole.ANY()) - frozenset(except_roles)
+        return cls(include)

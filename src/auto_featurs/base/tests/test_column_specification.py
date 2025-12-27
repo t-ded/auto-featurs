@@ -96,7 +96,7 @@ class TestColumnType:
 
 
 class TestColumnRole:
-    def test_any_column_type(self) -> None:
+    def test_any_column_role(self) -> None:
         assert ColumnRole.ANY() == {
             ColumnRole.LABEL,
             ColumnRole.IDENTIFIER,
@@ -163,3 +163,37 @@ class TestColumnRole:
 
     def test_as_selector(self) -> None:
         assert ColumnRole.LABEL.as_selector() == ColumnRoleSelector(frozenset([ColumnRole.LABEL]))
+
+
+class TestColumnTypeSelector:
+    def test_any(self) -> None:
+        any_selector = ColumnTypeSelector.any()
+
+        for value in ColumnType:
+            col_spec = ColumnSpecification(name='col', column_type=value)
+            assert any_selector.matches(col_spec)
+
+    def test_exclude(self) -> None:
+        exclude_selector = ColumnTypeSelector.exclude(ColumnType.NUMERIC)
+        numeric_col = ColumnSpecification(name='numeric', column_type=ColumnType.NUMERIC)
+        ordinal_col = ColumnSpecification(name='ordinal', column_type=ColumnType.ORDINAL)
+
+        assert not exclude_selector.matches(numeric_col)
+        assert exclude_selector.matches(ordinal_col)
+
+
+class TestColumnRoleSelector:
+    def test_any(self) -> None:
+        any_selector = ColumnRoleSelector.any()
+
+        for value in ColumnRole:
+            col_spec = ColumnSpecification(name='col', column_type=ColumnType.NUMERIC, column_role=value)
+            assert any_selector.matches(col_spec)
+
+    def test_exclude(self) -> None:
+        exclude_selector = ColumnRoleSelector.exclude(ColumnRole.FEATURE)
+        feature_col = ColumnSpecification(name='feature', column_type=ColumnType.NUMERIC, column_role=ColumnRole.FEATURE)
+        label_col = ColumnSpecification(name='label', column_type=ColumnType.NUMERIC, column_role=ColumnRole.LABEL)
+
+        assert not exclude_selector.matches(feature_col)
+        assert exclude_selector.matches(label_col)
