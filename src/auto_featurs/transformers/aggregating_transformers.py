@@ -178,6 +178,49 @@ class NumUniqueTransformer(AggregatingTransformer):
         return transform.alias(f'{self._column.name}_{str(self._cumulative)}num_unique' + condition_name)
 
 
+class EntityEntropyTransformer(AggregatingTransformer):
+    def __init__(
+            self,
+            source: str | ColumnSpecification,
+            target: str | ColumnSpecification,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
+    ) -> None:
+        self._source = source if isinstance(source, str) else source.name
+        self._target = target if isinstance(target, str) else target.name
+        self._cumulative = cumulative
+
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return (
+            ColumnTypeSelector.exclude(ColumnType.NUMERIC, ColumnType.DATETIME),
+            ColumnTypeSelector.exclude(ColumnType.NUMERIC, ColumnType.DATETIME),
+        )
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return False
+
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
+    def _transform(self) -> pl.Expr:
+        col = pl.col(self._target)
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return self._entropy_expr(expr=col).over(self._source)
+            case CumulativeOptions.EXCLUSIVE:
+                return col.cumulative_eval(self._entropy_expr(pl.element())).shift(1).over(self._source)
+            case CumulativeOptions.INCLUSIVE:
+                return col.cumulative_eval(self._entropy_expr(pl.element())).over(self._source)
+
+    @staticmethod
+    def _entropy_expr(expr: pl.Expr) -> pl.Expr:
+        return expr.value_counts().struct.field('count').entropy(base=2)
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        agg_name = str(self._cumulative) + 'entropy'
+        return transform.alias(f'{self._target}_by_{self._source}_{agg_name}')
+
+
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
     def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None, **kwargs: Any) -> None:
         self._column = column if isinstance(column, str) else column.name

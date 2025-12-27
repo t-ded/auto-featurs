@@ -7,6 +7,7 @@ from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
+from auto_featurs.transformers.aggregating_transformers import EntityEntropyTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
@@ -211,6 +212,54 @@ class TestNumUniqueTransformer:
                 'NUMERIC_FEATURE_num_unique': [6, 6, 6, 6, 6, 6],
                 'GROUPING_FEATURE_NUM_num_unique_where_BOOL_FEATURE': [2, 2, 2, 2, 2, 2],
                 'GROUPING_FEATURE_NUM_inclusive_cum_num_unique_where_BOOL_FEATURE': [1, 1, 2, 2, 2, 2],
+            },
+        )
+
+
+class TestEntityEntropyTransformer:
+    def setup_method(self) -> None:
+        self._entity_entropy_transformer = EntityEntropyTransformer(source='ID', target='LOC')
+        self._cumulative_entity_entropy_transformer = EntityEntropyTransformer(source='ID', target='LOC', cumulative=CumulativeOptions.INCLUSIVE)
+
+    def test_name_and_output_type(self) -> None:
+        assert self._entity_entropy_transformer.output_column_specification == ColumnSpecification.numeric(name='LOC_by_ID_entropy')
+        assert self._cumulative_entity_entropy_transformer.output_column_specification == ColumnSpecification.numeric(name='LOC_by_ID_inclusive_cum_entropy')
+
+    def test_entity_entropy_transform(self) -> None:
+        frame = pl.DataFrame(
+            {
+                'ID': [
+                    1, 1, 1,
+                    2, 2, 2,
+                    3, 3, 3,
+                ],
+                'LOC': [
+                    'CZ', 'CZ', 'CZ',
+                    'CZ', 'CZ', 'SK',
+                    'CZ', 'SK', 'PL',
+                ],
+            },
+        )
+
+        df = frame.with_columns(
+            self._entity_entropy_transformer.transform(),
+            self._cumulative_entity_entropy_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=frame,
+            new_frame=df,
+            expected_new_columns={
+                'LOC_by_ID_entropy': [
+                    0.0, 0.0, 0.0,
+                    0.918296, 0.918296, 0.918296,
+                    1.584963, 1.584963, 1.584963,
+                ],
+                'LOC_by_ID_inclusive_cum_entropy': [
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.918296,
+                    0.0, 1.0, 1.584963,
+                ],
             },
         )
 

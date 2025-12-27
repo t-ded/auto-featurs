@@ -22,6 +22,7 @@ from auto_featurs.transformers.aggregating_transformers import AggregatingTransf
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
+from auto_featurs.transformers.aggregating_transformers import EntityEntropyTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
@@ -160,7 +161,6 @@ class Pipeline:
             auxiliary: bool = False,
     ) -> Pipeline:
         aggregating_transformers = self._build_aggregated_transformers(
-            subset=None,
             transformer_factory=CountTransformer,
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
@@ -179,7 +179,7 @@ class Pipeline:
             auxiliary: bool = False,
         ) -> Pipeline:
         lagged_transformers = self._build_aggregated_transformers(
-            subset=subset,
+            subset,
             transformer_factory=LaggedTransformer,
             over_columns_combinations=over_columns_combinations,
             kw_params={'lag': lags},
@@ -197,7 +197,7 @@ class Pipeline:
             auxiliary: bool = False,
     ) -> Pipeline:
         first_value_transformers = self._build_aggregated_transformers(
-            subset=subset,
+            subset,
             transformer_factory=FirstValueTransformer,
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
@@ -217,7 +217,7 @@ class Pipeline:
             auxiliary: bool = False,
     ) -> Pipeline:
         mode_transformers = self._build_aggregated_transformers(
-            subset=subset,
+            subset,
             transformer_factory=ModeTransformer,
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
@@ -238,7 +238,7 @@ class Pipeline:
             auxiliary: bool = False,
     ) -> Pipeline:
         num_unique_transformers = self._build_aggregated_transformers(
-            subset=subset,
+            subset,
             transformer_factory=NumUniqueTransformer,
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
@@ -247,6 +247,25 @@ class Pipeline:
             filtering_condition=filtering_condition,
         )
         return self._with_added_to_current_layer(num_unique_transformers, auxiliary=auxiliary)
+
+    def with_entity_entropy(
+        self,
+        source_subset: ColumnSelection,
+        target_subset: ColumnSelection,
+        time_windows: Sequence[Optional[str | timedelta]] = (),
+        index_column_name: Optional[str] = None,
+        cumulative: CumulativeOptions = CumulativeOptions.NONE,
+        auxiliary: bool = False,
+    ) -> Pipeline:
+        entity_entropy_transformers = self._build_aggregated_transformers(
+            source_subset,
+            target_subset,
+            transformer_factory=EntityEntropyTransformer,
+            time_windows=time_windows,
+            index_column_name=index_column_name,
+            cumulative=cumulative,
+        )
+        return self._with_added_to_current_layer(entity_entropy_transformers, auxiliary=auxiliary)
 
     def with_arithmetic_aggregation(
             self,
@@ -264,7 +283,7 @@ class Pipeline:
         quantiles = kwargs.pop('quantiles', None)
         kw_params = {'quantile': quantiles} if quantiles else None
         arithmetic_aggregation_transformers = self._build_aggregated_transformers(
-            subset=subset,
+            subset,
             transformer_factory=transformer_types,
             over_columns_combinations=over_columns_combinations,
             time_windows=time_windows,
@@ -360,8 +379,7 @@ class Pipeline:
 
     def _build_aggregated_transformers[AT: AggregatingTransformer](
             self,
-            *,
-            subset: Optional[ColumnSelection],
+            *subsets: ColumnSelection,
             transformer_factory: type[AT] | list[type[AT]],
             over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
@@ -370,7 +388,7 @@ class Pipeline:
     ) -> list[AT | RollingWrapper[AT] | OverWrapper[AT | RollingWrapper[AT]]]:
         index_column = self._dataset.get_column_by_name(index_column_name) if index_column_name else None
         self._validator.validate_time_window_index_column(time_windows, index_column)
-        input_columns = self._dataset.get_combinations_from_selections(subset) if subset is not None else None
+        input_columns = self._dataset.get_combinations_from_selections(*subsets) if subsets is not None else None
 
         aggregating_transformers = self._build_transformers(
             transformer_factory=transformer_factory,

@@ -212,6 +212,8 @@ class TestPipeline:
             .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_mode(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']])
             .with_num_unique(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
+            .with_entity_entropy(source_subset='TEXT_FEATURE', target_subset='TEXT_FEATURE_2')
+            .with_entity_entropy(source_subset='TEXT_FEATURE_2', target_subset='TEXT_FEATURE')
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
@@ -330,6 +332,8 @@ class TestPipeline:
                 'BOOL_FEATURE_num_unique': [2, 2, 2, 2, 2, 2],
                 'BOOL_FEATURE_num_unique_over_GROUPING_FEATURE_NUM': [1, 1, 1, 1, 1, 1],
                 'BOOL_FEATURE_num_unique_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 1, 1],
+                'TEXT_FEATURE_2_by_TEXT_FEATURE_entropy': [2.584963, 2.584963, 2.584963, 2.584963, 2.584963, 2.584963],
+                'TEXT_FEATURE_by_TEXT_FEATURE_2_entropy': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
