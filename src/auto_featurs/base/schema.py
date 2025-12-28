@@ -15,7 +15,7 @@ type ColumnSelection = (
     str | Iterable[str] |
     ColumnType | Iterable[ColumnType] |
     ColumnRole | Iterable[ColumnRole] |
-    ColumnSpecification | Iterable[ColumnSpecification] |
+    ColumnSpecification | Iterable[ColumnSpecification] | Iterable[str | ColumnSpecification] |
     ColumnSelector
 )
 type ColumnSet = list[ColumnSpecification]
@@ -115,7 +115,10 @@ class Schema:
             case str():
                 return [self.get_column_by_name(subset)]
             case Iterable():
-                return sorted(flatten([self.get_columns_from_selection(col) for col in subset]), key=lambda col: col.name)
+                cols = flatten([self.get_columns_from_selection(col) for col in subset])
+                if type(subset) is set:
+                    return sorted(cols, key=lambda col: col.name)
+                return list(cols)
             case _:
                 raise ValueError(f'Unexpected subset type: {type(subset)}')
 

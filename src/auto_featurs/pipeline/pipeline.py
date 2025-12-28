@@ -410,6 +410,7 @@ class Pipeline:
             index_column_name: Optional[str] = None,
             **kwargs: Any,
     ) -> list[AT | RollingWrapper[AT] | OverWrapper[AT | RollingWrapper[AT]]]:
+        over_columns_combinations = [self._dataset.get_columns_from_selection(combination) if combination else [] for combination in over_columns_combinations]
         index_column = self._dataset.get_column_by_name(index_column_name) if index_column_name else None
         self._validator.validate_time_window_index_column(time_windows, index_column)
         input_columns = self._dataset.get_combinations_from_selections(*subsets) if subsets is not None else None

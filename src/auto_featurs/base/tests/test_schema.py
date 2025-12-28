@@ -105,7 +105,7 @@ class TestSchema:
         assert self._schema.get_columns_from_selection(ColumnType.NUMERIC) == [a]
         assert self._schema.get_columns_from_selection([ColumnType.NUMERIC, ColumnType.ORDINAL]) == [a, b]
         assert self._schema.get_columns_from_selection(ColumnRole.FEATURE) == [a, c]
-        assert self._schema.get_columns_from_selection([ColumnRole.FEATURE, ColumnRole.LABEL]) == [a, b, c]
+        assert self._schema.get_columns_from_selection([ColumnRole.FEATURE, ColumnRole.LABEL]) == [a, c, b]
         assert self._schema.get_columns_from_selection(ColumnType.NUMERIC | ColumnType.ORDINAL) == [a, b]
         assert self._schema.get_columns_from_selection(~ColumnType.NOMINAL) == [a, b]
         assert self._schema.get_columns_from_selection(ColumnRole.FEATURE | ColumnRole.LABEL) == [a, b, c]

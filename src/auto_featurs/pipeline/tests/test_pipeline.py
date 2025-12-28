@@ -1,10 +1,10 @@
-import math
 from datetime import timedelta
+import math
 
 import numpy as np
 import polars as pl
-import pytest
 from polars.testing import assert_frame_equal
+import pytest
 
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -155,6 +155,18 @@ class TestPipeline:
             new_frame=res,
             expected_new_columns=expected_new_columns,
         )
+
+    def test_index_column_must_be_present_in_schema(self) -> None:
+        pipeline = Pipeline(dataset=Dataset(data=BASIC_FRAME, schema=Schema([])))
+
+        with pytest.raises(KeyError, match='Column "GROUPING_FEATURE_NUM" not found in schema'):
+            pipeline.with_count(time_windows=['1d'], index_column_name='GROUPING_FEATURE_NUM')
+
+    def test_over_columns_must_be_present_in_schema(self) -> None:
+        pipeline = Pipeline(dataset=Dataset(data=BASIC_FRAME, schema=Schema([])))
+
+        with pytest.raises(KeyError, match='Column "GROUPING_FEATURE_NUM" not found in schema'):
+            pipeline.with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']])
 
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
