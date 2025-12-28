@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 import re
 from abc import ABC
 from abc import abstractmethod

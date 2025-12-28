@@ -211,7 +211,10 @@ class TestPipeline:
             .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], filtering_condition=pl.col('BOOL_FEATURE'))
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
             .with_lagged(subset=(ColumnType.ORDINAL | ColumnType.NOMINAL) & ~ColumnRole.IDENTIFIER, lags=[1, 2], fill_value='missing')
-            .with_first_value(subset=(ColumnType.NUMERIC | ColumnType.ORDINAL) & ~ColumnRole.IDENTIFIER, over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
+            .with_first_value(
+                subset=(ColumnType.NUMERIC | ColumnType.ORDINAL) & ~ColumnRole.IDENTIFIER,
+                over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
+            )
             .with_mode(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']])
             .with_num_unique(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_entity_entropy(source_subset='TEXT_FEATURE', target_subset='TEXT_FEATURE_2')
