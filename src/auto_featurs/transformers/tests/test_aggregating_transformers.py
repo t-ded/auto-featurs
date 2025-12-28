@@ -14,6 +14,7 @@ from auto_featurs.transformers.aggregating_transformers import MeanTransformer
 from auto_featurs.transformers.aggregating_transformers import MedianTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
+from auto_featurs.transformers.aggregating_transformers import PointwiseMutualInformationTransformer
 from auto_featurs.transformers.aggregating_transformers import StdTransformer
 from auto_featurs.transformers.aggregating_transformers import SumTransformer
 from auto_featurs.transformers.aggregating_transformers import ZscoreTransformer
@@ -259,6 +260,67 @@ class TestEntityEntropyTransformer:
                     0.0, 0.0, 0.0,
                     0.0, 0.0, 0.918296,
                     0.0, 1.0, 1.584963,
+                ],
+            },
+        )
+
+
+class TestPointwiseMutualInformationTransformer:
+    def setup_method(self) -> None:
+        self._pmi_transformer = PointwiseMutualInformationTransformer(column_a='ID', column_b='LOC')
+        self._cumulative_pmi_transformer = PointwiseMutualInformationTransformer(column_a='ID', column_b='LOC', cumulative=CumulativeOptions.INCLUSIVE)
+        self._filtered_cumulative_pmi_transformer = PointwiseMutualInformationTransformer(column_a='ID', column_b='LOC', cumulative=CumulativeOptions.INCLUSIVE, filtering_condition=pl.col('BOOL'))
+
+    def test_name_and_output_type(self) -> None:
+        assert self._pmi_transformer.output_column_specification == ColumnSpecification.numeric(name='ID_LOC_pmi')
+        assert self._cumulative_pmi_transformer.output_column_specification == ColumnSpecification.numeric(name='ID_LOC_inclusive_cum_pmi')
+        assert self._filtered_cumulative_pmi_transformer.output_column_specification == ColumnSpecification.numeric(name='ID_LOC_inclusive_cum_pmi_where_BOOL')
+
+    def test_pmi_transform(self) -> None:
+        frame = pl.DataFrame(
+            {
+                'ID': [
+                    1, 1, 1,
+                    2, 2, 2,
+                    3, 3, 3,
+                ],
+                'LOC': [
+                    'CZ', 'CZ', 'CZ',
+                    'CZ', 'CZ', 'SK',
+                    'CZ', 'SK', 'PL',
+                ],
+                'BOOL': [
+                    True, True, False,
+                    True, True, False,
+                    True, True, False,
+                ],
+            },
+        )
+
+        df = frame.with_columns(
+            self._pmi_transformer.transform(),
+            self._cumulative_pmi_transformer.transform(),
+            self._filtered_cumulative_pmi_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=frame,
+            new_frame=df,
+            expected_new_columns={
+                'ID_LOC_pmi': [
+                    0.584963, 0.584963, 0.584963,
+                    0.0, 0.0, 0.584963,
+                    -1.0, 0.584963, 1.584963,
+                ],
+                'ID_LOC_inclusive_cum_pmi': [
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0,
+                    0.222392, 1.0, 1.584963,
+                ],
+                'ID_LOC_inclusive_cum_pmi_where_BOOL': [
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, np.nan,
+                    0.0, 1.584963, np.nan,
                 ],
             },
         )

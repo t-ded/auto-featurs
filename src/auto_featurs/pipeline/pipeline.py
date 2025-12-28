@@ -27,6 +27,7 @@ from auto_featurs.transformers.aggregating_transformers import FirstValueTransfo
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
+from auto_featurs.transformers.aggregating_transformers import PointwiseMutualInformationTransformer
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.transformers.comparison_transformers import Comparisons
 from auto_featurs.transformers.datetime_transformers import SeasonalOperation
@@ -266,6 +267,29 @@ class Pipeline:
             cumulative=cumulative,
         )
         return self._with_added_to_current_layer(entity_entropy_transformers, auxiliary=auxiliary)
+
+    def with_pointwise_mutual_information(
+            self,
+            column_a_subset: ColumnSelection,
+            column_b_subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
+            filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
+    ) -> Pipeline:
+        pmi_transformers = self._build_aggregated_transformers(
+            column_a_subset,
+            column_b_subset,
+            transformer_factory=PointwiseMutualInformationTransformer,
+            over_columns_combinations=over_columns_combinations,
+            time_windows=time_windows,
+            index_column_name=index_column_name,
+            cumulative=cumulative,
+            filtering_condition=filtering_condition,
+        )
+        return self._with_added_to_current_layer(pmi_transformers, auxiliary=auxiliary)
 
     def with_arithmetic_aggregation(
             self,

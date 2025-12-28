@@ -221,6 +221,45 @@ class EntityEntropyTransformer(AggregatingTransformer):
         return transform.alias(f'{self._target}_by_{self._source}_{agg_name}')
 
 
+class PointwiseMutualInformationTransformer(AggregatingTransformer):
+    def __init__(
+            self,
+            column_a: str | ColumnSpecification,
+            column_b: str | ColumnSpecification,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
+            filtering_condition: Optional[pl.Expr] = None,
+    ) -> None:
+        self._column_a = column_a if isinstance(column_a, str) else column_a.name
+        self._column_b = column_b if isinstance(column_b, str) else column_b.name
+        self._count_transformer = CountTransformer(cumulative=cumulative, filtering_condition=filtering_condition)
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
+        self._cumulative = cumulative
+
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnTypeSelector.exclude(ColumnType.NUMERIC, ColumnType.DATETIME), ColumnTypeSelector.exclude(ColumnType.NUMERIC, ColumnType.DATETIME)
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return True
+
+    def _return_type(self) -> ColumnType:
+        return ColumnType.NUMERIC
+
+    def _transform(self) -> pl.Expr:
+        total_count = self._count_transformer.transform()
+        prob_a = self._compute_probability(self._column_a, total_count=total_count)
+        prob_b = self._compute_probability(self._column_b, total_count=total_count)
+        prob_ab = self._compute_probability(self._column_a, self._column_b, total_count=total_count)
+        return (prob_ab / (prob_a * prob_b)).log(base=2)
+
+    def _compute_probability(self, *over_columns: str, total_count: pl.Expr) -> pl.Expr:
+        return self._count_transformer.transform().over(*over_columns) / total_count
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        agg_name = str(self._cumulative) + 'pmi'
+        return transform.alias(f'{self._column_a}_{self._column_b}_{agg_name}' + filtering_condition_to_string(self._filtering_condition))
+
+
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
     def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None, **kwargs: Any) -> None:
         self._column = column if isinstance(column, str) else column.name

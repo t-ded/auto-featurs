@@ -165,6 +165,8 @@ class TestPipeline:
                     ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
                     ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
                     ColumnSpecification.nominal(name='CATEGORICAL_FEATURE_2'),
+                    ColumnSpecification.nominal(name='GROUPING_FEATURE_NUM', role=ColumnRole.IDENTIFIER),
+                    ColumnSpecification.nominal(name='GROUPING_FEATURE_CAT_2', role=ColumnRole.IDENTIFIER),
                     ColumnSpecification.datetime(name='DATE_FEATURE', role=ColumnRole.TIME_INFO),
                     ColumnSpecification.boolean(name='BOOL_FEATURE'),
                     ColumnSpecification.text(name='TEXT_FEATURE'),
@@ -196,7 +198,7 @@ class TestPipeline:
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
             .with_comparison(
-                left_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], right_subset=[ColumnType.ORDINAL, ColumnType.NOMINAL],
+                left_subset=(ColumnType.ORDINAL | ColumnType.NOMINAL) & ~ColumnRole.IDENTIFIER, right_subset=(ColumnType.ORDINAL | ColumnType.NOMINAL) & ~ColumnRole.IDENTIFIER,
                 comparisons=[Comparisons.EQUAL, Comparisons.GREATER_THAN, Comparisons.GREATER_OR_EQUAL],
             )
             .with_count(over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
@@ -208,12 +210,13 @@ class TestPipeline:
             )
             .with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']], filtering_condition=pl.col('BOOL_FEATURE'))
             .with_lagged(subset=ColumnType.NUMERIC, lags=[1], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']], fill_value=0)
-            .with_lagged(subset=[ColumnType.ORDINAL, ColumnType.NOMINAL], lags=[1, 2], fill_value='missing')
-            .with_first_value(subset=[ColumnType.NUMERIC, ColumnType.ORDINAL], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
+            .with_lagged(subset=(ColumnType.ORDINAL | ColumnType.NOMINAL) & ~ColumnRole.IDENTIFIER, lags=[1, 2], fill_value='missing')
+            .with_first_value(subset=(ColumnType.NUMERIC | ColumnType.ORDINAL) & ~ColumnRole.IDENTIFIER, over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_mode(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM']])
             .with_num_unique(subset=[ColumnType.BOOLEAN], over_columns_combinations=[[], ['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']])
             .with_entity_entropy(source_subset='TEXT_FEATURE', target_subset='TEXT_FEATURE_2')
             .with_entity_entropy(source_subset='TEXT_FEATURE_2', target_subset='TEXT_FEATURE')
+            .with_pointwise_mutual_information(column_a_subset='GROUPING_FEATURE_NUM', column_b_subset='GROUPING_FEATURE_CAT_2')
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
                 aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
@@ -334,6 +337,7 @@ class TestPipeline:
                 'BOOL_FEATURE_num_unique_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [1, 1, 1, 1, 1, 1],
                 'TEXT_FEATURE_2_by_TEXT_FEATURE_entropy': [2.584963, 2.584963, 2.584963, 2.584963, 2.584963, 2.584963],
                 'TEXT_FEATURE_by_TEXT_FEATURE_2_entropy': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                'GROUPING_FEATURE_NUM_GROUPING_FEATURE_CAT_2_pmi': [0.584963, 1.0, 0.584963, -1.0, 0.584963, 1.0],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
