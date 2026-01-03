@@ -1,6 +1,6 @@
+import math
 from abc import ABC
 from enum import Enum
-import math
 
 import polars as pl
 

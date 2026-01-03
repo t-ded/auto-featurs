@@ -8,7 +8,6 @@ from typing import assert_never
 import polars as pl
 
 from auto_featurs.base.column_specification import ColumnNameOrSpec
-from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
