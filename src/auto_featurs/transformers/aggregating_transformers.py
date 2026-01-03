@@ -147,8 +147,8 @@ class ModeTransformer(AggregatingTransformer):
 
 
 class NumUniqueTransformer(AggregatingTransformer):
-    def __init__(self, column: ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
-        self._column = column
+    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        self._column = column if isinstance(column, str) else column.name
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
@@ -163,7 +163,7 @@ class NumUniqueTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        col = pl.col(self._column.name)
+        col = pl.col(self._column)
         if self._cumulative == CumulativeOptions.NONE:
             return col.filter(self._filtering_condition).n_unique()
         else:
@@ -175,7 +175,7 @@ class NumUniqueTransformer(AggregatingTransformer):
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         condition_name = filtering_condition_to_string(self._filtering_condition)
-        return transform.alias(f'{self._column.name}_{str(self._cumulative)}num_unique' + condition_name)
+        return transform.alias(f'{self._column}_{str(self._cumulative)}num_unique' + condition_name)
 
 
 class EntityEntropyTransformer(AggregatingTransformer):
@@ -214,7 +214,7 @@ class EntityEntropyTransformer(AggregatingTransformer):
 
     @staticmethod
     def _entropy_expr(expr: pl.Expr) -> pl.Expr:
-        return expr.value_counts().struct.field('count').entropy(base=2)
+        return expr.unique_counts().entropy(base=2)
 
     def _name(self, transform: pl.Expr) -> pl.Expr:
         agg_name = str(self._cumulative) + 'entropy'
