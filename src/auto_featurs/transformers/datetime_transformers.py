@@ -7,18 +7,20 @@ from typing import assert_never
 
 import polars as pl
 
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
+from auto_featurs.utils.utils import parse_column_name
 
 
 class SeasonalTransformer(Transformer, ABC):
-    def __init__(self, column: str | ColumnSpecification, angular: bool = False, gon_transformation: Optional[Literal['sin', 'cos']] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, angular: bool = False, gon_transformation: Optional[Literal['sin', 'cos']] = None) -> None:
         if not angular and gon_transformation is not None:
             raise ValueError('gon_transformation can be used only with angular=True')
 
-        self._column = column if isinstance(column, str) else column.name
+        self._column = parse_column_name(column)
         self._angular = angular
         self._gon_transformation = gon_transformation
 
@@ -87,9 +89,9 @@ class SeasonalOperation(Enum):
 
 
 class TimeDiffTransformer(Transformer):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, unit: Literal['s', 'h', 'd'] = 'd') -> None:
-        self._left_column = left_column if isinstance(left_column, str) else left_column.name
-        self._right_column = right_column if isinstance(right_column, str) else right_column.name
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec, unit: Literal['s', 'h', 'd'] = 'd') -> None:
+        self._left_column = parse_column_name(left_column)
+        self._right_column = parse_column_name(right_column)
         self._unit = unit
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:

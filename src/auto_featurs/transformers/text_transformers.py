@@ -7,16 +7,17 @@ from typing import Any
 import polars as pl
 import polars_ds as pds  # type: ignore[import-untyped]
 
-from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
+from auto_featurs.utils.utils import parse_column_name
 
 
 class TextSimilarityTransformer(Transformer, ABC):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, **kwargs: Any) -> None:
-        self._left_column = left_column if isinstance(left_column, str) else left_column.name
-        self._right_column = right_column if isinstance(right_column, str) else right_column.name
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec, **kwargs: Any) -> None:
+        self._left_column = parse_column_name(left_column)
+        self._right_column = parse_column_name(right_column)
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
         return ColumnType.TEXT.as_selector(), ColumnType.TEXT.as_selector()
@@ -47,7 +48,7 @@ class DamerauLevenshteinSimilarityTransformer(TextSimilarityTransformer):
 
 
 class JaccardSimilarityTransformer(TextSimilarityTransformer):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, substr_size: int = 2, **kwargs: Any) -> None:
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec, substr_size: int = 2, **kwargs: Any) -> None:
         super().__init__(left_column, right_column)
         self._substr_size = substr_size
 
@@ -77,7 +78,7 @@ class JaroSimilarityTransformer(TextSimilarityTransformer):
 
 
 class JaroWinklerSimilarityTransformer(TextSimilarityTransformer):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification, weight: float = 0.1, **kwargs: Any) -> None:
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec, weight: float = 0.1, **kwargs: Any) -> None:
         super().__init__(left_column, right_column)
         self._weight = weight
 
@@ -101,8 +102,8 @@ class TextSimilarity(Enum):
 
 
 class TextExtractionTransformer(Transformer, ABC):
-    def __init__(self, column: str | ColumnSpecification):
-        self._column = column if isinstance(column, str) else column.name
+    def __init__(self, column: ColumnNameOrSpec):
+        self._column = parse_column_name(column)
 
     def input_type(self) -> ColumnTypeSelector:
         return ColumnType.TEXT.as_selector()
@@ -170,7 +171,7 @@ class _ResolvedPattern:
 
 
 class TextCountMatchesTransformer(TextExtractionTransformer):
-    def __init__(self, column: str | ColumnSpecification, pattern: PatternInput) -> None:
+    def __init__(self, column: ColumnNameOrSpec, pattern: PatternInput) -> None:
         super().__init__(column)
         resolved = self._resolve_pattern(pattern)
         self._regex = resolved.regex

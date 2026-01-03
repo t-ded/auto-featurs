@@ -9,6 +9,8 @@ from enum import auto
 from typing import overload
 
 
+type ColumnNameOrSpec = str | ColumnSpecification
+
 class ColumnType(Enum):
     NUMERIC = 'numeric'
     BOOLEAN = 'boolean'

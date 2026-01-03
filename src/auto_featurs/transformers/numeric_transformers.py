@@ -1,18 +1,19 @@
-import math
 from abc import ABC
 from enum import Enum
+import math
 
 import polars as pl
 
-from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
+from auto_featurs.utils.utils import parse_column_name
 
 
 class NumericTransformer(Transformer, ABC):
-    def __init__(self, column: str | ColumnSpecification) -> None:
-        self._column = column if isinstance(column, str) else column.name
+    def __init__(self, column: ColumnNameOrSpec) -> None:
+        self._column = parse_column_name(column)
 
     def input_type(self) -> ColumnTypeSelector:
         return ColumnType.NUMERIC.as_selector()
@@ -26,7 +27,7 @@ class NumericTransformer(Transformer, ABC):
 
 
 class PolynomialTransformer(NumericTransformer):
-    def __init__(self, column: str | ColumnSpecification, *, degree: int) -> None:
+    def __init__(self, column: ColumnNameOrSpec, *, degree: int) -> None:
         super().__init__(column)
         self._degree = degree
 
@@ -38,7 +39,7 @@ class PolynomialTransformer(NumericTransformer):
 
 
 class LogTransformer(NumericTransformer):
-    def __init__(self, column: str | ColumnSpecification, *, base: float = math.e) -> None:
+    def __init__(self, column: ColumnNameOrSpec, *, base: float = math.e) -> None:
         super().__init__(column)
         self._base = base
 
@@ -95,9 +96,9 @@ class Scaling(Enum):
 
 
 class ArithmeticTransformer(Transformer, ABC):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
-        self._left_column = left_column if isinstance(left_column, str) else left_column.name
-        self._right_column = right_column if isinstance(right_column, str) else right_column.name
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec) -> None:
+        self._left_column = parse_column_name(left_column)
+        self._right_column = parse_column_name(right_column)
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
         return ColumnType.NUMERIC | ColumnType.BOOLEAN, ColumnType.NUMERIC | ColumnType.BOOLEAN

@@ -3,7 +3,7 @@ from typing import Any
 
 import polars as pl
 
-from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
@@ -11,7 +11,7 @@ from auto_featurs.utils.utils import get_names_from_column_specs
 
 
 class OverWrapper[AT: AggregatingTransformer](AggregatingTransformer):
-    def __init__(self, inner_transformer: AT, over_columns: Iterable[str | ColumnSpecification], *args: Any) -> None:
+    def __init__(self, inner_transformer: AT, over_columns: Iterable[ColumnNameOrSpec], *args: Any) -> None:
         self._inner_transformer = inner_transformer
         self._over_columns: list[str] = get_names_from_column_specs(over_columns)
 

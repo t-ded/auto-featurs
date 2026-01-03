@@ -9,6 +9,12 @@ from auto_featurs.utils.utils import format_timedelta
 from auto_featurs.utils.utils import get_names_from_column_specs
 from auto_featurs.utils.utils import get_valid_param_options
 from auto_featurs.utils.utils import order_preserving_unique
+from auto_featurs.utils.utils import parse_column_name
+
+
+def test_parse_column_name() -> None:
+    assert parse_column_name(ColumnSpecification.numeric(name='a')) == 'a'
+    assert parse_column_name('a') == 'a'
 
 
 def test_default_true_filtering_condition() -> None:

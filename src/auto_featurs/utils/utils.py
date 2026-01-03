@@ -5,6 +5,7 @@ from typing import Optional
 
 import polars as pl
 
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.utils.constants import SECONDS_IN_DAY
 from auto_featurs.utils.constants import SECONDS_IN_HOUR
@@ -13,6 +14,12 @@ from auto_featurs.utils.constants import SECONDS_IN_MONTH
 from auto_featurs.utils.constants import SECONDS_IN_YEAR
 
 LIT_TRUE = pl.lit(True)
+
+
+def parse_column_name(column: ColumnNameOrSpec) -> str:
+    if isinstance(column, ColumnSpecification):
+        return column.name
+    return column
 
 
 def default_true_filtering_condition(filtering_condition: Optional[pl.Expr]) -> pl.Expr:
@@ -35,8 +42,8 @@ def order_preserving_unique[T](iterable: Iterable[T]) -> list[T]:
     return result
 
 
-def get_names_from_column_specs(columns: Iterable[str | ColumnSpecification]) -> list[str]:
-    return [column.name if isinstance(column, ColumnSpecification) else column for column in columns]
+def get_names_from_column_specs(columns: Iterable[ColumnNameOrSpec]) -> list[str]:
+    return [parse_column_name(column) for column in columns]
 
 
 def get_valid_param_options[T](param_options: Sequence[Optional[T]]) -> tuple[list[T], bool]:

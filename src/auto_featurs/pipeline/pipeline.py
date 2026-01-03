@@ -10,6 +10,7 @@ from typing import Optional
 
 import polars as pl
 
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.schema import ColumnSelection
 from auto_featurs.base.schema import ColumnSet
@@ -154,7 +155,7 @@ class Pipeline:
 
     def with_count(
             self,
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
@@ -175,7 +176,7 @@ class Pipeline:
             self,
             subset: ColumnSelection,
             lags: Sequence[int],
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             fill_value: Any = None,
             auxiliary: bool = False,
         ) -> Pipeline:
@@ -191,7 +192,7 @@ class Pipeline:
     def with_first_value(
             self,
             subset: ColumnSelection,
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             filtering_condition: Optional[pl.Expr] = None,
@@ -210,7 +211,7 @@ class Pipeline:
     def with_mode(
             self,
             subset: ColumnSelection,
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
@@ -231,7 +232,7 @@ class Pipeline:
     def with_num_unique(
             self,
             subset: ColumnSelection,
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
@@ -272,7 +273,7 @@ class Pipeline:
             self,
             column_a_subset: ColumnSelection,
             column_b_subset: ColumnSelection,
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
@@ -295,7 +296,7 @@ class Pipeline:
             self,
             subset: ColumnSelection,
             aggregations: Sequence[ArithmeticAggregations],
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
@@ -405,7 +406,7 @@ class Pipeline:
             self,
             *subsets: ColumnSelection,
             transformer_factory: type[AT] | list[type[AT]],
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]] = (),
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
             time_windows: Sequence[Optional[str | timedelta]] = (),
             index_column_name: Optional[str] = None,
             **kwargs: Any,
@@ -428,7 +429,7 @@ class Pipeline:
     def _get_over_transformers[AT: AggregatingTransformer](
             self,
             aggregating_transformers: Sequence[AT],
-            over_columns_combinations: Sequence[Sequence[str | ColumnSpecification]],
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]],
     ) -> list[AT | OverWrapper[AT]]:
         if not over_columns_combinations:
             return list(aggregating_transformers)

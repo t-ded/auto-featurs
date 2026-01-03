@@ -7,12 +7,14 @@ from typing import Optional
 import polars as pl
 from polars._typing import IntoExpr
 
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
 from auto_featurs.utils.utils import default_true_filtering_condition
 from auto_featurs.utils.utils import filtering_condition_to_string
+from auto_featurs.utils.utils import parse_column_name
 
 
 class CumulativeOptions(Enum):
@@ -147,8 +149,8 @@ class ModeTransformer(AggregatingTransformer):
 
 
 class NumUniqueTransformer(AggregatingTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
-        self._column = column if isinstance(column, str) else column.name
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        self._column = parse_column_name(column)
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
@@ -181,12 +183,12 @@ class NumUniqueTransformer(AggregatingTransformer):
 class EntityEntropyTransformer(AggregatingTransformer):
     def __init__(
             self,
-            source: str | ColumnSpecification,
-            target: str | ColumnSpecification,
+            source: ColumnNameOrSpec,
+            target: ColumnNameOrSpec,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
     ) -> None:
-        self._source = source if isinstance(source, str) else source.name
-        self._target = target if isinstance(target, str) else target.name
+        self._source = parse_column_name(source)
+        self._target = parse_column_name(target)
         self._cumulative = cumulative
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
@@ -224,13 +226,13 @@ class EntityEntropyTransformer(AggregatingTransformer):
 class PointwiseMutualInformationTransformer(AggregatingTransformer):
     def __init__(
             self,
-            column_a: str | ColumnSpecification,
-            column_b: str | ColumnSpecification,
+            column_a: ColumnNameOrSpec,
+            column_b: ColumnNameOrSpec,
             cumulative: CumulativeOptions = CumulativeOptions.NONE,
             filtering_condition: Optional[pl.Expr] = None,
     ) -> None:
-        self._column_a = column_a if isinstance(column_a, str) else column_a.name
-        self._column_b = column_b if isinstance(column_b, str) else column_b.name
+        self._column_a = parse_column_name(column_a)
+        self._column_b = parse_column_name(column_b)
         self._count_transformer = CountTransformer(cumulative=cumulative, filtering_condition=filtering_condition)
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
         self._cumulative = cumulative
@@ -261,8 +263,8 @@ class PointwiseMutualInformationTransformer(AggregatingTransformer):
 
 
 class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None, **kwargs: Any) -> None:
-        self._column = column if isinstance(column, str) else column.name
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None, **kwargs: Any) -> None:
+        self._column = parse_column_name(column)
         self._cumulative = cumulative
         self._filtering_condition = default_true_filtering_condition(filtering_condition)
 
@@ -302,7 +304,7 @@ class SumTransformer(ArithmeticAggregationTransformer):
 
 
 class QuantileTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, quantile: float, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, quantile: float, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)
         self._quantile = quantile
 
@@ -324,12 +326,12 @@ class QuantileTransformer(ArithmeticAggregationTransformer):
 
 
 class MedianTransformer(QuantileTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, 0.5, cumulative, filtering_condition)
 
 
 class MeanTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)
         self._sum_transformer = SumTransformer(column, cumulative, filtering_condition)
         self._count_transformer = CountTransformer(cumulative, filtering_condition)
@@ -343,7 +345,7 @@ class MeanTransformer(ArithmeticAggregationTransformer):
 
 
 class StdTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)
         self._mean_transformer = MeanTransformer(column, cumulative, filtering_condition)
 
@@ -367,7 +369,7 @@ class StdTransformer(ArithmeticAggregationTransformer):
 
 
 class ZscoreTransformer(ArithmeticAggregationTransformer):
-    def __init__(self, column: str | ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+    def __init__(self, column: ColumnNameOrSpec, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
         super().__init__(column, cumulative, filtering_condition)
         self._mean_transformer = MeanTransformer(column, cumulative, filtering_condition)
         self._std_transformer = StdTransformer(column, cumulative, filtering_condition)

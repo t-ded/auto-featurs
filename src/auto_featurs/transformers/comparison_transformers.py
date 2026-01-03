@@ -3,16 +3,17 @@ from enum import Enum
 
 import polars as pl
 
-from auto_featurs.base.column_specification import ColumnSpecification
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
+from auto_featurs.utils.utils import parse_column_name
 
 
 class ComparisonTransformer(Transformer, ABC):
-    def __init__(self, left_column: str | ColumnSpecification, right_column: str | ColumnSpecification) -> None:
-        self._left_column = left_column if isinstance(left_column, str) else left_column.name
-        self._right_column = right_column if isinstance(right_column, str) else right_column.name
+    def __init__(self, left_column: ColumnNameOrSpec, right_column: ColumnNameOrSpec) -> None:
+        self._left_column = parse_column_name(left_column)
+        self._right_column = parse_column_name(right_column)
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
         return ColumnTypeSelector.any(), ColumnTypeSelector.any()

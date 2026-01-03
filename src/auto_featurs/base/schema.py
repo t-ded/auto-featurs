@@ -5,6 +5,7 @@ from typing import Optional
 
 from more_itertools import flatten
 
+from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnRole
 from auto_featurs.base.column_specification import ColumnSelector
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -15,7 +16,7 @@ type ColumnSelection = (
     str | Iterable[str] |
     ColumnType | Iterable[ColumnType] |
     ColumnRole | Iterable[ColumnRole] |
-    ColumnSpecification | Iterable[ColumnSpecification] | Iterable[str | ColumnSpecification] |
+    ColumnSpecification | Iterable[ColumnSpecification] | Iterable[ColumnNameOrSpec] |
     ColumnSelector
 )
 type ColumnSet = list[ColumnSpecification]
