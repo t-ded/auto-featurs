@@ -168,6 +168,24 @@ class TestPipeline:
         with pytest.raises(KeyError, match='Column "GROUPING_FEATURE_NUM" not found in schema'):
             pipeline.with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']])
 
+    def test_describe(self) -> None:
+        pipeline = Pipeline(dataset=self._simple_dataset)
+        pipeline = (
+            pipeline
+            .with_polynomial(subset=ColumnType.NUMERIC, degrees=[2], auxiliary=True)
+            .with_new_layer()
+            .with_log(subset=ColumnType.NUMERIC, bases=[10])
+        )
+
+        description = pipeline.describe()
+
+        assert 'Pipeline Breakdown' in description
+        assert 'NUMERIC_FEATURE_pow_2' in description
+        assert '[AUXILIARY]' in description
+        assert 'NUMERIC_FEATURE_log10' in description
+        assert 'Initial Column Count:' in description
+        assert 'Total Features Created (of which auxiliary):' in description
+
     def test_basic_sample_with_all_transformers(self) -> None:
         pipeline = Pipeline(
             dataset=Dataset(

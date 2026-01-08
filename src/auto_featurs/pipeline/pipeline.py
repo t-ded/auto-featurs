@@ -9,6 +9,7 @@ from typing import Literal
 from typing import Optional
 
 import polars as pl
+from more_itertools import flatten
 
 from auto_featurs.base.column_specification import ColumnNameOrSpec
 from auto_featurs.base.column_specification import ColumnSpecification
@@ -378,6 +379,61 @@ class Pipeline:
     def collect(self) -> pl.DataFrame:
         updated_dataset = self.collect_plan()
         return updated_dataset.collect()
+
+    def describe(self) -> str:
+        result = self.collect_plan(cache_computation=False)
+        max_colname_length = max(len(col.name) for col in result.schema.columns) + 10
+
+        description: list[str] = []
+        description.append('\n\n\nPipeline Breakdown')
+        description.append('=' * 80)
+
+        initial_schema = result.schema.drop(
+            transformer.output_column_specification for transformer in flatten(self._transformers)
+            if transformer.output_column_specification not in self._auxiliary_columns
+        )
+        description.append(f'\nInitial Schema: {len(initial_schema.columns)} columns')
+        for col in initial_schema.columns:
+            description.append(f'  - {col.name:<{max_colname_length + 1}} | {col.column_type.name:<10} | {col.column_role.name}')
+        description.append('')
+        description.append('-' * 80)
+
+        total_features = 0
+        for i, layer in enumerate(self._transformers):
+            is_current_layer = i == len(self._transformers) - 1
+            description.append(f'Layer {i + 1}{" [Current]" if is_current_layer else ""}: {len(layer)} transformer{"s" if len(layer) > 1 else ""}')
+            if not layer:
+                description.append('  (Empty layer)')
+
+            layer_features = 0
+            for transformer in layer:
+                out_spec = transformer.output_column_specification
+                is_aux = ' [AUXILIARY]' if out_spec in self._auxiliary_columns else ''
+                description.append(f'  -> {out_spec.name:<{max_colname_length}} | Type: {out_spec.column_type.name}{is_aux}')
+                layer_features += 1
+
+            total_features += layer_features
+            if not is_current_layer:
+                description.append('-' * 40)
+        description.append('-' * 80)
+        description.append('')
+
+        final_schema = result.schema
+        description.append(f'Final Schema: {len(final_schema.columns)} columns')
+        for col in final_schema.columns:
+            description.append(f'  - {col.name:<{max_colname_length + 1}} | {col.column_type.name:<10} | {col.column_role.name}')
+        description.append('')
+        description.append('-' * 80)
+        description.append('')
+
+        description.append('Summary:')
+        description.append(f'  Total Layers:                                  {len(self._transformers)}\n')
+        description.append(f'  Initial Column Count:                          {len(initial_schema.columns)}')
+        description.append(f'  Total Features Created (of which auxiliary):   {total_features} ({len(self._auxiliary_columns)})\n')
+        description.append(f'  Final Column Count:                            {len(final_schema.columns)}\n')
+        description.append('=' * 80)
+
+        return '\n'.join(description)
 
     def _with_added_to_current_layer(self, transformers: Transformer | Sequence[Transformer], auxiliary: bool = False) -> Pipeline:
         current_layer_additions = [transformers] if isinstance(transformers, Transformer) else list(transformers)
