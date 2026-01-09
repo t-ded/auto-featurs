@@ -233,11 +233,13 @@ class TestEntityEntropyTransformer:
                     1, 1, 1,
                     2, 2, 2,
                     3, 3, 3,
+                    None,
                 ],
                 'LOC': [
                     'CZ', 'CZ', 'CZ',
                     'CZ', 'CZ', 'SK',
                     'CZ', 'SK', 'PL',
+                    None,
                 ],
             },
         )
@@ -255,11 +257,13 @@ class TestEntityEntropyTransformer:
                     0.0, 0.0, 0.0,
                     0.918296, 0.918296, 0.918296,
                     1.584963, 1.584963, 1.584963,
+                    0.0,
                 ],
                 'LOC_by_ID_inclusive_cum_entropy': [
                     0.0, 0.0, 0.0,
                     0.0, 0.0, 0.918296,
                     0.0, 1.0, 1.584963,
+                    0.0,
                 ],
             },
         )
@@ -283,16 +287,19 @@ class TestPointwiseMutualInformationTransformer:
                     1, 1, 1,
                     2, 2, 2,
                     3, 3, 3,
+                    None,
                 ],
                 'LOC': [
                     'CZ', 'CZ', 'CZ',
                     'CZ', 'CZ', 'SK',
                     'CZ', 'SK', 'PL',
+                    None,
                 ],
                 'BOOL': [
                     True, True, False,
                     True, True, False,
                     True, True, False,
+                    True,
                 ],
             },
         )
@@ -308,19 +315,22 @@ class TestPointwiseMutualInformationTransformer:
             new_frame=df,
             expected_new_columns={
                 'ID_LOC_pmi': [
-                    0.584963, 0.584963, 0.584963,
-                    0.0, 0.0, 0.584963,
-                    -1.0, 0.584963, 1.584963,
+                    0.736966, 0.736966, 0.736966,
+                    0.152003, 0.152003, 0.736966,
+                    -0.847997, 0.736966, 1.736966,
+                    3.321928,
                 ],
                 'ID_LOC_inclusive_cum_pmi': [
                     0.0, 0.0, 0.0,
                     0.0, 0.0, 1.0,
                     0.222392, 1.0, 1.584963,
+                    3.321928,
                 ],
                 'ID_LOC_inclusive_cum_pmi_where_BOOL': [
                     0.0, 0.0, 0.0,
                     0.0, 0.0, np.nan,
                     0.0, 1.584963, np.nan,
+                    2.807355,
                 ],
             },
         )

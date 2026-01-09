@@ -205,7 +205,7 @@ class EntityEntropyTransformer(AggregatingTransformer):
         return ColumnType.NUMERIC
 
     def _transform(self) -> pl.Expr:
-        col = pl.col(self._target)
+        col = pl.col(self._target).cast(pl.String).fill_null('N/A')
         match self._cumulative:
             case CumulativeOptions.NONE:
                 return self._entropy_expr(expr=col).over(self._source)
