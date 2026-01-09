@@ -17,7 +17,7 @@ from auto_featurs.utils.constants import INFINITY
 class TestFeatureSelector:
     def setup_method(self) -> None:
         schema = Schema([
-            ColumnSpecification(name='x1', column_type=ColumnType.NUMERIC),
+            ColumnSpecification(name='x_1', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x2', column_type=ColumnType.NUMERIC),
             ColumnSpecification(name='x3', column_type=ColumnType.BOOLEAN),
             ColumnSpecification(name='x4', column_type=ColumnType.NUMERIC),
@@ -26,7 +26,7 @@ class TestFeatureSelector:
             ColumnSpecification(name='y', column_type=ColumnType.BOOLEAN, column_role=ColumnRole.LABEL),
         ])
         df = pl.DataFrame({
-            'x1': [0, 0, 0, 0],
+            'x_1': [0, 0, 0, 0],
             'x2': [10, 9, 8, 7],
             'x3': [False, True, False, True],
             'x4': [2, 4, 6, 8],
@@ -84,7 +84,7 @@ class TestFeatureSelector:
     def test_correlation_report(self) -> None:
         out = self._selector.get_report(self._ds, (ColumnType.NUMERIC | ColumnType.BOOLEAN) & ~ColumnRole.LABEL, method=SelectionMethod.CORRELATION)
         dict_res = dict(out.to_frame().rows())
-        assert dict_res['x1'] == 0.0
+        assert dict_res['x_1'] == 0.0
         assert dict_res['x2'] == 0.4472135954999579
         assert dict_res['x3'] == 1.0
         assert dict_res['x4'] == 0.4472135954999579
@@ -111,13 +111,13 @@ class TestFeatureSelector:
     def test_ttest_report(self) -> None:
         out = self._selector.get_report(self._ds, (ColumnType.NUMERIC | ColumnType.BOOLEAN) & ~ColumnRole.LABEL, method=SelectionMethod.T_TEST)
         dict_res = dict(out.to_frame().rows())
-        assert dict_res['x1'] == 0.0
+        assert dict_res['x_1'] == 0.0
         assert dict_res['x2'] == 0.7071067811865475
         assert dict_res['x3'] == INFINITY
         assert dict_res['x4'] == 0.7071067811865475
         assert len(dict_res) == 4
 
-    @pytest.mark.parametrize('feature', ['x1', 'z2'])
+    @pytest.mark.parametrize('feature', ['x_1', 'z2'])
     def test_select_by_chi_squared_invalid_feature_type(self, feature: str) -> None:
         with pytest.raises(ValueError, match=f'Chi-Squared can only be computed for boolean, ordinal, nominal columns, but {feature} is of type ColumnType..'):
             self._selector.get_report(dataset=self._ds, feature_subset=feature, method=SelectionMethod.CHI_SQUARED)

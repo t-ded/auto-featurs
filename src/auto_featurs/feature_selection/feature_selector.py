@@ -109,9 +109,9 @@ class FeatureSelector:
             .drop('count')
             .unpivot(index=label_col_name, variable_name='FEATURE_STAT', value_name='VALUE')
             .select(
-                pl.col('FEATURE_STAT').str.split('_').list.get(0).alias('FEATURE_NAME'),
+                pl.col('FEATURE_STAT').str.extract(r'^(.*)_([^_]+)$', 1).alias('FEATURE_NAME'),
                 label_col_name,
-                pl.col('FEATURE_STAT').str.split('_').list.get(1).alias('STAT'),
+                pl.col('FEATURE_STAT').str.extract(r'^(.*)_([^_]+)$', 2).alias('STAT'),
                 'VALUE',
             )
             .with_columns(
