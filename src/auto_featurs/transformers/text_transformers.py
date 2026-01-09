@@ -8,6 +8,7 @@ import polars as pl
 import polars_ds as pds  # type: ignore[import-untyped]
 
 from auto_featurs.base.column_specification import ColumnNameOrSpec
+from auto_featurs.base.column_specification import ColumnSelector
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
@@ -20,7 +21,10 @@ class TextSimilarityTransformer(Transformer, ABC):
         self._right_column = parse_column_name(right_column)
 
     def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
-        return ColumnType.TEXT.as_selector(), ColumnType.TEXT.as_selector()
+        return (
+            ColumnTypeSelector(frozenset([ColumnType.TEXT, ColumnType.NOMINAL, ColumnType.ORDINAL])),
+            ColumnTypeSelector(frozenset([ColumnType.TEXT, ColumnType.NOMINAL, ColumnType.ORDINAL])),
+        )
 
     def _return_type(self) -> ColumnType:
         return ColumnType.NUMERIC
@@ -105,8 +109,8 @@ class TextExtractionTransformer(Transformer, ABC):
     def __init__(self, column: ColumnNameOrSpec):
         self._column = parse_column_name(column)
 
-    def input_type(self) -> ColumnTypeSelector:
-        return ColumnType.TEXT.as_selector()
+    def input_type(self) -> ColumnSelector:
+        return ColumnTypeSelector(frozenset([ColumnType.TEXT, ColumnType.NOMINAL, ColumnType.ORDINAL]))
 
     @classmethod
     def is_commutative(cls) -> bool:
