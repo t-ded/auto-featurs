@@ -31,6 +31,10 @@ class Dataset:
             logger.warning(f'Dropping columns not present in schema: {', '.join(sorted(columns_outside_schema))}')
             self._data = self._data.drop(columns_outside_schema)
 
+    @classmethod
+    def from_parquet(cls, path: str | Path, schema: Schema, drop_columns_outside_schema: bool = False) -> Dataset:
+        return cls(pl.scan_parquet(path), schema, drop_columns_outside_schema)
+
     @property
     def data(self) -> pl.LazyFrame:
         return self._data

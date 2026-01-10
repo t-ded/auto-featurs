@@ -21,6 +21,14 @@ class TestDataset:
         self._df = pl.DataFrame({'a': [1], 'b': ['x'], 'c': [2]})
         self._ds = Dataset(self._df, schema=self._schema)
 
+    def test_from_parquet(self, tmp_path: Path) -> None:
+        pl.DataFrame({'a': [1], 'b': ['x'], 'c': [2]}).write_parquet(tmp_path / 'test.parquet')
+
+        ds = Dataset.from_parquet(tmp_path / 'test.parquet', self._schema)
+
+        assert isinstance(ds, Dataset)
+        assert ds.schema.column_names == ['a', 'b', 'c']
+
     def test_data_is_lazy(self) -> None:
         assert isinstance(self._ds.data, pl.LazyFrame)
 
