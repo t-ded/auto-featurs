@@ -32,6 +32,7 @@ exclude = [
     ".pytest_cache",
     ".ruff_cache",
     ".venv",
+    "examples",
 ]
 line-length = 200
 target-version = "py313"

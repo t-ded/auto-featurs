@@ -8,7 +8,6 @@ import polars as pl
 import polars_ds as pds  # type: ignore[import-untyped]
 
 from auto_featurs.base.column_specification import ColumnNameOrSpec
-from auto_featurs.base.column_specification import ColumnSelector
 from auto_featurs.base.column_specification import ColumnType
 from auto_featurs.base.column_specification import ColumnTypeSelector
 from auto_featurs.transformers.base import Transformer
@@ -109,7 +108,7 @@ class TextExtractionTransformer(Transformer, ABC):
     def __init__(self, column: ColumnNameOrSpec):
         self._column = parse_column_name(column)
 
-    def input_type(self) -> ColumnSelector:
+    def input_type(self) -> ColumnTypeSelector:
         return ColumnTypeSelector(frozenset([ColumnType.TEXT, ColumnType.NOMINAL, ColumnType.ORDINAL]))
 
     @classmethod
