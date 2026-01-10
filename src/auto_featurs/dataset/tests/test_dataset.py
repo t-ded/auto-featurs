@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import polars as pl
 import pytest
 
@@ -89,3 +91,11 @@ class TestDataset:
         out = self._ds.collect()
         assert isinstance(out, pl.DataFrame)
         assert out.shape == (1, 3)
+
+    def test_sink_parquet(self, tmp_path: Path) -> None:
+        new = self._ds.with_columns([pl.col('a').add(1).alias('a_1')])
+        new.sink_parquet(tmp_path / 'test.parquet')
+
+        df = pl.read_parquet(tmp_path / 'test.parquet')
+
+        assert df.columns == ['a', 'b', 'c', 'a_1']

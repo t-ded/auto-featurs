@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from pathlib import Path
 
 import polars as pl
 
@@ -71,3 +72,6 @@ class Dataset:
 
     def collect(self) -> pl.DataFrame:
         return self._data.collect()
+
+    def sink_parquet(self, path: str | Path) -> None:
+        self._data.sink_parquet(path, mkdir=True)

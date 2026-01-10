@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 from datetime import timedelta
 from itertools import product
+from pathlib import Path
 from typing import Any
 from typing import Literal
 from typing import Optional
@@ -379,6 +380,10 @@ class Pipeline:
     def collect(self) -> pl.DataFrame:
         updated_dataset = self.collect_plan()
         return updated_dataset.collect()
+
+    def sink_parquet(self, path: str | Path) -> None:
+        updated_dataset = self.collect_plan()
+        updated_dataset.sink_parquet(path)
 
     def describe(self) -> str:
         result = self.collect_plan(cache_computation=False)

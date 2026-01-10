@@ -1,5 +1,6 @@
 import math
 from datetime import timedelta
+from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -167,6 +168,20 @@ class TestPipeline:
 
         with pytest.raises(KeyError, match='Column "GROUPING_FEATURE_NUM" not found in schema'):
             pipeline.with_count(over_columns_combinations=[['GROUPING_FEATURE_NUM']])
+
+    def test_sink_parquet(self, tmp_path: Path) -> None:
+        pipeline = Pipeline(
+            dataset=self._simple_dataset,
+            transformers=[[PolynomialTransformer(column='NUMERIC_FEATURE', degree=2)]],
+        )
+        pipeline.sink_parquet(tmp_path / 'test.parquet')
+
+        df = pl.read_parquet(tmp_path / 'test.parquet')
+
+        assert_frame_equal(
+            df,
+            pl.DataFrame({'NUMERIC_FEATURE': [0, 1, 2, 3, 4, 5], 'NUMERIC_FEATURE_pow_2': [0, 1, 4, 9, 16, 25]}),
+        )
 
     def test_describe(self) -> None:
         pipeline = Pipeline(dataset=self._simple_dataset)
