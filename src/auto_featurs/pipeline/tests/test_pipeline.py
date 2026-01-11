@@ -267,10 +267,23 @@ class TestPipeline:
             .with_pointwise_mutual_information(column_a_subset='GROUPING_FEATURE_NUM', column_b_subset='GROUPING_FEATURE_CAT_2')
             .with_arithmetic_aggregation(
                 subset=ColumnType.NUMERIC,
-                aggregations=[ArithmeticAggregations.SUM, ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE],
+                aggregations=[
+                    ArithmeticAggregations.MIN, ArithmeticAggregations.MAX, ArithmeticAggregations.SUM,
+                    ArithmeticAggregations.MEAN, ArithmeticAggregations.STD, ArithmeticAggregations.ZSCORE,
+                ],
                 over_columns_combinations=[['GROUPING_FEATURE_NUM'], ['GROUPING_FEATURE_NUM', 'GROUPING_FEATURE_CAT_2']],
             )
             .with_arithmetic_aggregation(subset='NUMERIC_FEATURE', aggregations=[ArithmeticAggregations.QUANTILE], quantiles=[0.25, 0.5, 0.75])
+            .with_argmin(
+                value_subset='NUMERIC_FEATURE_2',
+                arg_subset='CATEGORICAL_FEATURE',
+                over_columns_combinations=[['GROUPING_FEATURE_NUM']],
+            )
+            .with_argmax(
+                value_subset='NUMERIC_FEATURE',
+                arg_subset='CATEGORICAL_FEATURE',
+                over_columns_combinations=[['GROUPING_FEATURE_NUM']],
+            )
             .with_text_similarity(
                 left_subset='TEXT_FEATURE',
                 right_subset='TEXT_FEATURE_2',
@@ -386,6 +399,14 @@ class TestPipeline:
                 'TEXT_FEATURE_2_by_TEXT_FEATURE_entropy': [2.584963, 2.584963, 2.584963, 2.584963, 2.584963, 2.584963],
                 'TEXT_FEATURE_by_TEXT_FEATURE_2_entropy': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 'GROUPING_FEATURE_NUM_GROUPING_FEATURE_CAT_2_pmi': [0.584963, 1.0, 0.584963, -1.0, 0.584963, 1.0],
+                'NUMERIC_FEATURE_min_over_GROUPING_FEATURE_NUM': [0, 1, 2, 1, 2, 1],
+                'NUMERIC_FEATURE_min_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 1, 2, 3, 2, 1],
+                'NUMERIC_FEATURE_2_min_over_GROUPING_FEATURE_NUM': [0, -5, -4, -5, -4, -5],
+                'NUMERIC_FEATURE_2_min_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -5, -4, -3, -4, -5],
+                'NUMERIC_FEATURE_max_over_GROUPING_FEATURE_NUM': [0, 5, 4, 5, 4, 5],
+                'NUMERIC_FEATURE_max_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 5, 4, 3, 4, 5],
+                'NUMERIC_FEATURE_2_max_over_GROUPING_FEATURE_NUM': [0, -1, -2, -1, -2, -1],
+                'NUMERIC_FEATURE_2_max_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, -1, -2, -3, -2, -1],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM': [0, 9, 6, 9, 6, 9],
                 'NUMERIC_FEATURE_sum_over_GROUPING_FEATURE_NUM_and_GROUPING_FEATURE_CAT_2': [0, 6, 6, 3, 6, 6],
                 'NUMERIC_FEATURE_2_sum_over_GROUPING_FEATURE_NUM': [0, -9, -6, -9, -6, -9],
@@ -405,6 +426,8 @@ class TestPipeline:
                 'NUMERIC_FEATURE_quantile_25': [1.25, 1.25, 1.25, 1.25, 1.25, 1.25],
                 'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
                 'NUMERIC_FEATURE_quantile_75': [3.75, 3.75, 3.75, 3.75, 3.75, 3.75],
+                'argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_over_GROUPING_FEATURE_NUM': ['A', 'F', 'E', 'F', 'E', 'F'],
+                'argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_over_GROUPING_FEATURE_NUM': ['A', 'F', 'E', 'F', 'E', 'F'],
                 'TEXT_FEATURE_damerau_levenshtein_text_similarity_TEXT_FEATURE_2': [1.0, 0.142857, 0.714286, 0.5, 0.428571, 0.875],
                 'TEXT_FEATURE_jaccard_text_similarity_TEXT_FEATURE_2': [1.0, 0.25, 0.111111, 0.307692, 0.2, 0.375],
                 'TEXT_FEATURE_jaro_text_similarity_TEXT_FEATURE_2': [1.0, 0.428571, 0.809524, 0.690476, 0.809524, 0.958333],

@@ -4,14 +4,18 @@ import pytest
 
 from auto_featurs.base.column_specification import ColumnSpecification
 from auto_featurs.base.column_specification import ColumnType
+from auto_featurs.transformers.aggregating_transformers import ArgMaxTransformer
+from auto_featurs.transformers.aggregating_transformers import ArgMinTransformer
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregationTransformer
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
 from auto_featurs.transformers.aggregating_transformers import EntityEntropyTransformer
 from auto_featurs.transformers.aggregating_transformers import FirstValueTransformer
 from auto_featurs.transformers.aggregating_transformers import LaggedTransformer
+from auto_featurs.transformers.aggregating_transformers import MaxTransformer
 from auto_featurs.transformers.aggregating_transformers import MeanTransformer
 from auto_featurs.transformers.aggregating_transformers import MedianTransformer
+from auto_featurs.transformers.aggregating_transformers import MinTransformer
 from auto_featurs.transformers.aggregating_transformers import ModeTransformer
 from auto_featurs.transformers.aggregating_transformers import NumUniqueTransformer
 from auto_featurs.transformers.aggregating_transformers import PointwiseMutualInformationTransformer
@@ -340,6 +344,8 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (MinTransformer, {'NUMERIC_FEATURE_min': [0, 0, 0, 0, 0, 0]}),
+            (MaxTransformer, {'NUMERIC_FEATURE_max': [5, 5, 5, 5, 5, 5]}),
             (SumTransformer, {'NUMERIC_FEATURE_sum': [15, 15, 15, 15, 15, 15]}),
             (MedianTransformer, {'NUMERIC_FEATURE_median': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean': [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]}),
@@ -355,6 +361,8 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (MinTransformer, {'BOOL_FEATURE_min': [False, False, False, False, False, False]}),
+            (MaxTransformer, {'BOOL_FEATURE_max': [True, True, True, True, True, True]}),
             (SumTransformer, {'BOOL_FEATURE_sum': [3, 3, 3, 3, 3, 3]}),
             (MedianTransformer, {'BOOL_FEATURE_median': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}),
             (MeanTransformer, {'BOOL_FEATURE_mean': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}),
@@ -370,6 +378,8 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (MinTransformer, {'NUMERIC_FEATURE_exclusive_cum_min': [np.nan, 0, 0, 0, 0, 0]}),
+            (MaxTransformer, {'NUMERIC_FEATURE_exclusive_cum_max': [np.nan, 0, 1, 2, 3, 4]}),
             (SumTransformer, {'NUMERIC_FEATURE_exclusive_cum_sum': [0, 0, 1, 3, 6, 10]}),
             (MedianTransformer, {'NUMERIC_FEATURE_exclusive_cum_median': [None, 0.0, 0.5, 1.0, 1.5, 2.0]}),
             (MeanTransformer, {'NUMERIC_FEATURE_exclusive_cum_mean': [np.nan, 0.0, 0.5, 1, 1.5, 2]}),
@@ -385,6 +395,8 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (MinTransformer, {'NUMERIC_FEATURE_inclusive_cum_min': [0, 0, 0, 0, 0, 0]}),
+            (MaxTransformer, {'NUMERIC_FEATURE_inclusive_cum_max': [0, 1, 2, 3, 4, 5]}),
             (SumTransformer, {'NUMERIC_FEATURE_inclusive_cum_sum': [0, 1, 3, 6, 10, 15]}),
             (MedianTransformer, {'NUMERIC_FEATURE_inclusive_cum_median': [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]}),
             (MeanTransformer, {'NUMERIC_FEATURE_inclusive_cum_mean': [0.0, 0.5, 1, 1.5, 2, 2.5]}),
@@ -400,6 +412,8 @@ class TestArithmeticAggregationTransformers:
     @pytest.mark.parametrize(
         ('transformer_type', 'expected_new_columns'),
         [
+            (MinTransformer, {'NUMERIC_FEATURE_min_where_BOOL_FEATURE': [0, 0, 0, 0, 0, 0]}),
+            (MaxTransformer, {'NUMERIC_FEATURE_max_where_BOOL_FEATURE': [4, 4, 4, 4, 4, 4]}),
             (SumTransformer, {'NUMERIC_FEATURE_sum_where_BOOL_FEATURE': [6, 6, 6, 6, 6, 6]}),
             (MedianTransformer, {'NUMERIC_FEATURE_median_where_BOOL_FEATURE': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]}),
             (MeanTransformer, {'NUMERIC_FEATURE_mean_where_BOOL_FEATURE': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]}),
@@ -414,3 +428,97 @@ class TestArithmeticAggregationTransformers:
         transformer = transformer_type(column='NUMERIC_FEATURE', filtering_condition=pl.col('BOOL_FEATURE'))
         df = BASIC_FRAME.with_columns(transformer.transform())
         assert_new_columns_in_frame(original_frame=BASIC_FRAME, new_frame=df, expected_new_columns=expected_new_columns)
+
+
+class TestArgMinTransformer:
+    def setup_method(self) -> None:
+        self._filtered_argmin_transformer = ArgMinTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+        self._filtered_exclusive_cumulative_argmin_transformer = ArgMinTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            cumulative=CumulativeOptions.EXCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+        self._filtered_inclusive_cumulative_argmin_transformer = ArgMinTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE_2'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            cumulative=CumulativeOptions.INCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+
+    def test_name_and_output_type(self) -> None:
+        assert self._filtered_argmin_transformer.output_column_specification == ColumnSpecification.ordinal(name='argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE')
+        assert self._filtered_exclusive_cumulative_argmin_transformer.output_column_specification == ColumnSpecification.ordinal(
+            name='exclusive_cum_argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE',
+        )
+        assert self._filtered_inclusive_cumulative_argmin_transformer.output_column_specification == ColumnSpecification.ordinal(
+            name='inclusive_cum_argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE',
+        )
+
+    def test_argmin_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._filtered_argmin_transformer.transform(),
+            self._filtered_exclusive_cumulative_argmin_transformer.transform(),
+            self._filtered_inclusive_cumulative_argmin_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': ['E', 'E', 'E', 'E', 'E', 'E'],
+                'exclusive_cum_argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': [None, 'A', 'A', 'C', 'C', 'E'],
+                'inclusive_cum_argmin_of_NUMERIC_FEATURE_2_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': ['A', 'A', 'C', 'C', 'E', 'E'],
+            },
+        )
+
+
+class TestArgMaxTransformer:
+    def setup_method(self) -> None:
+        self._filtered_argmax_transformer = ArgMaxTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+        self._filtered_exclusive_cumulative_argmax_transformer = ArgMaxTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            cumulative=CumulativeOptions.EXCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+        self._filtered_inclusive_cumulative_argmax_transformer = ArgMaxTransformer(
+            value_column=ColumnSpecification.numeric(name='NUMERIC_FEATURE'),
+            arg_column=ColumnSpecification.ordinal(name='CATEGORICAL_FEATURE'),
+            cumulative=CumulativeOptions.INCLUSIVE,
+            filtering_condition=pl.col('BOOL_FEATURE'),
+        )
+
+    def test_name_and_output_type(self) -> None:
+        assert self._filtered_argmax_transformer.output_column_specification == ColumnSpecification.ordinal(name='argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE')
+        assert self._filtered_exclusive_cumulative_argmax_transformer.output_column_specification == ColumnSpecification.ordinal(
+            name='exclusive_cum_argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE',
+        )
+        assert self._filtered_inclusive_cumulative_argmax_transformer.output_column_specification == ColumnSpecification.ordinal(
+            name='inclusive_cum_argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE',
+        )
+
+    def test_argmax_transform(self) -> None:
+        df = BASIC_FRAME.with_columns(
+            self._filtered_argmax_transformer.transform(),
+            self._filtered_exclusive_cumulative_argmax_transformer.transform(),
+            self._filtered_inclusive_cumulative_argmax_transformer.transform(),
+        )
+
+        assert_new_columns_in_frame(
+            original_frame=BASIC_FRAME,
+            new_frame=df,
+            expected_new_columns={
+                'argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': ['E', 'E', 'E', 'E', 'E', 'E'],
+                'exclusive_cum_argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': [None, 'A', 'A', 'C', 'C', 'E'],
+                'inclusive_cum_argmax_of_NUMERIC_FEATURE_by_CATEGORICAL_FEATURE_where_BOOL_FEATURE': ['A', 'A', 'C', 'C', 'E', 'E'],
+            },
+        )

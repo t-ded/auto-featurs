@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any
 from typing import Optional
 
+import numpy as np
 import polars as pl
 from polars._typing import IntoExpr
 
@@ -287,6 +288,38 @@ class ArithmeticAggregationTransformer(AggregatingTransformer, ABC):
         raise NotImplementedError
 
 
+class MinTransformer(ArithmeticAggregationTransformer):
+    def _transform(self) -> pl.Expr:
+        col = pl.when(self._filtering_condition).then(pl.col(self._column))
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return col.min()
+            case CumulativeOptions.EXCLUSIVE:
+                return col.cum_min().shift(1, fill_value=np.nan).forward_fill()
+            case CumulativeOptions.INCLUSIVE:
+                return col.cum_min().forward_fill()
+
+    @property
+    def _aggregation(self) -> str:
+        return 'min'
+
+
+class MaxTransformer(ArithmeticAggregationTransformer):
+    def _transform(self) -> pl.Expr:
+        col = pl.when(self._filtering_condition).then(pl.col(self._column))
+        match self._cumulative:
+            case CumulativeOptions.NONE:
+                return col.max()
+            case CumulativeOptions.EXCLUSIVE:
+                return col.cum_max().shift(1, fill_value=np.nan).forward_fill()
+            case CumulativeOptions.INCLUSIVE:
+                return col.cum_max().forward_fill()
+
+    @property
+    def _aggregation(self) -> str:
+        return 'max'
+
+
 class SumTransformer(ArithmeticAggregationTransformer):
     def _transform(self) -> pl.Expr:
         col = pl.col(self._column).filter(self._filtering_condition)
@@ -383,9 +416,83 @@ class ZscoreTransformer(ArithmeticAggregationTransformer):
 
 
 class ArithmeticAggregations(Enum):
+    MIN = MinTransformer
+    MAX = MaxTransformer
     SUM = SumTransformer
     QUANTILE = QuantileTransformer
     MEDIAN = MedianTransformer
     MEAN = MeanTransformer
     STD = StdTransformer
     ZSCORE = ZscoreTransformer
+
+
+class ArgMinTransformer(AggregatingTransformer):
+    def __init__(self, value_column: ColumnNameOrSpec, arg_column: ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        self._min_transformer = MinTransformer(value_column, cumulative=cumulative, filtering_condition=filtering_condition)
+        self._value_column = parse_column_name(value_column)
+        self._arg_column = arg_column
+        self._cumulative = cumulative
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
+
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnTypeSelector.exclude(ColumnType.NOMINAL, ColumnType.TEXT), ColumnTypeSelector.any()
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return False
+
+    def _return_type(self) -> ColumnType:
+        return self._arg_column.column_type
+
+    def _transform(self) -> pl.Expr:
+        value_col = pl.col(self._value_column)
+        arg_col = pl.col(self._arg_column.name)
+
+        if self._cumulative == CumulativeOptions.NONE:
+            return arg_col.min_by(pl.when(self._filtering_condition).then(value_col))
+        else:
+            value_col_min = self._min_transformer.transform()
+            if self._cumulative == CumulativeOptions.EXCLUSIVE:
+                value_col = value_col.shift(1)
+                arg_col = arg_col.shift(1)
+            return pl.when(value_col == value_col_min).then(arg_col).forward_fill()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        condition_name = filtering_condition_to_string(self._filtering_condition)
+        return transform.alias(f'{str(self._cumulative)}argmin_of_{self._value_column}_by_{self._arg_column.name}' + condition_name)
+
+
+class ArgMaxTransformer(AggregatingTransformer):
+    def __init__(self, value_column: ColumnNameOrSpec, arg_column: ColumnSpecification, cumulative: CumulativeOptions = CumulativeOptions.NONE, filtering_condition: Optional[pl.Expr] = None) -> None:
+        self._max_transformer = MaxTransformer(value_column, cumulative=cumulative, filtering_condition=filtering_condition)
+        self._value_column = parse_column_name(value_column)
+        self._arg_column = arg_column
+        self._cumulative = cumulative
+        self._filtering_condition = default_true_filtering_condition(filtering_condition)
+
+    def input_type(self) -> tuple[ColumnTypeSelector, ColumnTypeSelector]:
+        return ColumnTypeSelector.exclude(ColumnType.NOMINAL, ColumnType.TEXT), ColumnTypeSelector.any()
+
+    @classmethod
+    def is_commutative(cls) -> bool:
+        return False
+
+    def _return_type(self) -> ColumnType:
+        return self._arg_column.column_type
+
+    def _transform(self) -> pl.Expr:
+        value_col = pl.col(self._value_column)
+        arg_col = pl.col(self._arg_column.name)
+
+        if self._cumulative == CumulativeOptions.NONE:
+            return arg_col.max_by(pl.when(self._filtering_condition).then(value_col))
+        else:
+            value_col_max = self._max_transformer.transform()
+            if self._cumulative == CumulativeOptions.EXCLUSIVE:
+                value_col = value_col.shift(1)
+                arg_col = arg_col.shift(1)
+            return pl.when(value_col == value_col_max).then(arg_col).forward_fill()
+
+    def _name(self, transform: pl.Expr) -> pl.Expr:
+        condition_name = filtering_condition_to_string(self._filtering_condition)
+        return transform.alias(f'{str(self._cumulative)}argmax_of_{self._value_column}_by_{self._arg_column.name}' + condition_name)

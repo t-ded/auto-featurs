@@ -22,6 +22,8 @@ from auto_featurs.pipeline.optimizer import OptimizationLevel
 from auto_featurs.pipeline.optimizer import Optimizer
 from auto_featurs.pipeline.validator import Validator
 from auto_featurs.transformers.aggregating_transformers import AggregatingTransformer
+from auto_featurs.transformers.aggregating_transformers import ArgMaxTransformer
+from auto_featurs.transformers.aggregating_transformers import ArgMinTransformer
 from auto_featurs.transformers.aggregating_transformers import ArithmeticAggregations
 from auto_featurs.transformers.aggregating_transformers import CountTransformer
 from auto_featurs.transformers.aggregating_transformers import CumulativeOptions
@@ -320,6 +322,52 @@ class Pipeline:
             kw_params=kw_params,
         )
         return self._with_added_to_current_layer(arithmetic_aggregation_transformers, auxiliary=auxiliary)
+
+    def with_argmin(
+            self,
+            value_subset: ColumnSelection,
+            arg_subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
+            filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
+        ) -> Pipeline:
+        argmin_transformers = self._build_aggregated_transformers(
+            value_subset,
+            arg_subset,
+            transformer_factory=ArgMinTransformer,
+            over_columns_combinations=over_columns_combinations,
+            time_windows=time_windows,
+            index_column_name=index_column_name,
+            cumulative=cumulative,
+            filtering_condition=filtering_condition,
+        )
+        return self._with_added_to_current_layer(argmin_transformers, auxiliary=auxiliary)
+
+    def with_argmax(
+            self,
+            value_subset: ColumnSelection,
+            arg_subset: ColumnSelection,
+            over_columns_combinations: Sequence[Sequence[ColumnNameOrSpec]] = (),
+            time_windows: Sequence[Optional[str | timedelta]] = (),
+            index_column_name: Optional[str] = None,
+            cumulative: CumulativeOptions = CumulativeOptions.NONE,
+            filtering_condition: Optional[pl.Expr] = None,
+            auxiliary: bool = False,
+        ) -> Pipeline:
+        argmin_transformers = self._build_aggregated_transformers(
+            value_subset,
+            arg_subset,
+            transformer_factory=ArgMaxTransformer,
+            over_columns_combinations=over_columns_combinations,
+            time_windows=time_windows,
+            index_column_name=index_column_name,
+            cumulative=cumulative,
+            filtering_condition=filtering_condition,
+        )
+        return self._with_added_to_current_layer(argmin_transformers, auxiliary=auxiliary)
 
     def with_text_similarity(self, left_subset: ColumnSelection, right_subset: ColumnSelection, text_similarities: Sequence[TextSimilarity], auxiliary: bool = False, **kwargs: Any) -> Pipeline:
         input_columns = self._dataset.get_combinations_from_selections(left_subset, right_subset)
